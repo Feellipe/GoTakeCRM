@@ -99,6 +99,8 @@ import { ExportButton } from '@/components/export-button';
 import { GlobalSearch } from '@/components/global-search';
 import { SettingsPanel } from '@/components/settings-panel';
 import { BriefingModal } from '@/components/briefing-modal';
+import { QuickActions } from '@/components/quick-actions';
+import { ClientActivityTimeline } from '@/components/client-activity-timeline';
 import {
   DndContext,
   DragOverlay,
@@ -326,6 +328,12 @@ export default function Dashboard() {
   
   // Briefing Modal state
   const [showBriefingModal, setShowBriefingModal] = useState(false);
+  
+  // Global Search trigger state
+  const [triggerSearch, setTriggerSearch] = useState(false);
+  
+  // Settings trigger state
+  const [triggerSettings, setTriggerSettings] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -1562,7 +1570,7 @@ export default function Dashboard() {
 
       {/* Client Detail Modal */}
       <Dialog open={!!selectedClient} onOpenChange={() => setSelectedClient(null)}>
-        <DialogContent className="max-w-lg glass-card">
+        <DialogContent className="max-w-3xl glass-card">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
               <Avatar className="w-12 h-12">
@@ -1579,59 +1587,72 @@ export default function Dashboard() {
               </div>
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-3 rounded-lg bg-muted/50">
-                <p className="text-xs text-muted-foreground">Total Value</p>
-                <p className="text-lg font-bold text-primary">{formatCurrency(selectedClient?.totalValue || 0)}</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Left Column - Client Info */}
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-3 rounded-lg bg-muted/50">
+                  <p className="text-xs text-muted-foreground">Total Value</p>
+                  <p className="text-lg font-bold text-primary">{formatCurrency(selectedClient?.totalValue || 0)}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-muted/50">
+                  <p className="text-xs text-muted-foreground">Total Deals</p>
+                  <p className="text-lg font-bold text-foreground">{selectedClient?.totalDeals || 0}</p>
+                </div>
               </div>
-              <div className="p-3 rounded-lg bg-muted/50">
-                <p className="text-xs text-muted-foreground">Total Deals</p>
-                <p className="text-lg font-bold text-foreground">{selectedClient?.totalDeals || 0}</p>
-              </div>
-            </div>
-            <Separator />
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-sm">
-                <Phone className="w-4 h-4 text-muted-foreground" />
-                <span>{selectedClient?.phone}</span>
-              </div>
-              {selectedClient?.email && (
+              <Separator />
+              <div className="space-y-3">
                 <div className="flex items-center gap-2 text-sm">
-                  <Mail className="w-4 h-4 text-muted-foreground" />
-                  <span>{selectedClient.email}</span>
+                  <Phone className="w-4 h-4 text-muted-foreground" />
+                  <span>{selectedClient?.phone}</span>
                 </div>
+                {selectedClient?.email && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Mail className="w-4 h-4 text-muted-foreground" />
+                    <span>{selectedClient.email}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 text-sm">
+                  <Camera className="w-4 h-4 text-muted-foreground" />
+                  <span>{selectedClient?.eventType}</span>
+                </div>
+              </div>
+              {selectedClient?.notes && (
+                <>
+                  <Separator />
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Notes</p>
+                    <p className="text-sm text-foreground">{selectedClient.notes}</p>
+                  </div>
+                </>
               )}
-              <div className="flex items-center gap-2 text-sm">
-                <Camera className="w-4 h-4 text-muted-foreground" />
-                <span>{selectedClient?.eventType}</span>
+              <Separator />
+              <div className="flex gap-2">
+                <Button
+                  className="flex-1"
+                  onClick={() => {
+                    if (selectedClient) openWhatsApp(selectedClient);
+                    setSelectedClient(null);
+                  }}
+                >
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  WhatsApp
+                </Button>
+                <Button variant="outline" className="flex-1" onClick={() => selectedClient && openEditClientModal(selectedClient)}>
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit
+                </Button>
               </div>
             </div>
-            {selectedClient?.notes && (
-              <>
-                <Separator />
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Notes</p>
-                  <p className="text-sm text-foreground">{selectedClient.notes}</p>
-                </div>
-              </>
-            )}
-            <Separator />
-            <div className="flex gap-2">
-              <Button 
-                className="flex-1" 
-                onClick={() => {
-                  if (selectedClient) openWhatsApp(selectedClient);
-                  setSelectedClient(null);
-                }}
-              >
-                <MessageSquare className="w-4 h-4 mr-2" />
-                WhatsApp
-              </Button>
-              <Button variant="outline" className="flex-1" onClick={() => selectedClient && openEditClientModal(selectedClient)}>
-                <Edit className="w-4 h-4 mr-2" />
-                Edit
-              </Button>
+            
+            {/* Right Column - Activity Timeline */}
+            <div className="border-l border-border pl-6">
+              {selectedClient && (
+                <ClientActivityTimeline
+                  clientId={selectedClient.id}
+                  clientName={selectedClient.name}
+                />
+              )}
             </div>
           </div>
         </DialogContent>
@@ -1781,6 +1802,28 @@ export default function Dashboard() {
         dealValue={selectedDeal?.value || 0}
         clientName={selectedDeal?.client.name || ''}
         clientAvatar={selectedDeal?.client.avatar || null}
+      />
+
+      {/* Quick Actions FAB */}
+      <QuickActions
+        onNewClient={openNewClientModal}
+        onNewDeal={openNewDealModal}
+        onNewBooking={openNewBookingModal}
+        onOpenSearch={() => setTriggerSearch(true)}
+        onExport={() => {
+          // Trigger export functionality
+          const exportData = { clients, deals, kpis: data?.kpis };
+          const csvContent = 'data:text/csv;charset=utf-8,' + encodeURIComponent(
+            'Clients\n' + clients.map(c => `${c.name},${c.email},${c.phone}`).join('\n')
+          );
+          const link = document.createElement('a');
+          link.href = csvContent;
+          link.download = 'crm-export.csv';
+          link.click();
+        }}
+        onOpenSettings={() => setTriggerSettings(true)}
+        onNavigate={(view) => setActiveView(view)}
+        currentView={activeView}
       />
     </div>
   );
