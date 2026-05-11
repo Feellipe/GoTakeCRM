@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,20 +10,175 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+// Client - represents a customer (filmmaker/photographer client)
+model Client {
+  id          String   @id @default(cuid())
+  phone       String   @unique
+  name        String
+  email       String?
+  eventType   String   // wedding, corporate, portrait, product, etc.
+  notes       String?
+  source      String   @default("whatsapp") // whatsapp, referral, website
+  status      String   @default("active") // active, lead, inactive
+  avatar      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  deals       Deal[]
+  conversations Conversation[]
+  bookings    Booking[]
+  documents   Document[]
 }
 
-model Post {
-  id        String   @id @default(cuid())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+// Deal - the central entity linking all project data
+model Deal {
+  id          String   @id @default(cuid())
+  clientId    String
+  title       String
+  description String?
+  status      String   @default("novo") // novo, briefing, contando, producao, finalizado
+  value       Float    @default(0)
+  currency    String   @default("BRL")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  briefings   Briefing[]
+  expenses    Expense[]
+  revenue     Revenue[]
+  bookings    Booking[]
+  documents   Document[]
+}
+
+// Briefing - creative requirements captured per project
+model Briefing {
+  id          String   @id @default(cuid())
+  dealId      String
+  content     String
+  author      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  deal        Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+}
+
+// Expense - project-specific expenses
+model Expense {
+  id          String   @id @default(cuid())
+  dealId      String
+  category    String   // equipment, location, crew, props, travel, other
+  description String
+  amount      Float
+  currency    String   @default("BRL")
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  deal        Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+}
+
+// Revenue - project payments received
+model Revenue {
+  id          String   @id @default(cuid())
+  dealId      String
+  description String?
+  amount      Float
+  currency    String   @default("BRL")
+  date        DateTime @default(now())
+  status      String   @default("received") // pending, received
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  deal        Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+}
+
+// Conversation - WhatsApp conversation threads
+model Conversation {
+  id          String   @id @default(cuid())
+  clientId    String
+  status      String   @default("active") // active, closed
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  messages    Message[]
+}
+
+// Message - individual messages in conversations
+model Message {
+  id              String   @id @default(cuid())
+  conversationId  String
+  direction       String   // inbound, outbound
+  type            String   // text, image, document, interactive
+  content         String
+  status          String   @default("sent") // sent, delivered, read
+  createdAt       DateTime @default(now())
+
+  // Relations
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+}
+
+// Booking - calendar bookings/shoots
+model Booking {
+  id              String   @id @default(cuid())
+  clientId        String
+  dealId          String?
+  eventType       String
+  eventDate       DateTime
+  duration        Int      @default(60) // in minutes
+  location        String?
+  status          String   @default("pending") // pending, confirmed, completed, cancelled
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  client          Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  deal            Deal?    @relation(fields: [dealId], references: [id], onDelete: SetNull)
+}
+
+// Document - PDFs generated and sent
+model Document {
+  id          String   @id @default(cuid())
+  clientId    String
+  dealId      String?
+  type        String   // contract, quote, invoice, moodboard, other
+  title       String
+  filename    String
+  storageUrl  String
+  sentAt      DateTime?
+  status      String   @default("draft") // draft, sent, viewed, signed
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  deal        Deal?    @relation(fields: [dealId], references: [id], onDelete: SetNull)
+}
+
+// Template - document templates for PDF generation
+model Template {
+  id          String   @id @default(cuid())
+  type        String   // contract, quote, invoice
+  title       String
+  bodyHtml    String
+  variables   String   // JSON string of variable names
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Dashboard Settings
+model DashboardSettings {
+  id              String   @id @default(cuid())
+  businessName    String   @default("My Studio")
+  currency        String   @default("BRL")
+  timezone        String   @default("America/Sao_Paulo")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
