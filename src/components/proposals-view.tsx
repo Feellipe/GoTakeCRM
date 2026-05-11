@@ -699,15 +699,15 @@ export function ProposalsView({ clients, onNotification, initialDeal, onProposal
         setShowNewProposalModal(open);
         if (!open) resetForm();
       }}>
-        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
-          <DialogHeader>
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-4">
             <DialogTitle>{editingProposal ? 'Edit Proposal' : 'Create New Proposal'}</DialogTitle>
             <DialogDescription>
               Build a custom proposal with packages, pricing, and portfolio links
             </DialogDescription>
           </DialogHeader>
-          <ScrollArea className="flex-1 pr-4 min-h-0">
-            <div className="space-y-6">
+          <div className="px-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+            <div className="space-y-6 pb-6">
               {/* Template Selection */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Template</label>
@@ -917,8 +917,8 @@ export function ProposalsView({ clients, onNotification, initialDeal, onProposal
                 </CardContent>
               </Card>
             </div>
-          </ScrollArea>
-          <div className="flex flex-col sm:flex-row justify-between gap-3 pt-4 border-t bg-background shrink-0 -mx-6 px-6 pb-2">
+          </div>
+          <div className="flex flex-col sm:flex-row justify-between gap-3 px-6 py-4 border-t bg-background">
             <div className="flex flex-wrap gap-2">
               <Button
                 variant="outline"
