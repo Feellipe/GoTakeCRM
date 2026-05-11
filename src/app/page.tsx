@@ -48,6 +48,9 @@ import {
   Target,
   Zap,
   Settings,
+  PieChart as PieChartIcon,
+  BarChart3,
+  TrendingUpIcon,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -95,6 +98,7 @@ import { DraggableDealCard } from '@/components/draggable-deal-card';
 import { ExportButton } from '@/components/export-button';
 import { GlobalSearch } from '@/components/global-search';
 import { SettingsPanel } from '@/components/settings-panel';
+import { BriefingModal } from '@/components/briefing-modal';
 import {
   DndContext,
   DragOverlay,
@@ -319,6 +323,9 @@ export default function Dashboard() {
     { id: '4', title: 'New client registered', message: 'Maria Santos joined from website', time: '5 hours ago', read: true, type: 'client' as const },
     { id: '5', title: 'Booking reminder', message: 'Portrait session tomorrow at 10AM', time: '1 day ago', read: false, type: 'booking' as const },
   ]);
+  
+  // Briefing Modal state
+  const [showBriefingModal, setShowBriefingModal] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -578,7 +585,13 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-background flex relative">
+      {/* Animated Background Orbs */}
+      <div className="bg-orbs">
+        <div className="bg-orb bg-orb-1" />
+        <div className="bg-orb bg-orb-2" />
+        <div className="bg-orb bg-orb-3" />
+      </div>
       {/* Sidebar */}
       <aside
         className={`glass-sidebar fixed left-0 top-0 h-full z-50 transition-all duration-500 ease-in-out ${
@@ -1395,7 +1408,7 @@ export default function Dashboard() {
               <Card className="glass-card">
                 <CardHeader>
                   <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                    <PieChart className="w-5 h-5 text-primary" />
+                    <PieChartIcon className="w-5 h-5 text-primary" />
                     Expense Distribution
                   </CardTitle>
                 </CardHeader>
@@ -1655,9 +1668,9 @@ export default function Dashboard() {
             </div>
             <Separator />
             <div className="flex gap-2">
-              <Button className="flex-1">
-                <Eye className="w-4 h-4 mr-2" />
-                View Details
+              <Button className="flex-1" onClick={() => setShowBriefingModal(true)}>
+                <FileText className="w-4 h-4 mr-2" />
+                Notes
               </Button>
               <Button variant="outline" className="flex-1" onClick={() => selectedDeal && openEditDealModal(selectedDeal)}>
                 <Edit className="w-4 h-4 mr-2" />
@@ -1757,6 +1770,17 @@ export default function Dashboard() {
         booking={editingBooking}
         clients={clients.map(c => ({ id: c.id, name: c.name }))}
         onSave={handleSaveBooking}
+      />
+
+      {/* Briefing Modal */}
+      <BriefingModal
+        open={showBriefingModal}
+        onOpenChange={setShowBriefingModal}
+        dealId={selectedDeal?.id || null}
+        dealTitle={selectedDeal?.title || ''}
+        dealValue={selectedDeal?.value || 0}
+        clientName={selectedDeal?.client.name || ''}
+        clientAvatar={selectedDeal?.client.avatar || null}
       />
     </div>
   );

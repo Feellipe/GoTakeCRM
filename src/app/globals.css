@@ -552,3 +552,292 @@
 .duration-300 { animation-duration: 300ms; }
 .duration-500 { animation-duration: 500ms; }
 .duration-700 { animation-duration: 700ms; }
+
+/* Additional styling enhancements */
+@layer components {
+  /* Animated gradient border */
+  .gradient-border {
+    position: relative;
+    background: var(--glass);
+    border-radius: var(--radius-lg);
+  }
+
+  .gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    background: linear-gradient(
+      45deg,
+      var(--gold),
+      var(--gold-light),
+      transparent,
+      var(--gold)
+    );
+    background-size: 300% 300%;
+    animation: gradient-rotate 4s linear infinite;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  .gradient-border:hover::before {
+    opacity: 1;
+  }
+
+  @keyframes gradient-rotate {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* Animated background orbs */
+  .bg-orbs {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .bg-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.15;
+    animation: float-orb 20s ease-in-out infinite;
+  }
+
+  .bg-orb-1 {
+    width: 600px;
+    height: 600px;
+    background: var(--gold);
+    top: -200px;
+    right: -100px;
+    animation-delay: 0s;
+  }
+
+  .bg-orb-2 {
+    width: 400px;
+    height: 400px;
+    background: var(--warm-500);
+    bottom: -100px;
+    left: -50px;
+    animation-delay: -5s;
+  }
+
+  .bg-orb-3 {
+    width: 300px;
+    height: 300px;
+    background: var(--primary);
+    top: 50%;
+    left: 50%;
+    animation-delay: -10s;
+  }
+
+  @keyframes float-orb {
+    0%, 100% {
+      transform: translate(0, 0) scale(1);
+    }
+    25% {
+      transform: translate(30px, -30px) scale(1.05);
+    }
+    50% {
+      transform: translate(-20px, 20px) scale(0.95);
+    }
+    75% {
+      transform: translate(20px, 10px) scale(1.02);
+    }
+  }
+
+  /* Enhanced KPI card with animated icon */
+  .kpi-icon-animated {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .kpi-icon-animated::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      135deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.3) 50%,
+      transparent 100%
+    );
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+  }
+
+  .kpi-icon-animated:hover::before {
+    transform: translateX(100%);
+  }
+
+  /* Subtle noise texture overlay */
+  .noise-overlay {
+    position: relative;
+  }
+
+  .noise-overlay::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+    border-radius: inherit;
+  }
+
+  /* Glass input styling */
+  .glass-input {
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(180, 170, 155, 0.2);
+    transition: all 0.3s ease;
+  }
+
+  .glass-input:focus {
+    background: rgba(255, 255, 255, 0.7);
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(184, 134, 11, 0.15);
+  }
+
+  .dark .glass-input {
+    background: rgba(45, 42, 38, 0.5);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .dark .glass-input:focus {
+    background: rgba(45, 42, 38, 0.7);
+    border-color: var(--gold-light);
+  }
+
+  /* Animated underline for links */
+  .link-underline {
+    position: relative;
+  }
+
+  .link-underline::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--gold), var(--gold-light));
+    transition: width 0.3s ease;
+  }
+
+  .link-underline:hover::after {
+    width: 100%;
+  }
+
+  /* Card shine effect on hover */
+  .card-shine {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-shine::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -75%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.1),
+      transparent
+    );
+    transform: skewX(-25deg);
+    transition: left 0.75s ease;
+  }
+
+  .card-shine:hover::before {
+    left: 125%;
+  }
+
+  /* Pulsing dot indicator */
+  .pulse-dot {
+    position: relative;
+  }
+
+  .pulse-dot::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 8px;
+    height: 8px;
+    background: var(--gold);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    animation: dot-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes dot-pulse {
+    0%, 100% {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: translate(-50%, -50%) scale(1.5);
+      opacity: 0.5;
+    }
+  }
+
+  /* Enhanced button hover */
+  .btn-gold-hover {
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+  }
+
+  .btn-gold-hover::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--gold-light), var(--gold));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: -1;
+  }
+
+  .btn-gold-hover:hover::before {
+    opacity: 1;
+  }
+
+  /* Smooth scale on interaction */
+  .scale-on-hover {
+    transition: transform 0.2s ease;
+  }
+
+  .scale-on-hover:hover {
+    transform: scale(1.02);
+  }
+
+  .scale-on-hover:active {
+    transform: scale(0.98);
+  }
+
+  /* Skeleton loading animation */
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--muted) 0%,
+      var(--glass) 50%,
+      var(--muted) 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  }
+
+  @keyframes skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+}
