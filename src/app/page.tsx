@@ -90,6 +90,7 @@ import { Bar, BarChart, XAxis, YAxis, ResponsiveContainer, Pie, PieChart, Cell, 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { NotificationDropdown } from '@/components/notification-dropdown';
 import { ClientFormModal } from '@/components/client-form-modal';
@@ -104,6 +105,7 @@ import { QuickActions } from '@/components/quick-actions';
 import { ClientActivityTimeline } from '@/components/client-activity-timeline';
 import { ProposalsView } from '@/components/proposals-view';
 import { ExpenseManager } from '@/components/expense-manager';
+import { RevenueManager } from '@/components/revenue-manager';
 import { Toaster } from '@/components/ui/sonner';
 import {
   DndContext,
@@ -1492,15 +1494,43 @@ export default function Dashboard() {
               </Card>
             </div>
 
-            {/* Expense Management */}
+            {/* Revenue & Expense Management */}
             <Card className="glass-card">
-              <CardContent className="p-6">
-                <ExpenseManager 
-                  deals={deals.map(d => ({ id: d.id, title: d.title, client: d.client }))} 
-                  onExpenseChange={() => {
-                    fetchDashboardData();
-                  }}
-                />
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                  <DollarSign className="w-5 h-5 text-primary" />
+                  Financial Management
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Tabs defaultValue="revenue" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 mb-6">
+                    <TabsTrigger value="revenue" className="flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4" />
+                      Revenue
+                    </TabsTrigger>
+                    <TabsTrigger value="expenses" className="flex items-center gap-2">
+                      <TrendingDown className="w-4 h-4" />
+                      Expenses
+                    </TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="revenue">
+                    <RevenueManager 
+                      deals={deals.map(d => ({ id: d.id, title: d.title, value: d.value, client: d.client }))}
+                      onNotification={(msg) => {
+                        fetchDashboardData();
+                      }}
+                    />
+                  </TabsContent>
+                  <TabsContent value="expenses">
+                    <ExpenseManager 
+                      deals={deals.map(d => ({ id: d.id, title: d.title, client: d.client }))} 
+                      onExpenseChange={() => {
+                        fetchDashboardData();
+                      }}
+                    />
+                  </TabsContent>
+                </Tabs>
               </CardContent>
             </Card>
           </div>

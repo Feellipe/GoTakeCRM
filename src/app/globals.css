@@ -824,6 +824,88 @@
     transform: scale(0.98);
   }
 
+  /* Enhanced revenue/expense card styling */
+  .financial-card {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .financial-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    border-radius: 4px 0 0 4px;
+  }
+
+  .financial-card.positive::before {
+    background: linear-gradient(180deg, var(--success), transparent);
+  }
+
+  .financial-card.negative::before {
+    background: linear-gradient(180deg, var(--destructive), transparent);
+  }
+
+  .financial-card.pending::before {
+    background: linear-gradient(180deg, var(--warning), transparent);
+  }
+
+  /* Tab styling enhancement */
+  .tab-gold[data-state="active"] {
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    color: white;
+    box-shadow: 0 4px 12px -2px rgba(184, 134, 11, 0.4);
+  }
+
+  /* Status badge glow */
+  .badge-glow {
+    box-shadow: 0 0 12px currentColor;
+  }
+
+  /* Data table enhancements */
+  .data-row {
+    transition: all 0.3s ease;
+  }
+
+  .data-row:hover {
+    background: var(--muted);
+  }
+
+  /* Metric card with accent */
+  .metric-accent {
+    position: relative;
+  }
+
+  .metric-accent::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--gold), var(--gold-light), var(--gold));
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  }
+
+  /* Subtle text gradient */
+  .text-gradient-gold {
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 50%, var(--gold) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Icon container with hover effect */
+  .icon-container-hover {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .icon-container-hover:hover {
+    transform: rotate(-5deg) scale(1.1);
+  }
+
   /* Skeleton loading animation */
   .skeleton {
     background: linear-gradient(
