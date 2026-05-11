@@ -47,6 +47,7 @@ import {
   Activity,
   Target,
   Zap,
+  Settings,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -92,6 +93,8 @@ import { DealFormModal } from '@/components/deal-form-modal';
 import { BookingFormModal } from '@/components/booking-form-modal';
 import { DraggableDealCard } from '@/components/draggable-deal-card';
 import { ExportButton } from '@/components/export-button';
+import { GlobalSearch } from '@/components/global-search';
+import { SettingsPanel } from '@/components/settings-panel';
 import {
   DndContext,
   DragOverlay,
@@ -659,6 +662,15 @@ export default function Dashboard() {
                   <p className="text-white/50 text-xs">Admin</p>
                 </div>
               )}
+              {sidebarOpen && (
+                <SettingsPanel
+                  trigger={
+                    <button className="p-2 rounded-lg hover:bg-white/10 transition-colors text-white/70 hover:text-white">
+                      <Settings className="w-5 h-5" />
+                    </button>
+                  }
+                />
+              )}
             </div>
           </div>
         </div>
@@ -691,6 +703,24 @@ export default function Dashboard() {
               </p>
             </div>
             <div className="flex items-center gap-3">
+              {/* Global Search */}
+              <GlobalSearch
+                clients={clients}
+                deals={deals}
+                bookings={data?.upcomingBookings || []}
+                onSelectClient={(client) => {
+                  setActiveView('clients');
+                  setSelectedClient(client);
+                }}
+                onSelectDeal={(deal) => {
+                  setActiveView('pipeline');
+                  setSelectedDeal(deal);
+                }}
+                onSelectBooking={() => {
+                  setActiveView('calendar');
+                }}
+              />
+              
               {/* Theme Toggle */}
               <ThemeToggle />
               
