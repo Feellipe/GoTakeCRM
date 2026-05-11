@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
-// GET all proposals
+// GET all proposals with optional dealId filter
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);

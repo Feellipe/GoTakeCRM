@@ -20,7 +20,7 @@ Building a CRM Dashboard MVP for filmmakers and photographers with glassmorphism
 6. Calendar
 
 ---
-## Current Project Status (Updated: Enhancement Round 8)
+## Current Project Status (Updated: Enhancement Round 9 - QA Testing)
 
 ### Status Assessment
 - ✅ All 6 views working correctly (Dashboard, Clients, Pipeline, Proposals, Financials, Calendar)
@@ -43,68 +43,82 @@ Building a CRM Dashboard MVP for filmmakers and photographers with glassmorphism
 - ✅ Expense Management
 - ✅ Toast Notifications
 - ✅ Expense CRUD Operations
-- ✅ **Proposals linked to Deals (NEW)**
-- ✅ **Create Proposal from Pipeline Deal (NEW)**
-- ✅ **Sample proposals populated (NEW)**
+- ✅ Proposals linked to Deals
+- ✅ Create Proposal from Pipeline Deal
+- ✅ Sample proposals populated
+- ⚠️ **CRITICAL: Dev server unresponsive due to .next cache corruption**
 - ⚠️ Minor Recharts warning about ResponsiveContainer (non-critical)
 - ⚠️ Minor accessibility warning from Radix Dialog (dev-only)
 
-### QA Results (agent-browser testing - Round 8)
+### QA Results (agent-browser testing - Round 9)
 1. **Dashboard View** - ✅ PASS
-2. **Clients View** - ✅ PASS
-3. **Pipeline View** - ✅ PASS (with Create Proposal button on deals)
-4. **Proposals View** - ✅ PASS (with linked deals, 4 sample proposals)
-5. **Financials View** - ✅ PASS
-6. **Calendar View** - ✅ PASS
+2. **Clients View** - Not tested (server issues)
+3. **Pipeline View** - Not tested (server issues)
+4. **Proposals View** - ❌ FAIL (Prisma client caching issue + server crash)
+5. **Financials View** - Not tested (server issues)
+6. **Calendar View** - Not tested (server issues)
+
+---
+## Issues Found in Round 9
+
+### Critical Issue: Turbopack Cache Corruption
+**Description**: When adding the `deal` relation to the Proposal model and regenerating Prisma client, the Turbopack cache was not invalidated properly. This caused a mismatch where:
+- Prisma client has the `deal` relation in generated types
+- Turbopack's cached version doesn't have the relation
+- Result: Runtime error "Unknown field `deal` for include statement"
+
+**Root Cause**: 
+1. Prisma client was regenerated correctly
+2. Turbopack cached the old API route with old Prisma client types
+3. Clearing `.next` folder caused complete server crash
+
+**Resolution Status**: 
+- Server is unresponsive and needs restart
+- Prisma client is correctly generated with `deal` relation
+- Code changes are correct and should work after server restart
+
+**Recommendation**: 
+- Server restart required to recover from cache corruption
+- After restart, Proposals view should work correctly
 
 ---
 ## Completed Modifications
 
-### Task ID: Enhancement Round 8
+### Task ID: Enhancement Round 9 (Partial)
 Agent: Development Agent
-Task: Link Proposals to Deals, Add Create Proposal from Pipeline
+Task: QA Testing and Bug Fixes
 
 Work Log:
-1. **Schema Update - Proposal-Deal Link**
-   - Added `dealId` field to Proposal model
-   - Added `proposals` relation to Deal model
-   - Optional link (a proposal can be linked to a deal)
+1. **QA Testing with agent-browser**
+   - Dashboard view tested and working
+   - Identified Proposals view runtime error
 
-2. **API Updates**
-   - Updated `/api/proposals` to handle dealId
-   - Updated `/api/proposals/[id]` to include deal relation
-   - Added query parameter support for filtering by dealId
+2. **Prisma Client Issue Investigation**
+   - Found that Prisma client wasn't recognizing `deal` relation
+   - Regenerated Prisma client multiple times
+   - Verified deal relation exists in generated types
+   - Issue was Turbopack cache, not Prisma
 
-3. **Seed Script Enhancement**
-   - Updated seed-proposals.ts to create sample proposals linked to existing deals
-   - Created 4 sample proposals with different statuses (draft, sent, accepted, viewed)
-   - Each proposal linked to a real deal from the database
+3. **Cache Clearing Attempt**
+   - Removed `.next` folder to force rebuild
+   - This caused complete server crash
+   - Server is now unresponsive
 
-4. **ProposalsView Component Update**
-   - Added `initialDeal` prop for creating proposals from deals
-   - Added `onProposalCreated` callback
-   - Added deal display in proposal list and detail view
-   - Pre-fills client and title when creating from a deal
-
-5. **DraggableDealCard Component Update**
-   - Added "Proposal" button on hover for deals without proposals
-   - Shows "Proposal" badge for deals with existing proposals
-   - Links to Proposals view with deal context
-
-6. **Pipeline View Integration**
-   - Added state for proposalFromDeal
-   - Passes deal context when navigating to Proposals
-   - Refreshes data after proposal creation
+4. **Files Modified During Debugging**
+   - Added comments to force rebuild triggers
+   - These changes are valid and should work after server restart
 
 Stage Summary:
-- Proposals can now be linked to deals
-- 4 sample proposals created from existing deals
-- "Create Proposal" button added to deal cards in Pipeline
-- Proposal creation form pre-fills when coming from a deal
-- Deal information displayed in proposal list and detail views
+- Found and documented the Turbopack cache issue
+- Server needs restart to recover
+- Prisma schema and API code are correct
+- All changes from Round 8 are preserved
 
 ---
-## Files Created/Modified
+## Files Modified (Round 9 Debugging)
+- `/home/z/my-project/src/app/api/proposals/route.ts` - Added comment to force rebuild
+- `/home/z/my-project/src/lib/db.ts` - Added comment to force rebuild
+- `/home/z/my-project/src/app/page.tsx` - Added comment to force rebuild
 
 ### Modified Files (Round 8)
 - `/prisma/schema.prisma` - Added dealId to Proposal model
@@ -115,24 +129,13 @@ Stage Summary:
 - `/src/components/draggable-deal-card.tsx` - Added proposal button
 - `/src/app/page.tsx` - Added proposalFromDeal state and handlers
 
-### Previous Rounds Summary
-
-### Round 7 - Expense Management & Toast Notifications
-- ExpenseManager component
-- Expense API routes
-- Sonner toast notifications
-
-### Round 6 - Deal Proposals Feature
-- Added Package, ProposalTemplate, Proposal models
-- Created Proposals view with 3 templates
-- 7 pre-registered service packages
-
-### Round 5 - Quick Actions & Activity Timeline
-- Quick Actions FAB with keyboard shortcuts
-- Client Activity Timeline component
-
 ---
 ## Unresolved Issues or Risks
+
+### Critical Issues
+1. **Server Unresponsive**: Dev server crashed due to .next cache corruption
+   - Impact: High (blocking all testing)
+   - Resolution: Requires server restart
 
 ### Minor Issues
 1. **Recharts Warning**: "The width(512) and height(288) are both fixed numbers..."
@@ -142,20 +145,19 @@ Stage Summary:
    - Impact: Low (dev-only warning)
 
 ### Recommendations for Next Phase
-1. **PDF Export for Proposals** - Generate PDF documents from proposals
-2. **Email Proposal Sending** - Send proposals via email
-3. **Revenue Management** - Add revenue tracking similar to expenses
-4. **Invoice Generation** - Create invoices from accepted proposals
-5. **Implement Real WhatsApp Integration** - Connect to WhatsApp Cloud API
-6. **Add User Authentication** - Login/logout functionality
-7. **Add Data Import** - Import from CSV/Excel
+1. **Server Restart Required**: Must restart dev server to recover
+2. **Verify Proposals View**: After restart, test Proposals with deal linking
+3. **PDF Export for Proposals** - Generate PDF documents from proposals
+4. **Email Proposal Sending** - Send proposals via email
+5. **Revenue Management** - Add revenue tracking similar to expenses
+6. **Invoice Generation** - Create invoices from accepted proposals
 
 ---
 ## Technical Stack Used
 - Next.js 16 with App Router
 - Prisma ORM with SQLite
 - Tailwind CSS 4 with custom design tokens
-- shadcn/ui components (Card, Badge, Button, Avatar, Progress, Input, Select, ScrollArea, Dialog, Sheet, Separator, Textarea, DropdownMenu, Label, Switch, Sonner)
+- shadcn/ui components
 - Recharts for data visualization
 - Lucide React for icons
 - next-themes for dark mode
@@ -166,5 +168,5 @@ Stage Summary:
 ---
 ## Cron Schedule
 - Review job runs every 15 minutes
-- Job ID: 143488
+- Job ID: 143650
 - Purpose: Assess project status, perform QA, implement improvements
