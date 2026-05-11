@@ -15,12 +15,12 @@ Building a CRM Dashboard MVP for filmmakers and photographers with glassmorphism
 1. Dashboard Overview (KPIs, charts)
 2. Client List
 3. Deal Pipeline
-4. Deal Proposals (NEW)
+4. Deal Proposals
 5. Financial Tracking
 6. Calendar
 
 ---
-## Current Project Status (Updated: Enhancement Round 6)
+## Current Project Status (Updated: Enhancement Round 7)
 
 ### Status Assessment
 - ✅ All 6 views working correctly (Dashboard, Clients, Pipeline, Proposals, Financials, Calendar)
@@ -39,15 +39,14 @@ Building a CRM Dashboard MVP for filmmakers and photographers with glassmorphism
 - ✅ Enhanced glassmorphism effects
 - ✅ Quick Actions FAB with keyboard shortcuts
 - ✅ Client Activity Timeline
-- ✅ **Deal Proposals Page (NEW)**
-- ✅ **Proposal Templates (3 templates)**
-- ✅ **Service Packages (7 pre-registered packages)**
-- ✅ **Portfolio Links Integration**
-- ✅ **Custom Pricing for Packages**
+- ✅ Deal Proposals Page with templates and packages
+- ✅ **Expense Management (NEW)**
+- ✅ **Toast Notifications (NEW)**
+- ✅ **Expense CRUD Operations (NEW)**
 - ⚠️ Minor Recharts warning about ResponsiveContainer (non-critical)
 - ⚠️ Minor accessibility warning from Radix Dialog (dev-only)
 
-### QA Results (agent-browser testing - Round 6)
+### QA Results (agent-browser testing - Round 7)
 1. **Dashboard View** - ✅ PASS
    - KPI cards render correctly with animations
    - Animated background orbs visible
@@ -62,17 +61,19 @@ Building a CRM Dashboard MVP for filmmakers and photographers with glassmorphism
    - Kanban columns render for all 5 stages
    - Drag and drop deals between stages
 
-4. **Proposals View** - ✅ PASS (NEW)
+4. **Proposals View** - ✅ PASS
    - Stats cards show Total/Drafts/Accepted/Total Value
    - 3 Proposal Templates displayed
    - Template cards clickable to create proposals
-   - Search and filter functionality
-   - New Proposal button working
-   - Modal with all fields working
 
-5. **Financials View** - ✅ PASS
+5. **Financials View** - ✅ PASS (UPDATED)
    - Financial KPIs display correctly
-   - Charts render properly
+   - Profit Trend chart works
+   - Expense Distribution pie chart renders
+   - **Expense Management section (NEW)**
+   - **Recent Expenses list with categories**
+   - **Add/Edit/Delete expense functionality**
+   - **Toast notifications for actions**
 
 6. **Calendar View** - ✅ PASS
    - Weekly calendar grid displays
@@ -81,130 +82,115 @@ Building a CRM Dashboard MVP for filmmakers and photographers with glassmorphism
 ---
 ## Completed Modifications
 
-### Task ID: Enhancement Round 6
+### Task ID: Enhancement Round 7
 Agent: Development Agent
-Task: QA Testing, Deal Proposals Feature Implementation
+Task: QA Testing, Expense Management, Toast Notifications
 
 Work Log:
 1. **QA Testing with agent-browser**
-   - Tested all 5 existing views
+   - Tested all 6 views
    - Verified all existing functionality
    - No runtime errors detected
 
-2. **Database Schema Extension**
-   - Added `Package` model for pre-registered service packages
-   - Added `ProposalTemplate` model for proposal templates
-   - Added `Proposal` model for deal proposals
-   - Added relations to Client model
+2. **Expense Management Feature (NEW)**
+   - Created ExpenseManager component
+   - Categories: Equipment, Location, Crew, Props, Travel, Software, Marketing, Other
+   - Category icons and color coding
+   - Add/Edit/Delete expense operations
+   - Link expenses to deals/projects
+   - Date picker for expense tracking
+   - Total expense calculation
+   - Animated expense cards with hover effects
 
-3. **API Routes Created**
-   - `/api/packages` - GET all packages, POST new package
-   - `/api/packages/[id]` - GET, PUT, DELETE single package
-   - `/api/proposal-templates` - GET all templates, POST new template
-   - `/api/proposals` - GET all proposals, POST new proposal
-   - `/api/proposals/[id]` - GET, PUT, DELETE single proposal
+3. **Expense API Routes (NEW)**
+   - `/api/expenses` - GET all expenses, POST new expense
+   - `/api/expenses/[id]` - GET, PUT, DELETE single expense
+   - Includes deal relationship for project linking
 
-4. **Seed Data Created**
-   - 7 Pre-registered Packages:
-     - Wedding Essential (R$3,500)
-     - Wedding Premium (R$6,500)
-     - Portrait Session (R$500)
-     - Portrait Extended (R$900)
-     - Wedding Cinematic (R$4,500)
-     - Corporate Event (R$2,000)
-     - Graduation Session (R$400)
-   - 3 Proposal Templates:
-     - Wedding Photography
-     - Portrait & Personal
-     - Corporate & Events
+4. **Toast Notifications (NEW)**
+   - Integrated Sonner toaster component
+   - Position: bottom-right
+   - Rich colors and close button
+   - Success/error notifications for expense actions
 
-5. **Proposals View Component**
-   - Created `/src/components/proposals-view.tsx`
-   - Stats cards for proposal overview
-   - Template selection cards with animations
-   - Search and filter functionality
-   - New Proposal modal with:
-     - Template selection
-     - Client selection
-     - Title and description
-     - Package selection with custom pricing
-     - Portfolio links (multiple)
-     - Terms & conditions
-     - Valid until date
-     - Internal notes
-     - Total value calculation
-   - Proposal detail sheet
-   - Send/Edit/Delete actions
-
-6. **Navigation Integration**
-   - Added "Proposals" to sidebar navigation
-   - Added icon and description for Proposals view
-   - Integrated ProposalsView component in main page
+5. **Enhanced Financials View**
+   - Added Expense Management section below charts
+   - Recent Expenses list with category icons
+   - Add Expense button with modal
+   - Expense cards with edit/delete actions
+   - Project linking for expenses
 
 Stage Summary:
-- Deal Proposals feature fully implemented
-- 3 templates and 7 packages seeded
-- Full CRUD operations for proposals
-- Enhanced styling with animations
+- Expense Management fully implemented
+- Toast notifications working across app
+- Financials view now includes expense tracking
+- All CRUD operations for expenses working
 - Application tested via agent-browser
 
 ---
 ## Files Created/Modified
 
-### New Files (Round 6)
-- `/prisma/schema.prisma` - Extended with Package, ProposalTemplate, Proposal models
-- `/src/app/api/packages/route.ts` - Packages API
-- `/src/app/api/packages/[id]/route.ts` - Single package API
-- `/src/app/api/proposal-templates/route.ts` - Templates API
-- `/src/app/api/proposals/route.ts` - Proposals API
-- `/src/app/api/proposals/[id]/route.ts` - Single proposal API
-- `/src/components/proposals-view.tsx` - Proposals view component
-- `/prisma/seed-proposals.ts` - Seed script for packages and templates
+### New Files (Round 7)
+- `/src/components/expense-manager.tsx` - Expense management component
+- `/src/app/api/expenses/route.ts` - Expenses API
+- `/src/app/api/expenses/[id]/route.ts` - Single expense API
 
 ### Modified Files
-- `/src/app/page.tsx` - Integrated ProposalsView and navigation
+- `/src/app/page.tsx` - Integrated ExpenseManager and Toaster
+- `/src/components/ui/sonner.tsx` - Already available
 
-### Screenshots (QA Verification Round 6)
-- `/home/z/my-project/download/qa-round6-dashboard.png`
-- `/home/z/my-project/download/qa-round6-client-modal.png`
-- `/home/z/my-project/download/qa-round6-pipeline.png`
-- `/home/z/my-project/download/qa-round6-financials.png`
-- `/home/z/my-project/download/qa-round6-calendar.png`
-- `/home/z/my-project/download/qa-round6-proposals.png`
-- `/home/z/my-project/download/qa-round6-new-proposal-modal.png`
+### Screenshots (QA Verification Round 7)
+- `/home/z/my-project/download/qa-round7-dashboard.png`
+- `/home/z/my-project/download/qa-round7-proposals.png`
+- `/home/z/my-project/download/qa-round7-financials.png`
+- `/home/z/my-project/download/qa-round7-financials-expenses.png`
+- `/home/z/my-project/download/qa-round7-financials-full.png`
+
+---
+## Previous Rounds Summary
+
+### Round 6 - Deal Proposals Feature
+- Added Package, ProposalTemplate, Proposal models
+- Created Proposals view with 3 templates
+- 7 pre-registered service packages
+- Full proposal CRUD with custom pricing
+- Portfolio links integration
+
+### Round 5 - Quick Actions & Activity Timeline
+- Quick Actions FAB with keyboard shortcuts
+- Client Activity Timeline component
+- Enhanced client modal
 
 ---
 ## Unresolved Issues or Risks
 
 ### Minor Issues
-1. **Recharts Warning**: "The width(512) and height(288) are both fixed numbers, maybe you don't need to use a ResponsiveContainer."
-   - Impact: Low (cosmetic warning, does not affect functionality)
-   - Recommendation: Can be ignored or fixed by using fixed dimensions
+1. **Recharts Warning**: "The width(512) and height(288) are both fixed numbers..."
+   - Impact: Low (cosmetic warning)
 
 2. **Radix Dialog Accessibility Warning**: Dev-only warning about DialogTitle
-   - Impact: Low (dev-only warning, accessible in production)
-   - Recommendation: Can be addressed by using VisuallyHidden component from Radix
+   - Impact: Low (dev-only warning)
 
 ### Recommendations for Next Phase
 1. **PDF Export for Proposals** - Generate PDF documents from proposals
 2. **Email Proposal Sending** - Send proposals via email
-3. **Proposal Analytics** - Track views, time spent, interactions
-4. **Implement Real WhatsApp Integration** - Connect to actual WhatsApp Cloud API
-5. **Add User Authentication** - Login/logout functionality
-6. **Add Team Features** - Multiple users with permissions
+3. **Revenue Management** - Add revenue tracking similar to expenses
+4. **Invoice Generation** - Create invoices from accepted proposals
+5. **Implement Real WhatsApp Integration** - Connect to WhatsApp Cloud API
+6. **Add User Authentication** - Login/logout functionality
 7. **Add Data Import** - Import from CSV/Excel
-8. **Add Invoice Generation** - Create invoices from accepted proposals
 
 ---
 ## Technical Stack Used
 - Next.js 16 with App Router
 - Prisma ORM with SQLite
 - Tailwind CSS 4 with custom design tokens
-- shadcn/ui components (Card, Badge, Button, Avatar, Progress, Input, Select, ScrollArea, Dialog, Sheet, Separator, Textarea, DropdownMenu, Label, Switch)
+- shadcn/ui components (Card, Badge, Button, Avatar, Progress, Input, Select, ScrollArea, Dialog, Sheet, Separator, Textarea, DropdownMenu, Label, Switch, Sonner)
 - Recharts for data visualization
 - Lucide React for icons
 - next-themes for dark mode
 - @dnd-kit for drag and drop
+- sonner for toast notifications
 - agent-browser for QA testing
 
 ---

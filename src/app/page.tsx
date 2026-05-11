@@ -102,6 +102,8 @@ import { BriefingModal } from '@/components/briefing-modal';
 import { QuickActions } from '@/components/quick-actions';
 import { ClientActivityTimeline } from '@/components/client-activity-timeline';
 import { ProposalsView } from '@/components/proposals-view';
+import { ExpenseManager } from '@/components/expense-manager';
+import { Toaster } from '@/components/ui/sonner';
 import {
   DndContext,
   DragOverlay,
@@ -1462,6 +1464,18 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Expense Management */}
+            <Card className="glass-card">
+              <CardContent className="p-6">
+                <ExpenseManager 
+                  deals={deals.map(d => ({ id: d.id, title: d.title, client: d.client }))} 
+                  onExpenseChange={() => {
+                    fetchDashboardData();
+                  }}
+                />
+              </CardContent>
+            </Card>
           </div>
         )}
 
@@ -1834,6 +1848,9 @@ export default function Dashboard() {
         onNavigate={(view) => setActiveView(view)}
         currentView={activeView}
       />
+
+      {/* Toast Notifications */}
+      <Toaster position="bottom-right" richColors closeButton />
     </div>
   );
 }
