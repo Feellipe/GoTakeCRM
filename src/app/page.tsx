@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-// Force rebuild after cache clear
+// Round 10 - trigger rebuild
 import {
   LayoutDashboard,
   Users,
