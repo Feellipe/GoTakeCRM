@@ -30,6 +30,13 @@ The development server is running correctly. All API endpoints are functional.
 - **Root Cause**: Browser extensions (Grammarly) inject attributes (`data-new-gr-c-s-check-loaded`, `data-gr-ext-installed`) into the DOM before React hydrates
 - **Solution**: Added `suppressHydrationWarning` prop to prevent false positive warnings
 
+### ✨ New Features Added This Round
+- **Save as Template Button**: Save current proposal configuration as a reusable template
+- **Add to Deal Button**: Link proposal to a specific deal with deal selector dropdown
+- **Deal Selector**: New dropdown to select which deal to link the proposal to
+- Shows linked deal with option to remove
+- Template dialog shows preview of what will be saved
+
 ### Code Status
 - ✅ All code changes are saved and linted
 - ✅ Prisma schema includes Revenue model (already existed)
@@ -73,6 +80,8 @@ The development server is running correctly. All API endpoints are functional.
 ### Files Modified
 - `/src/app/page.tsx` - Added RevenueManager import, Tabs for Financials
 - `/src/app/globals.css` - Added financial card styling, tab enhancements
+- `/src/app/layout.tsx` - Added suppressHydrationWarning to body element
+- `/src/components/proposals-view.tsx` - Added Save as Template and Add to Deal buttons
 
 ---
 ## Recommendations for Next Phase

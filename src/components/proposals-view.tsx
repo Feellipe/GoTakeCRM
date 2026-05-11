@@ -28,6 +28,8 @@ import {
   Building,
   Users2,
   Star,
+  Bookmark,
+  Link2,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -126,6 +128,17 @@ interface Client {
   avatar: string | null;
 }
 
+interface Deal {
+  id: string;
+  title: string;
+  status: string;
+  value: number;
+  client: {
+    id: string;
+    name: string;
+  };
+}
+
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
@@ -196,6 +209,10 @@ export function ProposalsView({ clients, onNotification, initialDeal, onProposal
   const [proposalNotes, setProposalNotes] = useState('');
   const [validUntil, setValidUntil] = useState('');
   const [dealId, setDealId] = useState<string | null>(null);
+  const [deals, setDeals] = useState<Deal[]>([]);
+  const [showSaveTemplateDialog, setShowSaveTemplateDialog] = useState(false);
+  const [templateName, setTemplateName] = useState('');
+  const [templateDescription, setTemplateDescription] = useState('');
 
   // Handle initialDeal from Pipeline
   useEffect(() => {
@@ -209,6 +226,7 @@ export function ProposalsView({ clients, onNotification, initialDeal, onProposal
 
   useEffect(() => {
     fetchData();
+    fetchDeals();
   }, []);
 
   const fetchData = async () => {
@@ -228,6 +246,16 @@ export function ProposalsView({ clients, onNotification, initialDeal, onProposal
       console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchDeals = async () => {
+    try {
+      const res = await fetch('/api/deals');
+      const data = await res.json();
+      setDeals(data);
+    } catch (error) {
+      console.error('Error fetching deals:', error);
     }
   };
 
@@ -317,6 +345,53 @@ export function ProposalsView({ clients, onNotification, initialDeal, onProposal
       onProposalCreated?.();
     } catch (error) {
       console.error('Error saving proposal:', error);
+    }
+  };
+
+  const handleSaveAsTemplate = async () => {
+    if (!templateName.trim()) return;
+
+    try {
+      const templateData = {
+        name: templateName,
+        description: templateDescription || `Template created from "${proposalTitle}"`,
+        defaultTerms: proposalTerms,
+        defaultPackages: selectedPackages.map(p => p.id),
+      };
+
+      await fetch('/api/proposal-templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(templateData),
+      });
+
+      fetchData();
+      setShowSaveTemplateDialog(false);
+      setTemplateName('');
+      setTemplateDescription('');
+      onNotification?.('Template saved successfully!');
+    } catch (error) {
+      console.error('Error saving template:', error);
+    }
+  };
+
+  const handleAddToDeal = async () => {
+    if (!dealId || !editingProposal?.id) return;
+
+    try {
+      await fetch(`/api/proposals/${editingProposal.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...editingProposal,
+          dealId: dealId,
+        }),
+      });
+
+      fetchData();
+      onNotification?.('Proposal linked to deal successfully!');
+    } catch (error) {
+      console.error('Error linking proposal to deal:', error);
     }
   };
 
@@ -648,6 +723,43 @@ export function ProposalsView({ clients, onNotification, initialDeal, onProposal
                 </Select>
               </div>
 
+              {/* Deal Selection */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Briefcase className="w-4 h-4" />
+                  Link to Deal (Optional)
+                </label>
+                <Select value={dealId || ''} onValueChange={setDealId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a deal to link this proposal" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {deals.map(d => (
+                      <SelectItem key={d.id} value={d.id}>
+                        <div className="flex items-center gap-2">
+                          <span>{d.title}</span>
+                          <span className="text-muted-foreground">- {d.client.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {dealId && (
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-primary/5 border border-primary/20 text-sm">
+                    <Link2 className="w-4 h-4 text-primary" />
+                    <span>Linked to: {deals.find(d => d.id === dealId)?.title}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="ml-auto h-6 px-2 text-xs"
+                      onClick={() => setDealId(null)}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                )}
+              </div>
+
               {/* Client Selection */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Client *</label>
@@ -806,19 +918,100 @@ export function ProposalsView({ clients, onNotification, initialDeal, onProposal
               </Card>
             </div>
           </ScrollArea>
-          <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button variant="outline" onClick={() => {
-              setShowNewProposalModal(false);
-              resetForm();
-            }}>
+          <div className="flex flex-col sm:flex-row justify-between gap-3 pt-4 border-t">
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowSaveTemplateDialog(true)}
+                disabled={selectedPackages.length === 0}
+                className="flex items-center gap-2"
+              >
+                <Bookmark className="w-4 h-4" />
+                Save as Template
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (dealId) {
+                    handleSaveProposal();
+                  }
+                }}
+                disabled={!dealId || !selectedClient || !proposalTitle}
+                className="flex items-center gap-2"
+              >
+                <Link2 className="w-4 h-4" />
+                Add to Deal
+              </Button>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => {
+                setShowNewProposalModal(false);
+                resetForm();
+              }}>
+                Cancel
+              </Button>
+              <Button
+                className="gradient-gold text-warm-950"
+                onClick={handleSaveProposal}
+                disabled={!selectedClient || !proposalTitle}
+              >
+                {editingProposal ? 'Update Proposal' : 'Save Draft'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Save as Template Dialog */}
+      <Dialog open={showSaveTemplateDialog} onOpenChange={setShowSaveTemplateDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Bookmark className="w-5 h-5 text-primary" />
+              Save as Template
+            </DialogTitle>
+            <DialogDescription>
+              Save this proposal configuration as a reusable template
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Template Name *</label>
+              <Input
+                value={templateName}
+                onChange={(e) => setTemplateName(e.target.value)}
+                placeholder="e.g., Wedding Photography Standard"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Description</label>
+              <Textarea
+                value={templateDescription}
+                onChange={(e) => setTemplateDescription(e.target.value)}
+                placeholder="Brief description of this template..."
+                rows={3}
+              />
+            </div>
+            <div className="p-3 rounded-lg bg-muted/50 text-sm">
+              <p className="font-medium">Template will include:</p>
+              <ul className="mt-2 space-y-1 text-muted-foreground">
+                <li>• {selectedPackages.length} package(s)</li>
+                <li>• Terms & conditions</li>
+                <li>• Package pricing</li>
+              </ul>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setShowSaveTemplateDialog(false)}>
               Cancel
             </Button>
             <Button
               className="gradient-gold text-warm-950"
-              onClick={handleSaveProposal}
-              disabled={!selectedClient || !proposalTitle}
+              onClick={handleSaveAsTemplate}
+              disabled={!templateName.trim()}
             >
-              {editingProposal ? 'Update Proposal' : 'Save Draft'}
+              <Bookmark className="w-4 h-4 mr-2" />
+              Save Template
             </Button>
           </div>
         </DialogContent>
