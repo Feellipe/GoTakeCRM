@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   LayoutDashboard,
   Users,
@@ -85,6 +85,29 @@ import { Bar, BarChart, XAxis, YAxis, ResponsiveContainer, Pie, PieChart, Cell, 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
+import { ThemeToggle } from '@/components/theme-toggle';
+import { NotificationDropdown } from '@/components/notification-dropdown';
+import { ClientFormModal } from '@/components/client-form-modal';
+import { DealFormModal } from '@/components/deal-form-modal';
+import { BookingFormModal } from '@/components/booking-form-modal';
+import { DraggableDealCard } from '@/components/draggable-deal-card';
+import { ExportButton } from '@/components/export-button';
+import {
+  DndContext,
+  DragOverlay,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 
 // Types
 interface DashboardData {
@@ -277,11 +300,21 @@ export default function Dashboard() {
   const [showWhatsAppPanel, setShowWhatsAppPanel] = useState(false);
   const [whatsappClient, setWhatsappClient] = useState<Client | null>(null);
   
+  // CRUD Modal states
+  const [showClientModal, setShowClientModal] = useState(false);
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [showDealModal, setShowDealModal] = useState(false);
+  const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [editingBooking, setEditingBooking] = useState<any>(null);
+  
   // Notifications
   const [notifications] = useState([
-    { id: '1', title: 'New booking confirmed', message: 'Wedding shoot with Ana Silva', time: '2 min ago', read: false },
-    { id: '2', title: 'Payment received', message: 'R$5,000 from Pedro Costa', time: '1 hour ago', read: false },
-    { id: '3', title: 'Briefing updated', message: 'Music Video project details added', time: '3 hours ago', read: true },
+    { id: '1', title: 'New booking confirmed', message: 'Wedding shoot with Ana Silva', time: '2 min ago', read: false, type: 'booking' as const },
+    { id: '2', title: 'Payment received', message: 'R$5,000 from Pedro Costa', time: '1 hour ago', read: false, type: 'payment' as const },
+    { id: '3', title: 'Briefing updated', message: 'Music Video project details added', time: '3 hours ago', read: true, type: 'briefing' as const },
+    { id: '4', title: 'New client registered', message: 'Maria Santos joined from website', time: '5 hours ago', read: true, type: 'client' as const },
+    { id: '5', title: 'Booking reminder', message: 'Portrait session tomorrow at 10AM', time: '1 day ago', read: false, type: 'booking' as const },
   ]);
 
   useEffect(() => {
@@ -339,6 +372,189 @@ export default function Dashboard() {
   const openWhatsApp = (client: Client) => {
     setWhatsappClient(client);
     setShowWhatsAppPanel(true);
+  };
+
+  // CRUD Handlers
+  const handleSaveClient = async (clientData: Partial<Client>) => {
+    try {
+      if (editingClient?.id) {
+        // Update existing client
+        const response = await fetch(`/api/clients/${editingClient.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(clientData),
+        });
+        if (response.ok) {
+          fetchClients();
+          fetchDashboardData();
+        }
+      } else {
+        // Create new client
+        const response = await fetch('/api/clients', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(clientData),
+        });
+        if (response.ok) {
+          fetchClients();
+          fetchDashboardData();
+        }
+      }
+    } catch (error) {
+      console.error('Error saving client:', error);
+    }
+    setEditingClient(null);
+  };
+
+  const handleDeleteClient = async () => {
+    if (!editingClient?.id) return;
+    try {
+      const response = await fetch(`/api/clients/${editingClient.id}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        fetchClients();
+        fetchDashboardData();
+      }
+    } catch (error) {
+      console.error('Error deleting client:', error);
+    }
+    setEditingClient(null);
+  };
+
+  const handleSaveDeal = async (dealData: Partial<Deal>) => {
+    try {
+      if (editingDeal?.id) {
+        const response = await fetch(`/api/deals/${editingDeal.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(dealData),
+        });
+        if (response.ok) {
+          fetchDeals();
+          fetchDashboardData();
+        }
+      } else {
+        const response = await fetch('/api/deals', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(dealData),
+        });
+        if (response.ok) {
+          fetchDeals();
+          fetchDashboardData();
+        }
+      }
+    } catch (error) {
+      console.error('Error saving deal:', error);
+    }
+    setEditingDeal(null);
+  };
+
+  const handleDeleteDeal = async () => {
+    if (!editingDeal?.id) return;
+    try {
+      const response = await fetch(`/api/deals/${editingDeal.id}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        fetchDeals();
+        fetchDashboardData();
+      }
+    } catch (error) {
+      console.error('Error deleting deal:', error);
+    }
+    setEditingDeal(null);
+  };
+
+  const handleSaveBooking = async (bookingData: any) => {
+    try {
+      const response = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bookingData),
+      });
+      if (response.ok) {
+        fetchDashboardData();
+      }
+    } catch (error) {
+      console.error('Error saving booking:', error);
+    }
+    setEditingBooking(null);
+  };
+
+  const openNewClientModal = () => {
+    setEditingClient(null);
+    setShowClientModal(true);
+  };
+
+  const openEditClientModal = (client: Client) => {
+    setEditingClient(client);
+    setShowClientModal(true);
+    setSelectedClient(null);
+  };
+
+  const openNewDealModal = () => {
+    setEditingDeal(null);
+    setShowDealModal(true);
+  };
+
+  const openEditDealModal = (deal: Deal) => {
+    setEditingDeal(deal);
+    setShowDealModal(true);
+    setSelectedDeal(null);
+  };
+
+  const openNewBookingModal = () => {
+    setEditingBooking(null);
+    setShowBookingModal(true);
+  };
+
+  // Drag and drop setup
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const [activeDeal, setActiveDeal] = React.useState<Deal | null>(null);
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveDeal(null);
+
+    if (!over) return;
+
+    const dealId = active.id as string;
+    const newStatus = over.id as string;
+
+    // If dropped on a status column, update the deal status
+    if (['novo', 'briefing', 'contando', 'producao', 'finalizado'].includes(newStatus)) {
+      const deal = deals.find(d => d.id === dealId);
+      if (deal && deal.status !== newStatus) {
+        try {
+          await fetch(`/api/deals/${dealId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...deal, status: newStatus }),
+          });
+          fetchDeals();
+          fetchDashboardData();
+        } catch (error) {
+          console.error('Error updating deal status:', error);
+        }
+      }
+    }
+  };
+
+  const handleDragStart = (event: { active: { id: string } }) => {
+    const deal = deals.find(d => d.id === event.active.id);
+    setActiveDeal(deal || null);
   };
 
   if (loading) {
@@ -474,25 +690,29 @@ export default function Dashboard() {
                 {activeView === 'calendar' && 'Your upcoming shoots and bookings.'}
               </p>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              {/* Theme Toggle */}
+              <ThemeToggle />
+              
               {/* Notifications */}
-              <div className="relative">
-                <Button variant="ghost" size="icon" className="relative">
-                  <Bell className="w-5 h-5 text-muted-foreground" />
-                  {notifications.filter(n => !n.read).length > 0 && (
-                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center animate-pulse">
-                      {notifications.filter(n => !n.read).length}
-                    </span>
-                  )}
-                </Button>
-              </div>
+              <NotificationDropdown notifications={notifications} />
+              
+              {/* Export */}
+              <ExportButton data={{ clients, deals, kpis: data?.kpis }} />
               
               <Badge variant="secondary" className="glass-badge px-4 py-2">
                 <Clock className="w-4 h-4 mr-2" />
                 {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
               </Badge>
               
-              <Button className="gradient-gold text-warm-950 hover:opacity-90 transition-all duration-300 shadow-lg shadow-gold/20 hover:shadow-gold/30 hover:scale-105">
+              <Button 
+                className="gradient-gold text-warm-950 hover:opacity-90 transition-all duration-300 shadow-lg shadow-gold/20 hover:shadow-gold/30 hover:scale-105"
+                onClick={() => {
+                  if (activeView === 'clients') openNewClientModal();
+                  else if (activeView === 'pipeline') openNewDealModal();
+                  else openNewBookingModal();
+                }}
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 New {activeView === 'clients' ? 'Client' : activeView === 'pipeline' ? 'Deal' : 'Booking'}
               </Button>
@@ -1000,68 +1220,88 @@ export default function Dashboard() {
         {/* Pipeline View */}
         {activeView === 'pipeline' && (
           <div className="p-8 flex-1 overflow-hidden">
-            <ScrollArea className="h-full">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 min-h-[calc(100vh-16rem)]">
-                {['novo', 'briefing', 'contando', 'producao', 'finalizado'].map((status) => {
-                  const stageDeals = deals.filter(d => d.status === status);
-                  const stageValue = stageDeals.reduce((sum, d) => sum + d.value, 0);
-                  
-                  return (
-                    <div key={status} className="flex flex-col">
-                      {/* Stage Header */}
-                      <div className="mb-4 p-3 rounded-xl bg-muted/30 border border-muted">
-                        <div className="flex items-center justify-between mb-1">
-                          <div className="flex items-center gap-2">
-                            <div className={`w-3 h-3 rounded-full ${statusColors[status]}`} />
-                            <h3 className="font-semibold text-foreground capitalize">{statusLabels[status] || status}</h3>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+              onDragStart={handleDragStart}
+            >
+              <ScrollArea className="h-full">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 min-h-[calc(100vh-16rem)]">
+                  {['novo', 'briefing', 'contando', 'producao', 'finalizado'].map((status) => {
+                    const stageDeals = deals.filter(d => d.status === status);
+                    const stageValue = stageDeals.reduce((sum, d) => sum + d.value, 0);
+                    
+                    return (
+                      <div key={status} className="flex flex-col">
+                        {/* Stage Header */}
+                        <div className="mb-4 p-3 rounded-xl bg-muted/30 border border-muted">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-2">
+                              <div className={`w-3 h-3 rounded-full ${statusColors[status]}`} />
+                              <h3 className="font-semibold text-foreground capitalize">{statusLabels[status] || status}</h3>
+                            </div>
+                            <Badge variant="secondary" className="text-xs bg-white/50">
+                              {stageDeals.length}
+                            </Badge>
                           </div>
-                          <Badge variant="secondary" className="text-xs bg-white/50">
-                            {stageDeals.length}
-                          </Badge>
+                          <p className="text-sm font-medium text-primary">{formatCurrency(stageValue)}</p>
                         </div>
-                        <p className="text-sm font-medium text-primary">{formatCurrency(stageValue)}</p>
-                      </div>
 
-                      {/* Deal Cards */}
-                      <div className="space-y-3 flex-1">
-                        {stageDeals.map((deal) => (
-                          <Card
-                            key={deal.id}
-                            className="glass-card cursor-pointer hover:shadow-xl transition-all duration-300 group border border-transparent hover:border-primary/20"
-                            onClick={() => setSelectedDeal(deal)}
+                        {/* Deal Cards - Droppable Zone */}
+                        <div 
+                          id={status}
+                          className="space-y-3 flex-1 min-h-[100px] rounded-xl border-2 border-dashed border-transparent p-1"
+                        >
+                          <SortableContext
+                            items={stageDeals.map(d => d.id)}
+                            strategy={verticalListSortingStrategy}
                           >
-                            <CardContent className="p-4">
-                              <div className="flex items-center gap-3 mb-3">
-                                <Avatar className="w-8 h-8 ring-2 ring-transparent group-hover:ring-primary/30 transition-all">
-                                  <AvatarImage src={deal.client.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${deal.client.name}`} />
-                                  <AvatarFallback className="bg-warm-200 text-warm-700 text-xs">
-                                    {deal.client.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">{deal.title}</p>
-                                  <p className="text-xs text-muted-foreground truncate">{deal.client.name}</p>
-                                </div>
-                              </div>
-                              <div className="flex items-center justify-between">
-                                <p className="text-sm font-bold text-primary">{formatCurrency(deal.value)}</p>
-                                <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                        {stageDeals.length === 0 && (
-                          <div className="border-2 border-dashed border-muted rounded-xl p-6 text-center hover:border-primary/30 transition-colors cursor-pointer">
-                            <Plus className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
-                            <p className="text-sm text-muted-foreground">Add deal</p>
-                          </div>
-                        )}
+                            {stageDeals.map((deal) => (
+                              <DraggableDealCard
+                                key={deal.id}
+                                deal={deal}
+                                statusColors={statusColors}
+                                statusLabels={statusLabels}
+                                formatCurrency={formatCurrency}
+                                onClick={() => setSelectedDeal(deal)}
+                              />
+                            ))}
+                          </SortableContext>
+                          {stageDeals.length === 0 && (
+                            <div className="border-2 border-dashed border-muted rounded-xl p-6 text-center hover:border-primary/30 transition-colors cursor-pointer" id={status}>
+                              <Plus className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
+                              <p className="text-sm text-muted-foreground">Add deal</p>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </ScrollArea>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+              <DragOverlay>
+                {activeDeal && (
+                  <Card className="glass-card shadow-2xl ring-2 ring-primary">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-3 mb-3">
+                        <Avatar className="w-8 h-8">
+                          <AvatarImage src={activeDeal.client.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${activeDeal.client.name}`} />
+                          <AvatarFallback className="bg-warm-200 text-warm-700 text-xs">
+                            {activeDeal.client.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{activeDeal.title}</p>
+                          <p className="text-xs text-muted-foreground truncate">{activeDeal.client.name}</p>
+                        </div>
+                      </div>
+                      <p className="text-sm font-bold text-primary">{formatCurrency(activeDeal.value)}</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </DragOverlay>
+            </DndContext>
           </div>
         )}
 
@@ -1345,7 +1585,7 @@ export default function Dashboard() {
                 <MessageSquare className="w-4 h-4 mr-2" />
                 WhatsApp
               </Button>
-              <Button variant="outline" className="flex-1">
+              <Button variant="outline" className="flex-1" onClick={() => selectedClient && openEditClientModal(selectedClient)}>
                 <Edit className="w-4 h-4 mr-2" />
                 Edit
               </Button>
@@ -1389,7 +1629,7 @@ export default function Dashboard() {
                 <Eye className="w-4 h-4 mr-2" />
                 View Details
               </Button>
-              <Button variant="outline" className="flex-1">
+              <Button variant="outline" className="flex-1" onClick={() => selectedDeal && openEditDealModal(selectedDeal)}>
                 <Edit className="w-4 h-4 mr-2" />
                 Edit
               </Button>
@@ -1460,6 +1700,34 @@ export default function Dashboard() {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Client Form Modal */}
+      <ClientFormModal
+        open={showClientModal}
+        onOpenChange={setShowClientModal}
+        client={editingClient}
+        onSave={handleSaveClient}
+        onDelete={editingClient?.id ? handleDeleteClient : undefined}
+      />
+
+      {/* Deal Form Modal */}
+      <DealFormModal
+        open={showDealModal}
+        onOpenChange={setShowDealModal}
+        deal={editingDeal}
+        clients={clients.map(c => ({ id: c.id, name: c.name }))}
+        onSave={handleSaveDeal}
+        onDelete={editingDeal?.id ? handleDeleteDeal : undefined}
+      />
+
+      {/* Booking Form Modal */}
+      <BookingFormModal
+        open={showBookingModal}
+        onOpenChange={setShowBookingModal}
+        booking={editingBooking}
+        clients={clients.map(c => ({ id: c.id, name: c.name }))}
+        onSave={handleSaveBooking}
+      />
     </div>
   );
 }
