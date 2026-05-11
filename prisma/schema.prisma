@@ -29,6 +29,7 @@ model Client {
   conversations Conversation[]
   bookings    Booking[]
   documents   Document[]
+  proposals   Proposal[]
 }
 
 // Deal - the central entity linking all project data
@@ -171,6 +172,64 @@ model Template {
   variables   String   // JSON string of variable names
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// Package - pre-registered service packages for proposals
+model Package {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  price       Float
+  currency    String   @default("BRL")
+  deliverables String  // JSON string of deliverable items
+  duration    Int      // in hours
+  category    String   @default("photography") // photography, videography, both
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ProposalTemplate - templates for proposals
+model ProposalTemplate {
+  id              String   @id @default(cuid())
+  name            String
+  description     String?
+  defaultTerms    String?
+  defaultPackages String?  // JSON array of package IDs
+  coverImage      String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  proposals       Proposal[]
+}
+
+// Proposal - deal proposals for negotiation
+model Proposal {
+  id              String   @id @default(cuid())
+  clientId        String
+  templateId      String?
+  title           String
+  description     String?
+  status          String   @default("draft") // draft, sent, viewed, accepted, rejected, expired
+  packages        String   // JSON array of selected packages with custom prices
+  customItems     String?  // JSON array of custom line items
+  portfolioLinks  String?  // JSON array of portfolio links
+  terms           String?  // Custom terms and conditions
+  validUntil      DateTime?
+  totalValue      Float    @default(0)
+  currency        String   @default("BRL")
+  notes           String?
+  sentAt          DateTime?
+  viewedAt        DateTime?
+  respondedAt     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  client          Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  template        ProposalTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
 }
 
 // Dashboard Settings

@@ -101,6 +101,7 @@ import { SettingsPanel } from '@/components/settings-panel';
 import { BriefingModal } from '@/components/briefing-modal';
 import { QuickActions } from '@/components/quick-actions';
 import { ClientActivityTimeline } from '@/components/client-activity-timeline';
+import { ProposalsView } from '@/components/proposals-view';
 import {
   DndContext,
   DragOverlay,
@@ -223,6 +224,7 @@ const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'clients', label: 'Clients', icon: Users },
   { id: 'pipeline', label: 'Pipeline', icon: FolderKanban },
+  { id: 'proposals', label: 'Proposals', icon: FileText },
   { id: 'financials', label: 'Financials', icon: DollarSign },
   { id: 'calendar', label: 'Calendar', icon: Calendar },
 ];
@@ -711,6 +713,7 @@ export default function Dashboard() {
                 {activeView === 'dashboard' && <LayoutDashboard className="w-6 h-6 text-primary" />}
                 {activeView === 'clients' && <Users className="w-6 h-6 text-primary" />}
                 {activeView === 'pipeline' && <FolderKanban className="w-6 h-6 text-primary" />}
+                {activeView === 'proposals' && <FileText className="w-6 h-6 text-primary" />}
                 {activeView === 'financials' && <DollarSign className="w-6 h-6 text-primary" />}
                 {activeView === 'calendar' && <Calendar className="w-6 h-6 text-primary" />}
                 {activeView}
@@ -719,6 +722,7 @@ export default function Dashboard() {
                 {activeView === 'dashboard' && 'Welcome back! Here\'s your studio overview.'}
                 {activeView === 'clients' && 'Manage your client relationships and contacts.'}
                 {activeView === 'pipeline' && 'Track and manage your deals across all stages.'}
+                {activeView === 'proposals' && 'Create and send professional proposals to clients.'}
                 {activeView === 'financials' && 'Revenue, expenses, and profitability insights.'}
                 {activeView === 'calendar' && 'Your upcoming shoots and bookings.'}
               </p>
@@ -1354,6 +1358,11 @@ export default function Dashboard() {
               </DragOverlay>
             </DndContext>
           </div>
+        )}
+
+        {/* Proposals View */}
+        {activeView === 'proposals' && (
+          <ProposalsView clients={clients} />
         )}
 
         {/* Financials View */}
