@@ -18,24 +18,35 @@ import {
   ArrowUpRight,
   MoreHorizontal,
   Search,
-  Filter,
   Plus,
   Phone,
   Mail,
   MapPin,
   Camera,
   Video,
-  Image,
   Briefcase,
   Building,
   Star,
   MessageSquare,
   FileText,
   CheckCircle,
-  AlertCircle,
   CalendarDays,
   Users2,
   ArrowRight,
+  Bell,
+  Send,
+  Paperclip,
+  Smile,
+  ChevronDown,
+  ExternalLink,
+  Edit,
+  Trash2,
+  Eye,
+  Download,
+  Sparkles,
+  Activity,
+  Target,
+  Zap,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -51,13 +62,29 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { Bar, BarChart, XAxis, YAxis, ResponsiveContainer, Pie, PieChart, Cell, Line, LineChart, Area, AreaChart } from 'recharts';
+import { Bar, BarChart, XAxis, YAxis, ResponsiveContainer, Pie, PieChart, Cell, Area, AreaChart } from 'recharts';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
 
 // Types
 interface DashboardData {
@@ -148,11 +175,15 @@ interface Deal {
   client: {
     name: string;
     avatar: string | null;
+    id?: string;
+    phone?: string;
+    email?: string | null;
   };
   createdAt?: string;
   totalExpenses?: number;
   totalRevenue?: number;
   profit?: number;
+  description?: string;
 }
 
 // Navigation items
@@ -222,6 +253,14 @@ const statusLabels: Record<string, string> = {
 // Chart colors
 const CHART_COLORS = ['#b8860b', '#6b5c4a', '#9a8460', '#d4a24c', '#4a9b6b', '#5b8db8', '#9b6bb8', '#c75050'];
 
+// Mock WhatsApp messages
+const mockWhatsAppMessages = [
+  { id: '1', sender: 'client', text: 'Hi! I\'m interested in booking a wedding shoot.', time: '10:30 AM' },
+  { id: '2', sender: 'studio', text: 'Hello! Thank you for reaching out. We\'d love to help capture your special day! 📸', time: '10:32 AM' },
+  { id: '3', sender: 'client', text: 'The wedding is in December. Do you have availability?', time: '10:35 AM' },
+  { id: '4', sender: 'studio', text: 'Let me check our calendar... Yes, we have openings in December! Would you like to schedule a consultation?', time: '10:37 AM' },
+];
+
 export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeView, setActiveView] = useState('dashboard');
@@ -231,6 +270,19 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  
+  // Modal states
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
+  const [showWhatsAppPanel, setShowWhatsAppPanel] = useState(false);
+  const [whatsappClient, setWhatsappClient] = useState<Client | null>(null);
+  
+  // Notifications
+  const [notifications] = useState([
+    { id: '1', title: 'New booking confirmed', message: 'Wedding shoot with Ana Silva', time: '2 min ago', read: false },
+    { id: '2', title: 'Payment received', message: 'R$5,000 from Pedro Costa', time: '1 hour ago', read: false },
+    { id: '3', title: 'Briefing updated', message: 'Music Video project details added', time: '3 hours ago', read: true },
+  ]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -271,18 +323,9 @@ export default function Dashboard() {
   };
 
   const chartConfig: ChartConfig = {
-    revenue: {
-      label: 'Revenue',
-      color: '#b8860b',
-    },
-    expenses: {
-      label: 'Expenses',
-      color: '#6b5c4a',
-    },
-    profit: {
-      label: 'Profit',
-      color: '#4a9b6b',
-    },
+    revenue: { label: 'Revenue', color: '#b8860b' },
+    expenses: { label: 'Expenses', color: '#6b5c4a' },
+    profit: { label: 'Profit', color: '#4a9b6b' },
   };
 
   const filteredClients = clients.filter(client => {
@@ -293,13 +336,21 @@ export default function Dashboard() {
     return matchesSearch && matchesStatus;
   });
 
+  const openWhatsApp = (client: Client) => {
+    setWhatsappClient(client);
+    setShowWhatsAppPanel(true);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="relative w-16 h-16">
-            <div className="absolute inset-0 rounded-full border-4 border-warm-200"></div>
+          <div className="relative w-20 h-20">
+            <div className="absolute inset-0 rounded-full border-4 border-warm-200 animate-pulse"></div>
             <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Sparkles className="w-8 h-8 text-primary animate-pulse" />
+            </div>
           </div>
           <p className="text-muted-foreground animate-pulse">Loading your dashboard...</p>
         </div>
@@ -320,8 +371,9 @@ export default function Dashboard() {
           <div className="p-6 flex items-center justify-between border-b border-white/10">
             {sidebarOpen && (
               <div className="flex items-center gap-3 animate-fade-in-up">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gold to-gold-light flex items-center justify-center shadow-lg shadow-gold/30">
-                  <span className="text-white font-bold text-lg">W</span>
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gold to-gold-light flex items-center justify-center shadow-lg shadow-gold/30 relative overflow-hidden">
+                  <span className="text-white font-bold text-lg relative z-10">W</span>
+                  <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
                 </div>
                 <div>
                   <span className="text-white font-semibold text-lg block">WhatsApp</span>
@@ -343,7 +395,7 @@ export default function Dashboard() {
               <button
                 key={item.id}
                 onClick={() => setActiveView(item.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group ${
                   activeView === item.id
                     ? 'bg-gold text-warm-950 font-medium shadow-lg shadow-gold/20'
                     : 'text-white/70 hover:bg-white/10 hover:text-white'
@@ -354,9 +406,29 @@ export default function Dashboard() {
                 {sidebarOpen && (
                   <span className="animate-fade-in-up whitespace-nowrap">{item.label}</span>
                 )}
+                {activeView === item.id && (
+                  <div className="ml-auto w-2 h-2 rounded-full bg-white animate-pulse" />
+                )}
               </button>
             ))}
           </nav>
+
+          {/* Quick Stats */}
+          {sidebarOpen && (
+            <div className="p-4 border-t border-white/10 animate-fade-in-up">
+              <p className="text-white/50 text-xs mb-3 uppercase tracking-wider">Quick Stats</p>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-white/70 text-sm">Active Deals</span>
+                  <span className="text-white font-medium">{data?.kpis.totalDeals || 0}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-white/70 text-sm">Pipeline Value</span>
+                  <span className="text-gold font-medium">{formatCurrency(data?.kpis.pipelineValue || 0)}</span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* User section */}
           <div className="p-4 border-t border-white/10">
@@ -366,7 +438,7 @@ export default function Dashboard() {
                 <AvatarFallback className="bg-gold text-warm-950">ST</AvatarFallback>
               </Avatar>
               {sidebarOpen && (
-                <div className="animate-fade-in-up">
+                <div className="animate-fade-in-up flex-1">
                   <p className="text-white font-medium text-sm">Studio Pro</p>
                   <p className="text-white/50 text-xs">Admin</p>
                 </div>
@@ -386,7 +458,14 @@ export default function Dashboard() {
         <header className="sticky top-0 z-40 glass border-b border-glass-border">
           <div className="px-8 py-4 flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-foreground capitalize">{activeView}</h1>
+              <h1 className="text-2xl font-bold text-foreground capitalize flex items-center gap-2">
+                {activeView === 'dashboard' && <LayoutDashboard className="w-6 h-6 text-primary" />}
+                {activeView === 'clients' && <Users className="w-6 h-6 text-primary" />}
+                {activeView === 'pipeline' && <FolderKanban className="w-6 h-6 text-primary" />}
+                {activeView === 'financials' && <DollarSign className="w-6 h-6 text-primary" />}
+                {activeView === 'calendar' && <Calendar className="w-6 h-6 text-primary" />}
+                {activeView}
+              </h1>
               <p className="text-muted-foreground text-sm">
                 {activeView === 'dashboard' && 'Welcome back! Here\'s your studio overview.'}
                 {activeView === 'clients' && 'Manage your client relationships and contacts.'}
@@ -396,11 +475,24 @@ export default function Dashboard() {
               </p>
             </div>
             <div className="flex items-center gap-4">
+              {/* Notifications */}
+              <div className="relative">
+                <Button variant="ghost" size="icon" className="relative">
+                  <Bell className="w-5 h-5 text-muted-foreground" />
+                  {notifications.filter(n => !n.read).length > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center animate-pulse">
+                      {notifications.filter(n => !n.read).length}
+                    </span>
+                  )}
+                </Button>
+              </div>
+              
               <Badge variant="secondary" className="glass-badge px-4 py-2">
                 <Clock className="w-4 h-4 mr-2" />
                 {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
               </Badge>
-              <Button className="gradient-gold text-warm-950 hover:opacity-90 transition-opacity">
+              
+              <Button className="gradient-gold text-warm-950 hover:opacity-90 transition-all duration-300 shadow-lg shadow-gold/20 hover:shadow-gold/30 hover:scale-105">
                 <Plus className="w-4 h-4 mr-2" />
                 New {activeView === 'clients' ? 'Client' : activeView === 'pipeline' ? 'Deal' : 'Booking'}
               </Button>
@@ -421,6 +513,7 @@ export default function Dashboard() {
                   trend: 'up',
                   icon: DollarSign,
                   color: 'from-gold to-gold-light',
+                  description: 'vs last month',
                 },
                 {
                   title: 'Pipeline Value',
@@ -429,6 +522,7 @@ export default function Dashboard() {
                   trend: 'neutral',
                   icon: FolderKanban,
                   color: 'from-blue-500 to-blue-600',
+                  description: 'Active opportunities',
                 },
                 {
                   title: 'Active Clients',
@@ -437,6 +531,7 @@ export default function Dashboard() {
                   trend: 'neutral',
                   icon: UserCheck,
                   color: 'from-green-500 to-green-600',
+                  description: 'Client relationships',
                 },
                 {
                   title: 'Net Profit',
@@ -445,19 +540,23 @@ export default function Dashboard() {
                   trend: (data?.kpis.profit || 0) > 0 ? 'up' : 'down',
                   icon: Wallet,
                   color: (data?.kpis.profit || 0) > 0 ? 'from-emerald-500 to-emerald-600' : 'from-red-500 to-red-600',
+                  description: 'After expenses',
                 },
               ].map((kpi, index) => (
                 <Card
                   key={kpi.title}
-                  className={`glass-card kpi-glow animate-fade-in-up`}
-                  style={{ animationDelay: `${index * 50}ms` }}
+                  className={`glass-card kpi-glow animate-fade-in-up group cursor-pointer hover:shadow-2xl transition-all duration-500`}
+                  style={{ animationDelay: `${index * 100}ms` }}
                 >
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between">
-                      <div className="space-y-2">
-                        <p className="text-muted-foreground text-sm font-medium">{kpi.title}</p>
-                        <p className="text-2xl font-bold text-foreground">{kpi.value}</p>
-                        <div className="flex items-center gap-1">
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <p className="text-muted-foreground text-sm font-medium">{kpi.title}</p>
+                          <div className="w-1 h-1 rounded-full bg-primary animate-pulse" />
+                        </div>
+                        <p className="text-3xl font-bold text-foreground tracking-tight">{kpi.value}</p>
+                        <div className="flex items-center gap-2">
                           {kpi.trend === 'up' && <TrendingUp className="w-4 h-4 text-green-500" />}
                           {kpi.trend === 'down' && <TrendingDown className="w-4 h-4 text-red-500" />}
                           <span className={`text-xs font-medium ${
@@ -465,10 +564,11 @@ export default function Dashboard() {
                           }`}>
                             {kpi.change}
                           </span>
+                          <span className="text-xs text-muted-foreground">{kpi.description}</span>
                         </div>
                       </div>
-                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${kpi.color} flex items-center justify-center shadow-lg`}>
-                        <kpi.icon className="w-6 h-6 text-white" />
+                      <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${kpi.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                        <kpi.icon className="w-7 h-7 text-white" />
                       </div>
                     </div>
                   </CardContent>
@@ -476,22 +576,79 @@ export default function Dashboard() {
               ))}
             </div>
 
+            {/* Quick Actions Row */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card className="glass-card cursor-pointer hover:shadow-xl transition-all duration-300 group" onClick={() => setActiveView('clients')}>
+                <CardContent className="p-6 flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
+                    <Users className="w-6 h-6 text-blue-500" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-foreground">Manage Clients</p>
+                    <p className="text-sm text-muted-foreground">View and edit client details</p>
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                </CardContent>
+              </Card>
+              
+              <Card className="glass-card cursor-pointer hover:shadow-xl transition-all duration-300 group" onClick={() => setActiveView('pipeline')}>
+                <CardContent className="p-6 flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
+                    <Target className="w-6 h-6 text-purple-500" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-foreground">Track Pipeline</p>
+                    <p className="text-sm text-muted-foreground">Monitor deal progress</p>
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                </CardContent>
+              </Card>
+              
+              <Card className="glass-card cursor-pointer hover:shadow-xl transition-all duration-300 group" onClick={() => setActiveView('financials')}>
+                <CardContent className="p-6 flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center group-hover:bg-green-500/20 transition-colors">
+                    <Activity className="w-6 h-6 text-green-500" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-foreground">View Reports</p>
+                    <p className="text-sm text-muted-foreground">Financial insights</p>
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                </CardContent>
+              </Card>
+            </div>
+
             {/* Charts Row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Revenue Chart */}
               <Card className="glass-card lg:col-span-2 animate-fade-in-up">
                 <CardHeader className="pb-4">
-                  <CardTitle className="text-lg font-semibold text-foreground">Revenue vs Expenses</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5 text-primary" />
+                      Revenue vs Expenses
+                    </CardTitle>
+                    <Select defaultValue="6months">
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="6months">6 Months</SelectItem>
+                        <SelectItem value="year">This Year</SelectItem>
+                        <SelectItem value="all">All Time</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <ChartContainer config={chartConfig} className="h-72">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={data?.monthlyRevenue || []}>
-                        <XAxis dataKey="month" stroke="#7a756d" fontSize={12} />
-                        <YAxis stroke="#7a756d" fontSize={12} tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`} />
+                        <XAxis dataKey="month" stroke="#7a756d" fontSize={12} tickLine={false} axisLine={false} />
+                        <YAxis stroke="#7a756d" fontSize={12} tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`} tickLine={false} axisLine={false} />
                         <ChartTooltip content={<ChartTooltipContent />} />
-                        <Bar dataKey="revenue" fill="#b8860b" radius={[4, 4, 0, 0]} />
-                        <Bar dataKey="expenses" fill="#6b5c4a" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="revenue" fill="#b8860b" radius={[6, 6, 0, 0]} />
+                        <Bar dataKey="expenses" fill="#6b5c4a" radius={[6, 6, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </ChartContainer>
@@ -501,7 +658,10 @@ export default function Dashboard() {
               {/* Expenses by Category */}
               <Card className="glass-card animate-fade-in-up">
                 <CardHeader className="pb-4">
-                  <CardTitle className="text-lg font-semibold text-foreground">Expenses by Category</CardTitle>
+                  <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
+                    <Zap className="w-5 h-5 text-primary" />
+                    Expenses by Category
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -509,14 +669,14 @@ export default function Dashboard() {
                       const total = data?.expensesByCategory.reduce((sum, e) => sum + e.amount, 0) || 1;
                       const percentage = (item.amount / total) * 100;
                       return (
-                        <div key={item.category} className="space-y-2">
+                        <div key={item.category} className="space-y-2 group cursor-pointer">
                           <div className="flex items-center justify-between">
-                            <span className="text-sm text-foreground">{item.category}</span>
+                            <span className="text-sm text-foreground group-hover:text-primary transition-colors">{item.category}</span>
                             <span className="text-sm font-medium text-foreground">
                               {formatCurrency(item.amount)}
                             </span>
                           </div>
-                          <Progress value={percentage} className="h-2" />
+                          <Progress value={percentage} className="h-2 group-hover:h-3 transition-all" />
                         </div>
                       );
                     })}
@@ -531,8 +691,11 @@ export default function Dashboard() {
               <Card className="glass-card animate-fade-in-up">
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg font-semibold text-foreground">Pipeline Overview</CardTitle>
-                    <Button variant="ghost" size="sm" className="text-primary" onClick={() => setActiveView('pipeline')}>
+                    <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
+                      <FolderKanban className="w-5 h-5 text-primary" />
+                      Pipeline Overview
+                    </CardTitle>
+                    <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/10" onClick={() => setActiveView('pipeline')}>
                       View All <ChevronRight className="w-4 h-4 ml-1" />
                     </Button>
                   </div>
@@ -543,13 +706,13 @@ export default function Dashboard() {
                       const total = Object.values(data?.dealsByStatus || {}).reduce((a, b) => a + b, 0);
                       const percentage = total > 0 ? (count / total) * 100 : 0;
                       return (
-                        <div key={status} className="flex items-center gap-4">
-                          <div className={`w-3 h-3 rounded-full ${statusColors[status]}`} />
-                          <span className="text-sm text-foreground flex-1 capitalize">{statusLabels[status] || status}</span>
+                        <div key={status} className="flex items-center gap-4 group cursor-pointer">
+                          <div className={`w-3 h-3 rounded-full ${statusColors[status]} group-hover:scale-125 transition-transform`} />
+                          <span className="text-sm text-foreground flex-1 capitalize group-hover:text-primary transition-colors">{statusLabels[status] || status}</span>
                           <span className="text-sm font-medium text-foreground w-8">{count}</span>
                           <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
                             <div
-                              className={`h-full ${statusColors[status]} transition-all duration-500`}
+                              className={`h-full ${statusColors[status]} transition-all duration-500 group-hover:brightness-110`}
                               style={{ width: `${percentage}%` }}
                             />
                           </div>
@@ -564,8 +727,11 @@ export default function Dashboard() {
               <Card className="glass-card animate-fade-in-up">
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg font-semibold text-foreground">Upcoming Bookings</CardTitle>
-                    <Button variant="ghost" size="sm" className="text-primary" onClick={() => setActiveView('calendar')}>
+                    <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
+                      <CalendarDays className="w-5 h-5 text-primary" />
+                      Upcoming Bookings
+                    </CardTitle>
+                    <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/10" onClick={() => setActiveView('calendar')}>
                       View Calendar <ChevronRight className="w-4 h-4 ml-1" />
                     </Button>
                   </div>
@@ -575,18 +741,20 @@ export default function Dashboard() {
                     {(data?.upcomingBookings || []).slice(0, 4).map((booking) => (
                       <div
                         key={booking.id}
-                        className="flex items-center gap-4 p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors cursor-pointer group"
+                        className="flex items-center gap-4 p-3 rounded-xl bg-muted/50 hover:bg-muted transition-all duration-300 cursor-pointer group border border-transparent hover:border-primary/20"
                       >
-                        <div className={`w-2 h-12 rounded-full ${statusColors[booking.status]}`} />
+                        <div className={`w-2 h-12 rounded-full ${statusColors[booking.status]} group-hover:h-14 transition-all`} />
                         <div className="flex-1">
-                          <p className="text-sm font-medium text-foreground">{booking.eventType}</p>
+                          <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{booking.eventType}</p>
                           <p className="text-xs text-muted-foreground">{booking.client.name}</p>
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-medium text-foreground">
                             {new Date(booking.eventDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                           </p>
-                          <p className="text-xs text-muted-foreground capitalize">{booking.status}</p>
+                          <Badge variant="secondary" className={`text-xs text-white ${statusColors[booking.status]}`}>
+                            {booking.status}
+                          </Badge>
                         </div>
                         <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
@@ -608,8 +776,11 @@ export default function Dashboard() {
               <Card className="glass-card animate-fade-in-up">
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg font-semibold text-foreground">Recent Deals</CardTitle>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
+                      <Activity className="w-5 h-5 text-primary" />
+                      Recent Deals
+                    </CardTitle>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-muted">
                       <MoreHorizontal className="w-4 h-4" />
                     </Button>
                   </div>
@@ -619,20 +790,21 @@ export default function Dashboard() {
                     {(data?.recentDeals || []).slice(0, 5).map((deal) => (
                       <div
                         key={deal.id}
-                        className="flex items-center gap-4 p-3 rounded-xl hover:bg-muted/50 transition-colors cursor-pointer group"
+                        className="flex items-center gap-4 p-3 rounded-xl hover:bg-muted/50 transition-all duration-300 cursor-pointer group border border-transparent hover:border-primary/20"
+                        onClick={() => setSelectedDeal(deal)}
                       >
-                        <Avatar className="w-10 h-10">
+                        <Avatar className="w-10 h-10 ring-2 ring-transparent group-hover:ring-primary/30 transition-all">
                           <AvatarImage src={deal.client.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${deal.client.name}`} />
                           <AvatarFallback className="bg-warm-200 text-warm-700">
                             {deal.client.name.split(' ').map(n => n[0]).join('').toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">{deal.title}</p>
+                          <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">{deal.title}</p>
                           <p className="text-xs text-muted-foreground">{deal.client.name}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-medium text-foreground">{formatCurrency(deal.value)}</p>
+                          <p className="text-sm font-bold text-primary">{formatCurrency(deal.value)}</p>
                           <Badge variant="secondary" className={`text-xs text-white ${statusColors[deal.status]}`}>
                             {statusLabels[deal.status] || deal.status}
                           </Badge>
@@ -648,8 +820,11 @@ export default function Dashboard() {
               <Card className="glass-card animate-fade-in-up">
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg font-semibold text-foreground">Top Clients</CardTitle>
-                    <Button variant="ghost" size="sm" className="text-primary" onClick={() => setActiveView('clients')}>
+                    <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
+                      <Star className="w-5 h-5 text-primary" />
+                      Top Clients
+                    </CardTitle>
+                    <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/10" onClick={() => setActiveView('clients')}>
                       View All <ChevronRight className="w-4 h-4 ml-1" />
                     </Button>
                   </div>
@@ -659,23 +834,28 @@ export default function Dashboard() {
                     {(data?.topClients || []).map((client, index) => (
                       <div
                         key={client.name}
-                        className="flex items-center gap-4 p-3 rounded-xl hover:bg-muted/50 transition-colors cursor-pointer"
+                        className="flex items-center gap-4 p-3 rounded-xl hover:bg-muted/50 transition-all duration-300 cursor-pointer group border border-transparent hover:border-gold/20"
                       >
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gold to-gold-light flex items-center justify-center text-white font-bold text-sm shadow-md">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md ${
+                          index === 0 ? 'bg-gradient-to-br from-yellow-400 to-yellow-600' :
+                          index === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-500' :
+                          index === 2 ? 'bg-gradient-to-br from-amber-600 to-amber-800' :
+                          'bg-gradient-to-br from-warm-400 to-warm-600'
+                        }`}>
                           {index + 1}
                         </div>
-                        <Avatar className="w-10 h-10">
+                        <Avatar className="w-10 h-10 ring-2 ring-transparent group-hover:ring-gold/30 transition-all">
                           <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${client.name}`} />
                           <AvatarFallback className="bg-warm-200 text-warm-700">
                             {client.name.split(' ').map(n => n[0]).join('').toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
-                          <p className="text-sm font-medium text-foreground">{client.name}</p>
+                          <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{client.name}</p>
                           <p className="text-xs text-muted-foreground">{client.deals} deals</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-medium text-primary">{formatCurrency(client.value)}</p>
+                          <p className="text-sm font-bold text-primary">{formatCurrency(client.value)}</p>
                         </div>
                       </div>
                     ))}
@@ -724,20 +904,20 @@ export default function Dashboard() {
                 return (
                   <Card
                     key={client.id}
-                    className="glass-card hover:shadow-xl transition-all duration-300 cursor-pointer group"
+                    className="glass-card hover:shadow-2xl transition-all duration-500 cursor-pointer group border border-transparent hover:border-primary/20"
                     style={{ animationDelay: `${index * 30}ms` }}
                   >
                     <CardContent className="p-6">
                       <div className="flex items-start gap-4 mb-4">
-                        <Avatar className="w-14 h-14 border-2 border-gold/20 ring-2 ring-gold/5">
+                        <Avatar className="w-14 h-14 border-2 border-gold/20 ring-2 ring-gold/5 group-hover:ring-gold/20 transition-all">
                           <AvatarImage src={client.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${client.name}`} />
                           <AvatarFallback className="bg-warm-200 text-warm-700 text-lg">
                             {client.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-semibold text-foreground truncate">{client.name}</h3>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">{client.name}</h3>
                             <Badge variant="secondary" className={`text-xs text-white ${statusColors[client.status]}`}>
                               {statusLabels[client.status] || client.status}
                             </Badge>
@@ -750,19 +930,21 @@ export default function Dashboard() {
                       </div>
                       
                       <div className="space-y-2 text-sm">
-                        <div className="flex items-center gap-2 text-muted-foreground">
+                        <div className="flex items-center gap-2 text-muted-foreground group-hover:text-foreground transition-colors">
                           <Phone className="w-4 h-4" />
                           <span className="truncate">{client.phone}</span>
                         </div>
                         {client.email && (
-                          <div className="flex items-center gap-2 text-muted-foreground">
+                          <div className="flex items-center gap-2 text-muted-foreground group-hover:text-foreground transition-colors">
                             <Mail className="w-4 h-4" />
                             <span className="truncate">{client.email}</span>
                           </div>
                         )}
                       </div>
 
-                      <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
+                      <Separator className="my-4" />
+
+                      <div className="flex items-center justify-between mb-4">
                         <div>
                           <p className="text-xs text-muted-foreground">Total Value</p>
                           <p className="text-lg font-bold text-primary">{formatCurrency(client.totalValue)}</p>
@@ -773,8 +955,32 @@ export default function Dashboard() {
                         </div>
                       </div>
 
-                      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <ArrowUpRight className="w-5 h-5 text-primary" />
+                      {/* Action buttons */}
+                      <div className="flex items-center gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="flex-1 group-hover:bg-primary/10 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedClient(client);
+                          }}
+                        >
+                          <Eye className="w-4 h-4 mr-1" />
+                          View
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="flex-1 hover:bg-green-500/10 hover:text-green-600 hover:border-green-500/30 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openWhatsApp(client);
+                          }}
+                        >
+                          <MessageSquare className="w-4 h-4 mr-1" />
+                          WhatsApp
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -803,17 +1009,17 @@ export default function Dashboard() {
                   return (
                     <div key={status} className="flex flex-col">
                       {/* Stage Header */}
-                      <div className="mb-4">
-                        <div className="flex items-center justify-between mb-2">
+                      <div className="mb-4 p-3 rounded-xl bg-muted/30 border border-muted">
+                        <div className="flex items-center justify-between mb-1">
                           <div className="flex items-center gap-2">
                             <div className={`w-3 h-3 rounded-full ${statusColors[status]}`} />
                             <h3 className="font-semibold text-foreground capitalize">{statusLabels[status] || status}</h3>
                           </div>
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge variant="secondary" className="text-xs bg-white/50">
                             {stageDeals.length}
                           </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground">{formatCurrency(stageValue)}</p>
+                        <p className="text-sm font-medium text-primary">{formatCurrency(stageValue)}</p>
                       </div>
 
                       {/* Deal Cards */}
@@ -821,18 +1027,19 @@ export default function Dashboard() {
                         {stageDeals.map((deal) => (
                           <Card
                             key={deal.id}
-                            className="glass-card cursor-pointer hover:shadow-lg transition-all duration-300 group"
+                            className="glass-card cursor-pointer hover:shadow-xl transition-all duration-300 group border border-transparent hover:border-primary/20"
+                            onClick={() => setSelectedDeal(deal)}
                           >
                             <CardContent className="p-4">
                               <div className="flex items-center gap-3 mb-3">
-                                <Avatar className="w-8 h-8">
+                                <Avatar className="w-8 h-8 ring-2 ring-transparent group-hover:ring-primary/30 transition-all">
                                   <AvatarImage src={deal.client.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${deal.client.name}`} />
                                   <AvatarFallback className="bg-warm-200 text-warm-700 text-xs">
                                     {deal.client.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
                                   </AvatarFallback>
                                 </Avatar>
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-foreground truncate">{deal.title}</p>
+                                  <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">{deal.title}</p>
                                   <p className="text-xs text-muted-foreground truncate">{deal.client.name}</p>
                                 </div>
                               </div>
@@ -844,8 +1051,9 @@ export default function Dashboard() {
                           </Card>
                         ))}
                         {stageDeals.length === 0 && (
-                          <div className="border-2 border-dashed border-muted rounded-xl p-6 text-center">
-                            <p className="text-sm text-muted-foreground">No deals in this stage</p>
+                          <div className="border-2 border-dashed border-muted rounded-xl p-6 text-center hover:border-primary/30 transition-colors cursor-pointer">
+                            <Plus className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
+                            <p className="text-sm text-muted-foreground">Add deal</p>
                           </div>
                         )}
                       </div>
@@ -863,22 +1071,21 @@ export default function Dashboard() {
             {/* Financial KPIs */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               {[
-                { title: 'Total Revenue', value: formatCurrency(data?.kpis.totalRevenue || 0), icon: TrendingUp, color: 'text-green-500', bgColor: 'bg-green-500/10' },
-                { title: 'Total Expenses', value: formatCurrency(data?.kpis.totalExpenses || 0), icon: TrendingDown, color: 'text-red-500', bgColor: 'bg-red-500/10' },
-                { title: 'Net Profit', value: formatCurrency(data?.kpis.profit || 0), icon: Wallet, color: (data?.kpis.profit || 0) > 0 ? 'text-green-500' : 'text-red-500', bgColor: (data?.kpis.profit || 0) > 0 ? 'bg-green-500/10' : 'bg-red-500/10' },
-                { title: 'Profit Margin', value: `${Math.round(((data?.kpis.profit || 0) / (data?.kpis.totalRevenue || 1)) * 100)}%`, icon: DollarSign, color: 'text-primary', bgColor: 'bg-primary/10' },
+                { title: 'Total Revenue', value: formatCurrency(data?.kpis.totalRevenue || 0), icon: TrendingUp, color: 'text-green-500', bgColor: 'bg-green-500/10', change: '+12.5%' },
+                { title: 'Total Expenses', value: formatCurrency(data?.kpis.totalExpenses || 0), icon: TrendingDown, color: 'text-red-500', bgColor: 'bg-red-500/10', change: '+8.3%' },
+                { title: 'Net Profit', value: formatCurrency(data?.kpis.profit || 0), icon: Wallet, color: (data?.kpis.profit || 0) > 0 ? 'text-green-500' : 'text-red-500', bgColor: (data?.kpis.profit || 0) > 0 ? 'bg-green-500/10' : 'bg-red-500/10', change: (data?.kpis.profit || 0) > 0 ? '+15.2%' : '-5.1%' },
+                { title: 'Profit Margin', value: `${Math.round(((data?.kpis.profit || 0) / (data?.kpis.totalRevenue || 1)) * 100)}%`, icon: DollarSign, color: 'text-primary', bgColor: 'bg-primary/10', change: '+2.1%' },
               ].map((kpi) => (
-                <Card key={kpi.title} className="glass-card">
+                <Card key={kpi.title} className="glass-card hover:shadow-xl transition-all duration-300 group cursor-pointer">
                   <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">{kpi.title}</p>
-                        <p className={`text-2xl font-bold ${kpi.color}`}>{kpi.value}</p>
-                      </div>
-                      <div className={`w-12 h-12 rounded-xl ${kpi.bgColor} flex items-center justify-center`}>
-                        <kpi.icon className={`w-6 h-6 ${kpi.color}`} />
+                    <div className="flex items-center justify-between mb-4">
+                      <p className="text-sm text-muted-foreground">{kpi.title}</p>
+                      <div className={`w-10 h-10 rounded-xl ${kpi.bgColor} flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                        <kpi.icon className={`w-5 h-5 ${kpi.color}`} />
                       </div>
                     </div>
+                    <p className={`text-2xl font-bold ${kpi.color} mb-1`}>{kpi.value}</p>
+                    <p className={`text-xs ${kpi.color}`}>{kpi.change} vs last month</p>
                   </CardContent>
                 </Card>
               ))}
@@ -889,16 +1096,25 @@ export default function Dashboard() {
               {/* Profit Trend */}
               <Card className="glass-card">
                 <CardHeader>
-                  <CardTitle className="text-lg font-semibold">Profit Trend</CardTitle>
+                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                    <Activity className="w-5 h-5 text-primary" />
+                    Profit Trend
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ChartContainer config={chartConfig} className="h-72">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={data?.monthlyRevenue || []}>
-                        <XAxis dataKey="month" stroke="#7a756d" fontSize={12} />
-                        <YAxis stroke="#7a756d" fontSize={12} tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`} />
+                        <defs>
+                          <linearGradient id="profitGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#4a9b6b" stopOpacity={0.3}/>
+                            <stop offset="95%" stopColor="#4a9b6b" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <XAxis dataKey="month" stroke="#7a756d" fontSize={12} tickLine={false} axisLine={false} />
+                        <YAxis stroke="#7a756d" fontSize={12} tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`} tickLine={false} axisLine={false} />
                         <ChartTooltip content={<ChartTooltipContent />} />
-                        <Area type="monotone" dataKey="profit" stroke="#4a9b6b" fill="#4a9b6b" fillOpacity={0.3} />
+                        <Area type="monotone" dataKey="profit" stroke="#4a9b6b" strokeWidth={3} fill="url(#profitGradient)" />
                       </AreaChart>
                     </ResponsiveContainer>
                   </ChartContainer>
@@ -908,7 +1124,10 @@ export default function Dashboard() {
               {/* Expenses Pie Chart */}
               <Card className="glass-card">
                 <CardHeader>
-                  <CardTitle className="text-lg font-semibold">Expense Distribution</CardTitle>
+                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                    <PieChart className="w-5 h-5 text-primary" />
+                    Expense Distribution
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ChartContainer config={chartConfig} className="h-72">
@@ -922,7 +1141,7 @@ export default function Dashboard() {
                           cy="50%"
                           outerRadius={100}
                           innerRadius={60}
-                          label={({ category, percent }) => `${category.split(' ')[0]} ${(percent * 100).toFixed(0)}%`}
+                          paddingAngle={4}
                         >
                           {(data?.expensesByCategory || []).map((_, index) => (
                             <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
@@ -932,6 +1151,14 @@ export default function Dashboard() {
                       </PieChart>
                     </ResponsiveContainer>
                   </ChartContainer>
+                  <div className="flex flex-wrap gap-2 mt-4 justify-center">
+                    {(data?.expensesByCategory || []).slice(0, 5).map((item, index) => (
+                      <div key={item.category} className="flex items-center gap-1.5">
+                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }} />
+                        <span className="text-xs text-muted-foreground">{item.category.split(' ')[0]}</span>
+                      </div>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -945,10 +1172,13 @@ export default function Dashboard() {
               {/* Calendar Grid */}
               <Card className="glass-card lg:col-span-2">
                 <CardHeader>
-                  <CardTitle className="text-lg font-semibold">This Week</CardTitle>
+                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                    <CalendarDays className="w-5 h-5 text-primary" />
+                    This Week
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-7 gap-2">
+                  <div className="grid grid-cols-7 gap-3">
                     {Array.from({ length: 7 }).map((_, i) => {
                       const date = new Date();
                       date.setDate(date.getDate() + i);
@@ -960,16 +1190,22 @@ export default function Dashboard() {
                       return (
                         <div
                           key={i}
-                          className={`p-3 rounded-xl text-center transition-all duration-300 ${
-                            i === 0 ? 'bg-primary text-white' : 'bg-muted/50 hover:bg-muted'
+                          className={`p-4 rounded-2xl text-center transition-all duration-300 cursor-pointer hover:scale-105 ${
+                            i === 0 ? 'bg-gradient-to-br from-gold to-gold-light text-white shadow-lg shadow-gold/30' : 'bg-muted/50 hover:bg-muted'
                           }`}
                         >
-                          <p className="text-xs text-muted-foreground mb-1">
+                          <p className={`text-xs mb-1 ${i === 0 ? 'text-white/80' : 'text-muted-foreground'}`}>
                             {date.toLocaleDateString('en-US', { weekday: 'short' })}
                           </p>
-                          <p className="text-lg font-bold">{date.getDate()}</p>
+                          <p className={`text-2xl font-bold mb-2 ${i === 0 ? '' : 'text-foreground'}`}>{date.getDate()}</p>
                           {dayBookings.length > 0 && (
-                            <div className={`w-2 h-2 rounded-full mx-auto mt-1 ${i === 0 ? 'bg-white' : 'bg-primary'}`} />
+                            <div className="flex justify-center">
+                              <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                i === 0 ? 'bg-white/20 text-white' : 'bg-primary/20 text-primary'
+                              }`}>
+                                {dayBookings.length} {dayBookings.length === 1 ? 'event' : 'events'}
+                              </div>
+                            </div>
                           )}
                         </div>
                       );
@@ -981,7 +1217,10 @@ export default function Dashboard() {
               {/* Upcoming List */}
               <Card className="glass-card">
                 <CardHeader>
-                  <CardTitle className="text-lg font-semibold">Upcoming</CardTitle>
+                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-primary" />
+                    Upcoming
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ScrollArea className="h-80">
@@ -989,14 +1228,14 @@ export default function Dashboard() {
                       {(data?.upcomingBookings || []).map((booking) => (
                         <div
                           key={booking.id}
-                          className="p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
+                          className="p-4 rounded-xl bg-muted/50 hover:bg-muted transition-all duration-300 cursor-pointer group border border-transparent hover:border-primary/20"
                         >
                           <div className="flex items-center gap-3">
-                            <div className={`w-2 h-10 rounded-full ${statusColors[booking.status]}`} />
+                            <div className={`w-2 h-12 rounded-full ${statusColors[booking.status]} group-hover:h-14 transition-all`} />
                             <div className="flex-1">
-                              <p className="text-sm font-medium text-foreground">{booking.eventType}</p>
+                              <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{booking.eventType}</p>
                               <p className="text-xs text-muted-foreground">{booking.client.name}</p>
-                              <p className="text-xs text-muted-foreground">
+                              <p className="text-xs text-muted-foreground mt-1">
                                 {new Date(booking.eventDate).toLocaleDateString('en-US', {
                                   weekday: 'short',
                                   month: 'short',
@@ -1037,6 +1276,190 @@ export default function Dashboard() {
           </div>
         </footer>
       </main>
+
+      {/* Client Detail Modal */}
+      <Dialog open={!!selectedClient} onOpenChange={() => setSelectedClient(null)}>
+        <DialogContent className="max-w-lg glass-card">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <Avatar className="w-12 h-12">
+                <AvatarImage src={selectedClient?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedClient?.name}`} />
+                <AvatarFallback className="bg-warm-200 text-warm-700">
+                  {selectedClient?.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <p>{selectedClient?.name}</p>
+                <Badge variant="secondary" className={`text-xs text-white ${statusColors[selectedClient?.status || '']}`}>
+                  {statusLabels[selectedClient?.status || ''] || selectedClient?.status}
+                </Badge>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-3 rounded-lg bg-muted/50">
+                <p className="text-xs text-muted-foreground">Total Value</p>
+                <p className="text-lg font-bold text-primary">{formatCurrency(selectedClient?.totalValue || 0)}</p>
+              </div>
+              <div className="p-3 rounded-lg bg-muted/50">
+                <p className="text-xs text-muted-foreground">Total Deals</p>
+                <p className="text-lg font-bold text-foreground">{selectedClient?.totalDeals || 0}</p>
+              </div>
+            </div>
+            <Separator />
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm">
+                <Phone className="w-4 h-4 text-muted-foreground" />
+                <span>{selectedClient?.phone}</span>
+              </div>
+              {selectedClient?.email && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Mail className="w-4 h-4 text-muted-foreground" />
+                  <span>{selectedClient.email}</span>
+                </div>
+              )}
+              <div className="flex items-center gap-2 text-sm">
+                <Camera className="w-4 h-4 text-muted-foreground" />
+                <span>{selectedClient?.eventType}</span>
+              </div>
+            </div>
+            {selectedClient?.notes && (
+              <>
+                <Separator />
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Notes</p>
+                  <p className="text-sm text-foreground">{selectedClient.notes}</p>
+                </div>
+              </>
+            )}
+            <Separator />
+            <div className="flex gap-2">
+              <Button 
+                className="flex-1" 
+                onClick={() => {
+                  if (selectedClient) openWhatsApp(selectedClient);
+                  setSelectedClient(null);
+                }}
+              >
+                <MessageSquare className="w-4 h-4 mr-2" />
+                WhatsApp
+              </Button>
+              <Button variant="outline" className="flex-1">
+                <Edit className="w-4 h-4 mr-2" />
+                Edit
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Deal Detail Modal */}
+      <Dialog open={!!selectedDeal} onOpenChange={() => setSelectedDeal(null)}>
+        <DialogContent className="max-w-lg glass-card">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span>{selectedDeal?.title}</span>
+              <Badge variant="secondary" className={`text-xs text-white ${statusColors[selectedDeal?.status || '']}`}>
+                {statusLabels[selectedDeal?.status || ''] || selectedDeal?.status}
+              </Badge>
+            </DialogTitle>
+            <DialogDescription>
+              {selectedDeal?.client.name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="p-4 rounded-xl bg-gradient-to-br from-gold/10 to-gold-light/10 border border-gold/20">
+              <p className="text-xs text-muted-foreground">Deal Value</p>
+              <p className="text-3xl font-bold text-primary">{formatCurrency(selectedDeal?.value || 0)}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-3 rounded-lg bg-muted/50">
+                <p className="text-xs text-muted-foreground">Expenses</p>
+                <p className="text-lg font-bold text-red-500">{formatCurrency(selectedDeal?.totalExpenses || 0)}</p>
+              </div>
+              <div className="p-3 rounded-lg bg-muted/50">
+                <p className="text-xs text-muted-foreground">Revenue</p>
+                <p className="text-lg font-bold text-green-500">{formatCurrency(selectedDeal?.totalRevenue || 0)}</p>
+              </div>
+            </div>
+            <Separator />
+            <div className="flex gap-2">
+              <Button className="flex-1">
+                <Eye className="w-4 h-4 mr-2" />
+                View Details
+              </Button>
+              <Button variant="outline" className="flex-1">
+                <Edit className="w-4 h-4 mr-2" />
+                Edit
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* WhatsApp Panel */}
+      <Sheet open={showWhatsAppPanel} onOpenChange={setShowWhatsAppPanel}>
+        <SheetContent className="w-96 p-0 flex flex-col">
+          <SheetHeader className="p-4 border-b bg-gradient-to-r from-green-500 to-green-600 text-white">
+            <div className="flex items-center gap-3">
+              <Avatar className="w-10 h-10 border-2 border-white/30">
+                <AvatarImage src={whatsappClient?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${whatsappClient?.name}`} />
+                <AvatarFallback className="bg-white/20 text-white">
+                  {whatsappClient?.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <SheetTitle className="text-white text-left">{whatsappClient?.name}</SheetTitle>
+                <SheetDescription className="text-white/70 text-left text-xs">
+                  {whatsappClient?.phone}
+                </SheetDescription>
+              </div>
+            </div>
+          </SheetHeader>
+          
+          {/* Messages */}
+          <ScrollArea className="flex-1 p-4 bg-gradient-to-b from-warm-100 to-warm-50">
+            <div className="space-y-3">
+              {mockWhatsAppMessages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`flex ${msg.sender === 'client' ? 'justify-start' : 'justify-end'}`}
+                >
+                  <div
+                    className={`max-w-[80%] p-3 rounded-2xl ${
+                      msg.sender === 'client'
+                        ? 'bg-white rounded-tl-none shadow-sm'
+                        : 'bg-green-500 text-white rounded-tr-none'
+                    }`}
+                  >
+                    <p className="text-sm">{msg.text}</p>
+                    <p className={`text-xs mt-1 ${msg.sender === 'client' ? 'text-muted-foreground' : 'text-white/70'}`}>
+                      {msg.time}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+          
+          {/* Input */}
+          <div className="p-3 border-t bg-white">
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" className="shrink-0">
+                <Paperclip className="w-5 h-5 text-muted-foreground" />
+              </Button>
+              <Input placeholder="Type a message..." className="flex-1" />
+              <Button variant="ghost" size="icon" className="shrink-0">
+                <Smile className="w-5 h-5 text-muted-foreground" />
+              </Button>
+              <Button size="icon" className="shrink-0 bg-green-500 hover:bg-green-600">
+                <Send className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
