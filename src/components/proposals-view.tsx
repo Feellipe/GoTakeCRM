@@ -106,6 +106,12 @@ interface Proposal {
     phone: string;
     avatar: string | null;
   };
+  deal: {
+    id: string;
+    title: string;
+    status: string;
+    value: number;
+  } | null;
   template: {
     id: string;
     name: string;
@@ -156,9 +162,16 @@ const categoryIcons: Record<string, typeof Camera> = {
 interface ProposalsViewProps {
   clients: Client[];
   onNotification?: (message: string) => void;
+  initialDeal?: {
+    id: string;
+    title: string;
+    clientId: string;
+    value: number;
+  } | null;
+  onProposalCreated?: () => void;
 }
 
-export function ProposalsView({ clients, onNotification }: ProposalsViewProps) {
+export function ProposalsView({ clients, onNotification, initialDeal, onProposalCreated }: ProposalsViewProps) {
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [packages, setPackages] = useState<Package[]>([]);
   const [templates, setTemplates] = useState<ProposalTemplate[]>([]);
@@ -182,6 +195,17 @@ export function ProposalsView({ clients, onNotification }: ProposalsViewProps) {
   const [proposalTerms, setProposalTerms] = useState('');
   const [proposalNotes, setProposalNotes] = useState('');
   const [validUntil, setValidUntil] = useState('');
+  const [dealId, setDealId] = useState<string | null>(null);
+
+  // Handle initialDeal from Pipeline
+  useEffect(() => {
+    if (initialDeal) {
+      setSelectedClient(initialDeal.clientId);
+      setProposalTitle(`Proposal for ${initialDeal.title}`);
+      setDealId(initialDeal.id);
+      setShowNewProposalModal(true);
+    }
+  }, [initialDeal]);
 
   useEffect(() => {
     fetchData();
@@ -249,6 +273,7 @@ export function ProposalsView({ clients, onNotification }: ProposalsViewProps) {
     try {
       const proposalData = {
         clientId: selectedClient,
+        dealId: dealId || null,
         templateId: selectedTemplate || null,
         title: proposalTitle,
         description: proposalDescription,
@@ -289,6 +314,7 @@ export function ProposalsView({ clients, onNotification }: ProposalsViewProps) {
       resetForm();
       setShowNewProposalModal(false);
       onNotification?.('Proposal saved successfully!');
+      onProposalCreated?.();
     } catch (error) {
       console.error('Error saving proposal:', error);
     }
@@ -330,6 +356,7 @@ export function ProposalsView({ clients, onNotification }: ProposalsViewProps) {
     setProposalTerms('');
     setProposalNotes('');
     setValidUntil('');
+    setDealId(null);
     setEditingProposal(null);
   };
 
@@ -564,6 +591,12 @@ export function ProposalsView({ clients, onNotification }: ProposalsViewProps) {
                           <div className="flex items-center gap-1 text-sm text-muted-foreground">
                             <FileText className="w-4 h-4" />
                             <span>{proposal.template.name}</span>
+                          </div>
+                        )}
+                        {proposal.deal && (
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <Briefcase className="w-4 h-4" />
+                            <span className="truncate max-w-[120px]">{proposal.deal.title}</span>
                           </div>
                         )}
                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
@@ -820,6 +853,22 @@ export function ProposalsView({ clients, onNotification }: ProposalsViewProps) {
                     <p className="text-sm text-muted-foreground">{selectedProposal.client.email || selectedProposal.client.phone}</p>
                   </div>
                 </div>
+
+                {/* Deal Info */}
+                {selectedProposal.deal && (
+                  <div className="flex items-center gap-3 p-4 rounded-xl bg-primary/5 border border-primary/20">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Briefcase className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm text-muted-foreground">Linked Deal</p>
+                      <p className="font-medium text-foreground">{selectedProposal.deal.title}</p>
+                    </div>
+                    <Badge variant="outline" className="capitalize">
+                      {statusLabels[selectedProposal.deal.status] || selectedProposal.deal.status}
+                    </Badge>
+                  </div>
+                )}
 
                 {/* Total Value */}
                 <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">

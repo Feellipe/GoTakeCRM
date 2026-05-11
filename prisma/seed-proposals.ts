@@ -224,6 +224,97 @@ Timeline:
   ]);
 
   console.log(`Created ${templates.length} templates`);
+
+  // Create sample proposals linked to existing deals
+  console.log('Creating sample proposals...');
+
+  // Fetch existing deals with clients
+  const deals = await db.deal.findMany({
+    include: { client: true },
+    take: 5,
+  });
+
+  if (deals.length > 0) {
+    // Clear existing proposals first
+    await db.proposal.deleteMany({});
+
+    const sampleProposals = [
+      {
+        dealId: deals[0]?.id,
+        clientId: deals[0]?.clientId,
+        templateId: 'tpl-wedding',
+        title: `Wedding Photography Proposal - ${deals[0]?.title || 'Project'}`,
+        description: 'Complete wedding photography package with premium coverage.',
+        status: 'draft' as const,
+        packages: JSON.stringify([
+          { id: 'pkg-wedding-premium', name: 'Wedding Premium', customPrice: 6500, deliverables: ['10 hours of coverage', '2 photographers', '500+ edited photos'] },
+        ]),
+        portfolioLinks: JSON.stringify(['https://portfolio.example.com/weddings', 'https://instagram.com/studio']),
+        terms: '30% deposit to reserve date. Remaining balance due on event day.',
+        totalValue: 6500,
+        validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+      },
+      {
+        dealId: deals[1]?.id,
+        clientId: deals[1]?.clientId,
+        templateId: 'tpl-portrait',
+        title: `Portrait Session - ${deals[1]?.title || 'Project'}`,
+        description: 'Professional portrait session with multiple outfit changes.',
+        status: 'sent' as const,
+        packages: JSON.stringify([
+          { id: 'pkg-portrait-premium', name: 'Portrait Extended', customPrice: 900, deliverables: ['2 hour session', '50+ edited photos'] },
+        ]),
+        portfolioLinks: JSON.stringify(['https://portfolio.example.com/portraits']),
+        terms: 'Full payment due at booking. Rescheduling allowed with 48 hours notice.',
+        totalValue: 900,
+        sentAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+        validUntil: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+      },
+      {
+        dealId: deals[2]?.id,
+        clientId: deals[2]?.clientId,
+        templateId: 'tpl-corporate',
+        title: `Corporate Event Coverage - ${deals[2]?.title || 'Project'}`,
+        description: 'Full day corporate event photography and videography.',
+        status: 'accepted' as const,
+        packages: JSON.stringify([
+          { id: 'pkg-corporate', name: 'Corporate Event', customPrice: 2000, deliverables: ['4 hours of coverage', '200+ edited photos'] },
+          { id: 'pkg-video-wedding', name: 'Wedding Cinematic', customPrice: 3500, deliverables: ['5-7 minute cinematic film'] },
+        ]),
+        portfolioLinks: JSON.stringify(['https://portfolio.example.com/corporate']),
+        terms: '50% deposit to confirm. Remaining upon delivery.',
+        totalValue: 5500,
+        sentAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+        viewedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+        respondedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+      },
+      {
+        dealId: deals[3]?.id || deals[0]?.id,
+        clientId: deals[3]?.clientId || deals[0]?.clientId,
+        templateId: 'tpl-wedding',
+        title: `Wedding Video Package - ${deals[3]?.title || deals[0]?.title || 'Project'}`,
+        description: 'Cinematic wedding film with drone footage.',
+        status: 'viewed' as const,
+        packages: JSON.stringify([
+          { id: 'pkg-video-wedding', name: 'Wedding Cinematic', customPrice: 4500, deliverables: ['8 hours of coverage', '5-7 minute cinematic film'] },
+        ]),
+        portfolioLinks: JSON.stringify(['https://vimeo.com/studio/weddings']),
+        terms: '30% deposit required. Delivery within 6 weeks.',
+        totalValue: 4500,
+        sentAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+        viewedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+        validUntil: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000),
+      },
+    ];
+
+    for (const proposalData of sampleProposals) {
+      if (proposalData.clientId && proposalData.dealId) {
+        await db.proposal.create({ data: proposalData as any });
+        console.log(`Created proposal: ${proposalData.title}`);
+      }
+    }
+  }
+
   console.log('Seed complete!');
 }
 

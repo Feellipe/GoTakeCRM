@@ -12,6 +12,7 @@ export async function GET(
       where: { id },
       include: {
         client: true,
+        deal: true,
         template: true,
       },
     });
@@ -62,6 +63,7 @@ export async function PUT(
       data: updateData,
       include: {
         client: true,
+        deal: true,
       },
     });
     return NextResponse.json(proposal);

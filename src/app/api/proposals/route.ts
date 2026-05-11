@@ -2,9 +2,18 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
 // GET all proposals
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const dealId = searchParams.get('dealId');
+
+    const where: Record<string, unknown> = {};
+    if (dealId) {
+      where.dealId = dealId;
+    }
+
     const proposals = await db.proposal.findMany({
+      where,
       include: {
         client: {
           select: {
@@ -13,6 +22,14 @@ export async function GET() {
             email: true,
             phone: true,
             avatar: true,
+          },
+        },
+        deal: {
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            value: true,
           },
         },
         template: {
@@ -38,6 +55,7 @@ export async function POST(request: Request) {
     const proposal = await db.proposal.create({
       data: {
         clientId: body.clientId,
+        dealId: body.dealId || null,
         templateId: body.templateId || null,
         title: body.title,
         description: body.description,
@@ -52,6 +70,7 @@ export async function POST(request: Request) {
       },
       include: {
         client: true,
+        deal: true,
       },
     });
     return NextResponse.json(proposal);

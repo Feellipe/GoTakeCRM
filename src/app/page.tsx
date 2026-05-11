@@ -207,6 +207,7 @@ interface Deal {
   title: string;
   status: string;
   value: number;
+  clientId?: string;
   client: {
     name: string;
     avatar: string | null;
@@ -338,6 +339,14 @@ export default function Dashboard() {
   
   // Settings trigger state
   const [triggerSettings, setTriggerSettings] = useState(false);
+
+  // Proposal from deal state
+  const [proposalFromDeal, setProposalFromDeal] = useState<{
+    id: string;
+    title: string;
+    clientId: string;
+    value: number;
+  } | null>(null);
 
   useEffect(() => {
     fetchDashboardData();
@@ -1322,6 +1331,15 @@ export default function Dashboard() {
                                 statusLabels={statusLabels}
                                 formatCurrency={formatCurrency}
                                 onClick={() => setSelectedDeal(deal)}
+                                onCreateProposal={() => {
+                                  setProposalFromDeal({
+                                    id: deal.id,
+                                    title: deal.title,
+                                    clientId: deal.clientId || deal.client.id || '',
+                                    value: deal.value,
+                                  });
+                                  setActiveView('proposals');
+                                }}
                               />
                             ))}
                           </SortableContext>
@@ -1364,7 +1382,15 @@ export default function Dashboard() {
 
         {/* Proposals View */}
         {activeView === 'proposals' && (
-          <ProposalsView clients={clients} />
+          <ProposalsView 
+            clients={clients} 
+            initialDeal={proposalFromDeal}
+            onProposalCreated={() => {
+              setProposalFromDeal(null);
+              fetchDeals();
+              fetchDashboardData();
+            }}
+          />
         )}
 
         {/* Financials View */}

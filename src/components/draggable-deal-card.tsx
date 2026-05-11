@@ -6,14 +6,17 @@ import { CSS } from '@dnd-kit/utilities';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, GripVertical } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ArrowRight, GripVertical, FileText } from 'lucide-react';
 
 interface Deal {
   id: string;
   title: string;
   status: string;
   value: number;
+  clientId?: string;
   client: {
+    id?: string;
     name: string;
     avatar: string | null;
   };
@@ -25,6 +28,8 @@ interface DraggableDealCardProps {
   statusLabels: Record<string, string>;
   formatCurrency: (value: number) => string;
   onClick: () => void;
+  onCreateProposal?: () => void;
+  hasProposal?: boolean;
 }
 
 export function DraggableDealCard({
@@ -33,6 +38,8 @@ export function DraggableDealCard({
   statusLabels,
   formatCurrency,
   onClick,
+  onCreateProposal,
+  hasProposal = false,
 }: DraggableDealCardProps) {
   const {
     attributes,
@@ -82,7 +89,29 @@ export function DraggableDealCard({
         </div>
         <div className="flex items-center justify-between">
           <p className="text-sm font-bold text-primary">{formatCurrency(deal.value)}</p>
-          <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="flex items-center gap-2">
+            {onCreateProposal && !hasProposal && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 px-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCreateProposal();
+                }}
+              >
+                <FileText className="w-3 h-3 mr-1" />
+                Proposal
+              </Button>
+            )}
+            {hasProposal && (
+              <Badge variant="secondary" className="text-xs">
+                <FileText className="w-3 h-3 mr-1" />
+                Proposal
+              </Badge>
+            )}
+            <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
         </div>
       </CardContent>
     </Card>

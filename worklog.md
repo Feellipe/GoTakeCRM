@@ -20,7 +20,7 @@ Building a CRM Dashboard MVP for filmmakers and photographers with glassmorphism
 6. Calendar
 
 ---
-## Current Project Status (Updated: Enhancement Round 7)
+## Current Project Status (Updated: Enhancement Round 8)
 
 ### Status Assessment
 - ✅ All 6 views working correctly (Dashboard, Clients, Pipeline, Proposals, Financials, Calendar)
@@ -40,126 +40,96 @@ Building a CRM Dashboard MVP for filmmakers and photographers with glassmorphism
 - ✅ Quick Actions FAB with keyboard shortcuts
 - ✅ Client Activity Timeline
 - ✅ Deal Proposals Page with templates and packages
-- ✅ **Expense Management (NEW)**
-- ✅ **Toast Notifications (NEW)**
-- ✅ **Expense CRUD Operations (NEW)**
+- ✅ Expense Management
+- ✅ Toast Notifications
+- ✅ Expense CRUD Operations
+- ✅ **Proposals linked to Deals (NEW)**
+- ✅ **Create Proposal from Pipeline Deal (NEW)**
+- ✅ **Sample proposals populated (NEW)**
 - ⚠️ Minor Recharts warning about ResponsiveContainer (non-critical)
 - ⚠️ Minor accessibility warning from Radix Dialog (dev-only)
 
-### QA Results (agent-browser testing - Round 7)
+### QA Results (agent-browser testing - Round 8)
 1. **Dashboard View** - ✅ PASS
-   - KPI cards render correctly with animations
-   - Animated background orbs visible
-   - Revenue/Expenses bar chart works
-   - Pipeline overview shows all 5 stages
-
 2. **Clients View** - ✅ PASS
-   - Client cards render with correct data
-   - Client detail modal with Activity Timeline
-
-3. **Pipeline View** - ✅ PASS
-   - Kanban columns render for all 5 stages
-   - Drag and drop deals between stages
-
-4. **Proposals View** - ✅ PASS
-   - Stats cards show Total/Drafts/Accepted/Total Value
-   - 3 Proposal Templates displayed
-   - Template cards clickable to create proposals
-
-5. **Financials View** - ✅ PASS (UPDATED)
-   - Financial KPIs display correctly
-   - Profit Trend chart works
-   - Expense Distribution pie chart renders
-   - **Expense Management section (NEW)**
-   - **Recent Expenses list with categories**
-   - **Add/Edit/Delete expense functionality**
-   - **Toast notifications for actions**
-
+3. **Pipeline View** - ✅ PASS (with Create Proposal button on deals)
+4. **Proposals View** - ✅ PASS (with linked deals, 4 sample proposals)
+5. **Financials View** - ✅ PASS
 6. **Calendar View** - ✅ PASS
-   - Weekly calendar grid displays
-   - Upcoming bookings sidebar populated
 
 ---
 ## Completed Modifications
 
-### Task ID: Enhancement Round 7
+### Task ID: Enhancement Round 8
 Agent: Development Agent
-Task: QA Testing, Expense Management, Toast Notifications
+Task: Link Proposals to Deals, Add Create Proposal from Pipeline
 
 Work Log:
-1. **QA Testing with agent-browser**
-   - Tested all 6 views
-   - Verified all existing functionality
-   - No runtime errors detected
+1. **Schema Update - Proposal-Deal Link**
+   - Added `dealId` field to Proposal model
+   - Added `proposals` relation to Deal model
+   - Optional link (a proposal can be linked to a deal)
 
-2. **Expense Management Feature (NEW)**
-   - Created ExpenseManager component
-   - Categories: Equipment, Location, Crew, Props, Travel, Software, Marketing, Other
-   - Category icons and color coding
-   - Add/Edit/Delete expense operations
-   - Link expenses to deals/projects
-   - Date picker for expense tracking
-   - Total expense calculation
-   - Animated expense cards with hover effects
+2. **API Updates**
+   - Updated `/api/proposals` to handle dealId
+   - Updated `/api/proposals/[id]` to include deal relation
+   - Added query parameter support for filtering by dealId
 
-3. **Expense API Routes (NEW)**
-   - `/api/expenses` - GET all expenses, POST new expense
-   - `/api/expenses/[id]` - GET, PUT, DELETE single expense
-   - Includes deal relationship for project linking
+3. **Seed Script Enhancement**
+   - Updated seed-proposals.ts to create sample proposals linked to existing deals
+   - Created 4 sample proposals with different statuses (draft, sent, accepted, viewed)
+   - Each proposal linked to a real deal from the database
 
-4. **Toast Notifications (NEW)**
-   - Integrated Sonner toaster component
-   - Position: bottom-right
-   - Rich colors and close button
-   - Success/error notifications for expense actions
+4. **ProposalsView Component Update**
+   - Added `initialDeal` prop for creating proposals from deals
+   - Added `onProposalCreated` callback
+   - Added deal display in proposal list and detail view
+   - Pre-fills client and title when creating from a deal
 
-5. **Enhanced Financials View**
-   - Added Expense Management section below charts
-   - Recent Expenses list with category icons
-   - Add Expense button with modal
-   - Expense cards with edit/delete actions
-   - Project linking for expenses
+5. **DraggableDealCard Component Update**
+   - Added "Proposal" button on hover for deals without proposals
+   - Shows "Proposal" badge for deals with existing proposals
+   - Links to Proposals view with deal context
+
+6. **Pipeline View Integration**
+   - Added state for proposalFromDeal
+   - Passes deal context when navigating to Proposals
+   - Refreshes data after proposal creation
 
 Stage Summary:
-- Expense Management fully implemented
-- Toast notifications working across app
-- Financials view now includes expense tracking
-- All CRUD operations for expenses working
-- Application tested via agent-browser
+- Proposals can now be linked to deals
+- 4 sample proposals created from existing deals
+- "Create Proposal" button added to deal cards in Pipeline
+- Proposal creation form pre-fills when coming from a deal
+- Deal information displayed in proposal list and detail views
 
 ---
 ## Files Created/Modified
 
-### New Files (Round 7)
-- `/src/components/expense-manager.tsx` - Expense management component
-- `/src/app/api/expenses/route.ts` - Expenses API
-- `/src/app/api/expenses/[id]/route.ts` - Single expense API
+### Modified Files (Round 8)
+- `/prisma/schema.prisma` - Added dealId to Proposal model
+- `/src/app/api/proposals/route.ts` - Added dealId support
+- `/src/app/api/proposals/[id]/route.ts` - Added deal relation
+- `/prisma/seed-proposals.ts` - Added sample proposal creation
+- `/src/components/proposals-view.tsx` - Added deal integration
+- `/src/components/draggable-deal-card.tsx` - Added proposal button
+- `/src/app/page.tsx` - Added proposalFromDeal state and handlers
 
-### Modified Files
-- `/src/app/page.tsx` - Integrated ExpenseManager and Toaster
-- `/src/components/ui/sonner.tsx` - Already available
+### Previous Rounds Summary
 
-### Screenshots (QA Verification Round 7)
-- `/home/z/my-project/download/qa-round7-dashboard.png`
-- `/home/z/my-project/download/qa-round7-proposals.png`
-- `/home/z/my-project/download/qa-round7-financials.png`
-- `/home/z/my-project/download/qa-round7-financials-expenses.png`
-- `/home/z/my-project/download/qa-round7-financials-full.png`
-
----
-## Previous Rounds Summary
+### Round 7 - Expense Management & Toast Notifications
+- ExpenseManager component
+- Expense API routes
+- Sonner toast notifications
 
 ### Round 6 - Deal Proposals Feature
 - Added Package, ProposalTemplate, Proposal models
 - Created Proposals view with 3 templates
 - 7 pre-registered service packages
-- Full proposal CRUD with custom pricing
-- Portfolio links integration
 
 ### Round 5 - Quick Actions & Activity Timeline
 - Quick Actions FAB with keyboard shortcuts
 - Client Activity Timeline component
-- Enhanced client modal
 
 ---
 ## Unresolved Issues or Risks
