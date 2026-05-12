@@ -15,23 +15,20 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "WhatsApp CRM Dashboard - For Filmmakers & Photographers",
+  title: "GoTakeCRM - CRM Dashboard - For Filmmakers & Photographers",
   description: "Modern CRM dashboard for filmmakers and photographers. Manage clients, track deals, schedule bookings, and monitor finances with beautiful glassmorphism design.",
-  keywords: ["CRM", "filmmakers", "photographers", "WhatsApp", "Next.js", "TypeScript", "Tailwind CSS", "shadcn/ui", "AI development", "React"],
-  authors: [{ name: "Z.ai Team" }],
-  icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
-  },
+  keywords: ["CRM", "filmmakers", "photographers", "WhatsApp", "Next.js", "TypeScript", "Tailwind CSS", "shadcn/ui", "React"],
+  authors: [{ name: "Felipe Albuquerque" }],
   openGraph: {
-    title: "WhatsApp CRM Dashboard",
+    title: "GoTakeFilm",
     description: "Beautiful CRM dashboard for filmmakers and photographers",
-    url: "https://chat.z.ai",
-    siteName: "Z.ai",
+    url: "https://gotakefilm.vercel.app",
+    siteName: "GoTakeFilm",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "WhatsApp CRM Dashboard",
+    title: "CRM Dashboard For Filmmakers and Photographers",
     description: "Beautiful CRM dashboard for filmmakers and photographers",
   },
 };

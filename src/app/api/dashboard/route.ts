@@ -57,7 +57,7 @@ export async function GET() {
     // Revenue by month (last 6 months)
     const now = new Date();
     
-    const monthlyRevenue = [];
+    const monthlyRevenue: { month: string; revenue: number; expenses: number; profit: number }[] = [];
     for (let i = 0; i < 6; i++) {
       const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);

@@ -41,8 +41,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 local-*
-.claude
+.claude/
 .z-ai-config
+.zscripts/
 *.log
 dev.log
 dev.out.log
@@ -52,3 +53,4 @@ prompt
 server.log
 # Skills directory
 /skills/
+
