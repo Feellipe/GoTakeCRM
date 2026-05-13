@@ -1,5 +1,10 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
+//
+// DEVELOPMENT: Uses SQLite (local file-based database)
+// PRODUCTION: Use schema.prod.prisma with PostgreSQL (Supabase)
+// To switch: copy schema.prod.prisma over this file, update DATABASE_URL,
+// and run: npx prisma migrate dev --name init
 
 generator client {
   provider = "prisma-client-js"
@@ -30,6 +35,8 @@ model Client {
   bookings    Booking[]
   documents   Document[]
   proposals   Proposal[]
+
+  @@index([status])
 }
 
 // Deal - the central entity linking all project data
@@ -52,6 +59,9 @@ model Deal {
   bookings    Booking[]
   documents   Document[]
   proposals   Proposal[]
+
+  @@index([status])
+  @@index([clientId])
 }
 
 // Briefing - creative requirements captured per project
@@ -81,6 +91,8 @@ model Expense {
 
   // Relations
   deal        Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@index([dealId])
 }
 
 // Revenue - project payments received
@@ -97,6 +109,8 @@ model Revenue {
 
   // Relations
   deal        Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@index([dealId])
 }
 
 // Conversation - WhatsApp conversation threads
@@ -143,6 +157,10 @@ model Booking {
   // Relations
   client          Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   deal            Deal?    @relation(fields: [dealId], references: [id], onDelete: SetNull)
+
+  @@index([eventDate])
+  @@index([status])
+  @@index([clientId])
 }
 
 // Document - PDFs generated and sent
