@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { validateOrThrow, ValidationError, validationErrorResponse, revenueUpdateSchema } from '@/lib/validations';
 
 // GET a single revenue by ID
 export async function GET(
@@ -46,21 +47,19 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const body = await request.json();
-    const { dealId, description, amount, currency, date, status } = body;
+    const rawBody = await request.json();
+    // Apenas campos validados pelo schema sao aceitos (protecao contra mass assignment)
+    const body = validateOrThrow(revenueUpdateSchema, rawBody);
 
-    const updateData: Record<string, unknown> = {};
-    
-    if (dealId !== undefined) updateData.dealId = dealId;
-    if (description !== undefined) updateData.description = description;
-    if (amount !== undefined) updateData.amount = parseFloat(amount);
-    if (currency !== undefined) updateData.currency = currency;
-    if (date !== undefined) updateData.date = new Date(date);
-    if (status !== undefined) updateData.status = status;
+    // Monta data com campos validados; converte data se fornecida
+    const data: Record<string, unknown> = { ...body };
+    if (body.date) {
+      data.date = new Date(body.date);
+    }
 
     const revenue = await db.revenue.update({
       where: { id },
-      data: updateData,
+      data,
       include: {
         deal: {
           include: {
@@ -80,6 +79,9 @@ export async function PUT(
 
     return NextResponse.json(revenue);
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error);
+    }
     console.error('Error updating revenue:', error);
     return NextResponse.json({ error: 'Failed to update revenue' }, { status: 500 });
   }

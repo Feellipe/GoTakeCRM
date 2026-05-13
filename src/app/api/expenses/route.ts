@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { validateOrThrow, ValidationError, validationErrorResponse, expenseCreateSchema } from '@/lib/validations';
 
 // GET all expenses
 export async function GET() {
@@ -30,14 +31,16 @@ export async function GET() {
 // POST create new expense
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const rawBody = await request.json();
+    const body = validateOrThrow(expenseCreateSchema, rawBody);
+
     const expense = await db.expense.create({
       data: {
-        dealId: body.dealId || null,
+        dealId: body.dealId,
         category: body.category,
         description: body.description,
         amount: body.amount,
-        currency: body.currency || 'BRL',
+        currency: body.currency,
         date: body.date ? new Date(body.date) : new Date(),
       },
       include: {
@@ -54,8 +57,11 @@ export async function POST(request: Request) {
         },
       },
     });
-    return NextResponse.json(expense);
+    return NextResponse.json(expense, { status: 201 });
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error);
+    }
     console.error('Error creating expense:', error);
     return NextResponse.json({ error: 'Failed to create expense' }, { status: 500 });
   }

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { validateOrThrow, ValidationError, validationErrorResponse, packageCreateSchema } from '@/lib/validations';
 
 // GET all packages
 export async function GET() {
@@ -18,21 +19,25 @@ export async function GET() {
 // POST create new package
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const rawBody = await request.json();
+    const body = validateOrThrow(packageCreateSchema, rawBody);
+
     const newPackage = await db.package.create({
       data: {
         name: body.name,
         description: body.description,
         price: body.price,
-        currency: body.currency || 'BRL',
-        deliverables: JSON.stringify(body.deliverables || []),
-        duration: body.duration || 4,
-        category: body.category || 'photography',
-        active: true,
+        deliverables: body.deliverables,
+        duration: body.duration,
+        category: body.category,
+        active: body.active,
       },
     });
-    return NextResponse.json(newPackage);
+    return NextResponse.json(newPackage, { status: 201 });
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error);
+    }
     console.error('Error creating package:', error);
     return NextResponse.json({ error: 'Failed to create package' }, { status: 500 });
   }

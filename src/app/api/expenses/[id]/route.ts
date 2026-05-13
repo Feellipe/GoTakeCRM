@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { validateOrThrow, ValidationError, validationErrorResponse, expenseUpdateSchema } from '@/lib/validations';
 
 // GET single expense
 export async function GET(
@@ -31,16 +32,18 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const body = await request.json();
+    const rawBody = await request.json();
+    const body = validateOrThrow(expenseUpdateSchema, rawBody);
+
+    // Monta data com campos validados; converte data se fornecida
+    const data: Record<string, unknown> = { ...body };
+    if (body.date) {
+      data.date = new Date(body.date);
+    }
+
     const expense = await db.expense.update({
       where: { id },
-      data: {
-        dealId: body.dealId || null,
-        category: body.category,
-        description: body.description,
-        amount: body.amount,
-        date: body.date ? new Date(body.date) : undefined,
-      },
+      data,
       include: {
         deal: {
           select: {
@@ -57,6 +60,9 @@ export async function PUT(
     });
     return NextResponse.json(expense);
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error);
+    }
     console.error('Error updating expense:', error);
     return NextResponse.json({ error: 'Failed to update expense' }, { status: 500 });
   }

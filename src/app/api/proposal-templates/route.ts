@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { validateOrThrow, ValidationError, validationErrorResponse, proposalTemplateCreateSchema } from '@/lib/validations';
 
 // GET all proposal templates
 export async function GET() {
@@ -23,19 +24,24 @@ export async function GET() {
 // POST create new template
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const rawBody = await request.json();
+    const body = validateOrThrow(proposalTemplateCreateSchema, rawBody);
+
     const template = await db.proposalTemplate.create({
       data: {
         name: body.name,
-        description: body.description,
-        defaultTerms: body.defaultTerms,
-        defaultPackages: body.defaultPackages ? JSON.stringify(body.defaultPackages) : null,
-        coverImage: body.coverImage,
-        isActive: true,
+        description: body.description ?? null,
+        defaultTerms: body.defaultTerms ?? null,
+        defaultPackages: body.defaultPackages ?? null,
+        coverImage: body.coverImage ?? null,
+        isActive: body.isActive,
       },
     });
-    return NextResponse.json(template);
+    return NextResponse.json(template, { status: 201 });
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error);
+    }
     console.error('Error creating template:', error);
     return NextResponse.json({ error: 'Failed to create template' }, { status: 500 });
   }

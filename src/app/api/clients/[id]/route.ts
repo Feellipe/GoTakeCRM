@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { validateOrThrow, ValidationError, validationErrorResponse, clientUpdateSchema } from '@/lib/validations';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
@@ -39,24 +40,20 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const body = await request.json();
-    
+    const rawBody = await request.json();
+    const body = validateOrThrow(clientUpdateSchema, rawBody);
+
+    // Apenas campos validados sao repassados ao Prisma (protecao contra mass assignment)
     const client = await db.client.update({
       where: { id },
-      data: {
-        phone: body.phone,
-        name: body.name,
-        email: body.email || null,
-        eventType: body.eventType,
-        notes: body.notes || null,
-        source: body.source,
-        status: body.status,
-        avatar: body.avatar || null,
-      },
+      data: body,
     });
 
     return NextResponse.json(client);
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error);
+    }
     console.error('Error updating client:', error);
     return NextResponse.json({ error: 'Failed to update client' }, { status: 500 });
   }
@@ -68,22 +65,21 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    
-    // First delete related records
-    await db.document.deleteMany({ where: { clientId: id } });
-    await db.booking.deleteMany({ where: { clientId: id } });
-    
-    // Get deals to delete related records
+
+    // Busca deals relacionados para excluir registros associados dentro da transacao
     const deals = await db.deal.findMany({ where: { clientId: id } });
     const dealIds = deals.map(d => d.id);
-    
-    await db.briefing.deleteMany({ where: { dealId: { in: dealIds } } });
-    await db.expense.deleteMany({ where: { dealId: { in: dealIds } } });
-    await db.revenue.deleteMany({ where: { dealId: { in: dealIds } } });
-    await db.deal.deleteMany({ where: { clientId: id } });
-    
-    // Finally delete the client
-    await db.client.delete({ where: { id } });
+
+    // Todas as exclusoes em cascata dentro de uma unica transacao
+    await db.$transaction([
+      db.document.deleteMany({ where: { clientId: id } }),
+      db.booking.deleteMany({ where: { clientId: id } }),
+      db.briefing.deleteMany({ where: { dealId: { in: dealIds } } }),
+      db.expense.deleteMany({ where: { dealId: { in: dealIds } } }),
+      db.revenue.deleteMany({ where: { dealId: { in: dealIds } } }),
+      db.deal.deleteMany({ where: { clientId: id } }),
+      db.client.delete({ where: { id } }),
+    ]);
 
     return NextResponse.json({ success: true });
   } catch (error) {

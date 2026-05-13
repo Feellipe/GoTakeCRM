@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { validateOrThrow, ValidationError, validationErrorResponse, proposalUpdateSchema } from '@/lib/validations';
 
 // GET single proposal
 export async function GET(
@@ -33,28 +34,24 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const body = await request.json();
+    const rawBody = await request.json();
+    // Apenas campos validados pelo schema sao aceitos (protecao contra mass assignment)
+    const body = validateOrThrow(proposalUpdateSchema, rawBody);
 
+    // Monta data com campos validados; converte validUntil se fornecido
     const updateData: Record<string, unknown> = {
-      title: body.title,
-      description: body.description,
-      status: body.status,
-      packages: JSON.stringify(body.packages || []),
-      customItems: body.customItems ? JSON.stringify(body.customItems) : null,
-      portfolioLinks: body.portfolioLinks ? JSON.stringify(body.portfolioLinks) : null,
-      terms: body.terms,
+      ...body,
       validUntil: body.validUntil ? new Date(body.validUntil) : null,
-      totalValue: body.totalValue,
-      notes: body.notes,
     };
 
-    if (body.status === 'sent' && !body.sentAt) {
+    // Define timestamps automaticos conforme transicao de status
+    if (body.status === 'sent') {
       updateData.sentAt = new Date();
     }
-    if (body.status === 'viewed' && !body.viewedAt) {
+    if (body.status === 'viewed') {
       updateData.viewedAt = new Date();
     }
-    if (['accepted', 'rejected'].includes(body.status) && !body.respondedAt) {
+    if (body.status === 'accepted' || body.status === 'rejected') {
       updateData.respondedAt = new Date();
     }
 
@@ -68,6 +65,9 @@ export async function PUT(
     });
     return NextResponse.json(proposal);
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error);
+    }
     console.error('Error updating proposal:', error);
     return NextResponse.json({ error: 'Failed to update proposal' }, { status: 500 });
   }

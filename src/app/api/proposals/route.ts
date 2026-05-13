@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { validateOrThrow, ValidationError, validationErrorResponse, proposalCreateSchema } from '@/lib/validations';
 
 // GET all proposals with optional dealId filter
 export async function GET(request: Request) {
@@ -51,30 +52,36 @@ export async function GET(request: Request) {
 // POST create new proposal
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const rawBody = await request.json();
+    const body = validateOrThrow(proposalCreateSchema, rawBody);
+
     const proposal = await db.proposal.create({
       data: {
         clientId: body.clientId,
-        dealId: body.dealId || null,
-        templateId: body.templateId || null,
+        dealId: body.dealId ?? null,
+        templateId: body.templateId ?? null,
         title: body.title,
-        description: body.description,
-        status: 'draft',
-        packages: JSON.stringify(body.packages || []),
-        customItems: body.customItems ? JSON.stringify(body.customItems) : null,
-        portfolioLinks: body.portfolioLinks ? JSON.stringify(body.portfolioLinks) : null,
-        terms: body.terms,
+        description: body.description ?? null,
+        status: body.status,
+        packages: body.packages,
+        customItems: body.customItems ?? null,
+        portfolioLinks: body.portfolioLinks ?? null,
+        terms: body.terms ?? null,
         validUntil: body.validUntil ? new Date(body.validUntil) : null,
-        totalValue: body.totalValue || 0,
-        notes: body.notes,
+        totalValue: body.totalValue,
+        currency: body.currency,
+        notes: body.notes ?? null,
       },
       include: {
         client: true,
         deal: true,
       },
     });
-    return NextResponse.json(proposal);
+    return NextResponse.json(proposal, { status: 201 });
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error);
+    }
     console.error('Error creating proposal:', error);
     return NextResponse.json({ error: 'Failed to create proposal' }, { status: 500 });
   }

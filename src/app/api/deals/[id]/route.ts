@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { validateOrThrow, ValidationError, validationErrorResponse, dealUpdateSchema } from '@/lib/validations';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
@@ -47,17 +48,13 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const body = await request.json();
-    
+    const rawBody = await request.json();
+    // Apenas campos validados pelo schema sao repassados (protecao contra mass assignment)
+    const body = validateOrThrow(dealUpdateSchema, rawBody);
+
     const deal = await db.deal.update({
       where: { id },
-      data: {
-        title: body.title,
-        description: body.description || null,
-        status: body.status,
-        value: body.value,
-        clientId: body.clientId,
-      },
+      data: body,
       include: {
         client: true,
       },
@@ -65,6 +62,9 @@ export async function PUT(
 
     return NextResponse.json(deal);
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error);
+    }
     console.error('Error updating deal:', error);
     return NextResponse.json({ error: 'Failed to update deal' }, { status: 500 });
   }
@@ -76,16 +76,16 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    
-    // Delete related records first
-    await db.briefing.deleteMany({ where: { dealId: id } });
-    await db.expense.deleteMany({ where: { dealId: id } });
-    await db.revenue.deleteMany({ where: { dealId: id } });
-    await db.booking.deleteMany({ where: { dealId: id } });
-    await db.document.deleteMany({ where: { dealId: id } });
-    
-    // Delete the deal
-    await db.deal.delete({ where: { id } });
+
+    // Todas as exclusoes em cascata dentro de uma unica transacao
+    await db.$transaction([
+      db.briefing.deleteMany({ where: { dealId: id } }),
+      db.expense.deleteMany({ where: { dealId: id } }),
+      db.revenue.deleteMany({ where: { dealId: id } }),
+      db.booking.deleteMany({ where: { dealId: id } }),
+      db.document.deleteMany({ where: { dealId: id } }),
+      db.deal.delete({ where: { id } }),
+    ]);
 
     return NextResponse.json({ success: true });
   } catch (error) {

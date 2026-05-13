@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { validateOrThrow, ValidationError, validationErrorResponse, clientCreateSchema } from '@/lib/validations';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
@@ -61,23 +62,27 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    
+    const rawBody = await request.json();
+    const body = validateOrThrow(clientCreateSchema, rawBody);
+
     const client = await db.client.create({
       data: {
         phone: body.phone,
         name: body.name,
-        email: body.email || null,
+        email: body.email ?? null,
         eventType: body.eventType,
-        notes: body.notes || null,
-        source: body.source || 'whatsapp',
-        status: body.status || 'lead',
-        avatar: body.avatar || null,
+        notes: body.notes ?? null,
+        source: body.source,
+        status: body.status,
+        avatar: body.avatar ?? null,
       },
     });
 
-    return NextResponse.json(client);
+    return NextResponse.json(client, { status: 201 });
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error);
+    }
     console.error('Error creating client:', error);
     return NextResponse.json({ error: 'Failed to create client' }, { status: 500 });
   }

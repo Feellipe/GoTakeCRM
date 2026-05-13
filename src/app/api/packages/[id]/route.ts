@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { validateOrThrow, ValidationError, validationErrorResponse, packageUpdateSchema } from '@/lib/validations';
 
 // GET single package
 export async function GET(
@@ -28,22 +29,19 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const body = await request.json();
+    const rawBody = await request.json();
+    // Apenas campos validados pelo schema sao repassados (protecao contra mass assignment)
+    const body = validateOrThrow(packageUpdateSchema, rawBody);
+
     const updatedPackage = await db.package.update({
       where: { id },
-      data: {
-        name: body.name,
-        description: body.description,
-        price: body.price,
-        currency: body.currency,
-        deliverables: JSON.stringify(body.deliverables || []),
-        duration: body.duration,
-        category: body.category,
-        active: body.active,
-      },
+      data: body,
     });
     return NextResponse.json(updatedPackage);
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error);
+    }
     console.error('Error updating package:', error);
     return NextResponse.json({ error: 'Failed to update package' }, { status: 500 });
   }

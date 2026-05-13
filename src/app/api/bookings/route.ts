@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { validateOrThrow, ValidationError, validationErrorResponse, bookingCreateSchema } from '@/lib/validations';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
@@ -39,26 +40,30 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    
+    const rawBody = await request.json();
+    const body = validateOrThrow(bookingCreateSchema, rawBody);
+
     const booking = await db.booking.create({
       data: {
         clientId: body.clientId,
-        dealId: body.dealId || null,
+        dealId: body.dealId ?? null,
         eventType: body.eventType,
         eventDate: new Date(body.eventDate),
-        duration: body.duration || 60,
-        location: body.location || null,
-        status: body.status || 'pending',
-        notes: body.notes || null,
+        duration: body.duration,
+        location: body.location ?? null,
+        status: body.status,
+        notes: body.notes ?? null,
       },
       include: {
         client: true,
       },
     });
 
-    return NextResponse.json(booking);
+    return NextResponse.json(booking, { status: 201 });
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error);
+    }
     console.error('Error creating booking:', error);
     return NextResponse.json({ error: 'Failed to create booking' }, { status: 500 });
   }

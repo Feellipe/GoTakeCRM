@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { validateOrThrow, ValidationError, validationErrorResponse, revenueCreateSchema } from '@/lib/validations';
 
 // GET all revenues
 export async function GET(request: NextRequest) {
@@ -41,21 +42,17 @@ export async function GET(request: NextRequest) {
 // POST create a new revenue
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { dealId, description, amount, currency, date, status } = body;
-
-    if (!dealId || amount === undefined) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-    }
+    const rawBody = await request.json();
+    const body = validateOrThrow(revenueCreateSchema, rawBody);
 
     const revenue = await db.revenue.create({
       data: {
-        dealId,
-        description: description || null,
-        amount: parseFloat(amount),
-        currency: currency || 'BRL',
-        date: date ? new Date(date) : new Date(),
-        status: status || 'received',
+        dealId: body.dealId,
+        description: body.description ?? null,
+        amount: body.amount,
+        currency: body.currency,
+        date: body.date ? new Date(body.date) : new Date(),
+        status: body.status,
       },
       include: {
         deal: {
@@ -76,6 +73,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(revenue, { status: 201 });
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error);
+    }
     console.error('Error creating revenue:', error);
     return NextResponse.json({ error: 'Failed to create revenue' }, { status: 500 });
   }

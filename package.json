@@ -11,6 +11,9 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset",
+    "db:push:prod": "prisma db push --schema=prisma/schema.prod.prisma",
+    "db:generate:prod": "prisma generate --schema=prisma/schema.prod.prisma",
+    "db:migrate:prod": "prisma migrate deploy --schema=prisma/schema.prod.prisma",
     "postinstall": "prisma generate"
   },
   "dependencies": {
