@@ -31,6 +31,7 @@ import {
   closestCenter,
   KeyboardSensor,
   PointerSensor,
+  useDroppable,
   useSensor,
   useSensors,
   DragEndEvent,
@@ -40,6 +41,21 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
+
+// Componente de zona droppável para colunas do pipeline
+function DroppableColumn({ id, children }: { id: string; children: React.ReactNode }) {
+  const { setNodeRef, isOver } = useDroppable({ id });
+  return (
+    <div
+      ref={setNodeRef}
+      className={`space-y-3 flex-1 min-h-[100px] rounded-xl border-2 border-dashed p-1 transition-colors ${
+        isOver ? 'border-primary/50 bg-primary/5' : 'border-transparent'
+      }`}
+    >
+      {children}
+    </div>
+  );
+}
 
 export default function PipelinePage() {
   const { deals, fetchDeals, fetchDashboardData, setEditingDeal, setShowDealModal, clients } = useDashboard();
@@ -63,6 +79,9 @@ export default function PipelinePage() {
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
+      activationConstraint: {
+        distance: 8,
+      },
     })
   );
 
@@ -131,10 +150,7 @@ export default function PipelinePage() {
                   </div>
 
                   {/* Deal Cards - Droppable Zone */}
-                  <div
-                    id={status}
-                    className="space-y-3 flex-1 min-h-[100px] rounded-xl border-2 border-dashed border-transparent p-1"
-                  >
+                  <DroppableColumn id={status}>
                     <SortableContext
                       items={stageDeals.map(d => d.id)}
                       strategy={verticalListSortingStrategy}
@@ -165,8 +181,7 @@ export default function PipelinePage() {
                         <p className="text-sm text-muted-foreground">Add deal</p>
                       </div>
                     )}
-                  </div>
-                </div>
+                  </DroppableColumn>
               );
             })}
           </div>

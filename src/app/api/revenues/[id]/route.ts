@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { validateOrThrow, ValidationError, validationErrorResponse, revenueUpdateSchema } from '@/lib/validations';
+import { validateOrThrow, ValidationError, validationErrorResponse, revenueUpdateSchema, validateOrigin } from '@/lib/validations';
 
 // GET a single revenue by ID
 export async function GET(
@@ -47,6 +47,9 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
+    if (!validateOrigin(request)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     const rawBody = await request.json();
     // Apenas campos validados pelo schema sao aceitos (protecao contra mass assignment)
     const body = validateOrThrow(revenueUpdateSchema, rawBody);
@@ -94,7 +97,10 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    
+    if (!validateOrigin(request)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     await db.revenue.delete({
       where: { id },
     });

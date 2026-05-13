@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { validateOrThrow, ValidationError, validationErrorResponse, proposalUpdateSchema } from '@/lib/validations';
+import { validateOrThrow, ValidationError, validationErrorResponse, proposalUpdateSchema, validateOrigin } from '@/lib/validations';
 
 // GET single proposal
 export async function GET(
@@ -34,6 +34,9 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
+    if (!validateOrigin(request)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     const rawBody = await request.json();
     // Apenas campos validados pelo schema sao aceitos (protecao contra mass assignment)
     const body = validateOrThrow(proposalUpdateSchema, rawBody);
@@ -80,6 +83,9 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+    if (!validateOrigin(request)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     await db.proposal.delete({
       where: { id },
     });

@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { validateOrThrow, ValidationError, validationErrorResponse, clientUpdateSchema } from '@/lib/validations';
+import { validateOrThrow, ValidationError, validationErrorResponse, clientUpdateSchema, validateOrigin } from '@/lib/validations';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
@@ -40,6 +40,9 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
+    if (!validateOrigin(request)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     const rawBody = await request.json();
     const body = validateOrThrow(clientUpdateSchema, rawBody);
 
@@ -65,6 +68,9 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+    if (!validateOrigin(request)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     // Busca deals relacionados para excluir registros associados dentro da transacao
     const deals = await db.deal.findMany({ where: { clientId: id } });

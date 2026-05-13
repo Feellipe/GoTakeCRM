@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { validateOrThrow, ValidationError, validationErrorResponse, expenseUpdateSchema } from '@/lib/validations';
+import { validateOrThrow, ValidationError, validationErrorResponse, expenseUpdateSchema, validateOrigin } from '@/lib/validations';
 
 // GET single expense
 export async function GET(
@@ -32,6 +32,9 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
+    if (!validateOrigin(request)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     const rawBody = await request.json();
     const body = validateOrThrow(expenseUpdateSchema, rawBody);
 
@@ -75,6 +78,9 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+    if (!validateOrigin(request)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     await db.expense.delete({
       where: { id },
     });

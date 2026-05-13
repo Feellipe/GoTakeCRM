@@ -1,3 +1,13 @@
+// PRODUCTION DEPLOYMENT NOTE:
+// Before deploying to production, regenerate the Prisma client with:
+//   npx prisma generate --schema=prisma/schema.prod.prisma
+// This switches from SQLite to PostgreSQL client code.
+// Ensure DATABASE_URL is set to your Supabase PostgreSQL connection string.
+
+if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL environment variable is required in production');
+}
+
 import { PrismaClient } from '@prisma/client'
 
 const globalForPrisma = globalThis as unknown as {

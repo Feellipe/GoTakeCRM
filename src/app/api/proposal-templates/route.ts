@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { validateOrThrow, ValidationError, validationErrorResponse, proposalTemplateCreateSchema } from '@/lib/validations';
+import { validateOrThrow, ValidationError, validationErrorResponse, proposalTemplateCreateSchema, validateOrigin } from '@/lib/validations';
 
 // GET all proposal templates
 export async function GET() {
@@ -24,6 +24,9 @@ export async function GET() {
 // POST create new template
 export async function POST(request: Request) {
   try {
+    if (!validateOrigin(request)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     const rawBody = await request.json();
     const body = validateOrThrow(proposalTemplateCreateSchema, rawBody);
 

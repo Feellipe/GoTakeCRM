@@ -1,6 +1,17 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
+// Validacao de variaveis de ambiente obrigatórias para autenticacao
+const requiredEnvVars = ['NEXTAUTH_SECRET', 'NEXTAUTH_GOOGLE_ID', 'NEXTAUTH_GOOGLE_SECRET'] as const;
+const missing = requiredEnvVars.filter(v => !process.env[v]);
+if (missing.length > 0) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+  } else {
+    console.warn(`Warning: Missing environment variables: ${missing.join(', ')}`);
+  }
+}
+
 const handler = NextAuth({
   providers: [
     GoogleProvider({

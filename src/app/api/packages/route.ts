@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { validateOrThrow, ValidationError, validationErrorResponse, packageCreateSchema } from '@/lib/validations';
+import { validateOrThrow, ValidationError, validationErrorResponse, packageCreateSchema, validateOrigin } from '@/lib/validations';
 
 // GET all packages
 export async function GET() {
@@ -19,6 +19,9 @@ export async function GET() {
 // POST create new package
 export async function POST(request: Request) {
   try {
+    if (!validateOrigin(request)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     const rawBody = await request.json();
     const body = validateOrThrow(packageCreateSchema, rawBody);
 

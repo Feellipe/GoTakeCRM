@@ -279,3 +279,12 @@ export function validationErrorResponse(error: ValidationError) {
     { status: 422 }
   );
 }
+
+export function validateOrigin(request: Request): boolean {
+  if (process.env.NODE_ENV === 'development') return true;
+  const origin = request.headers.get('origin');
+  const host = request.headers.get('host');
+  if (!origin && !host) return false;
+  if (origin && host && !origin.includes(host)) return false;
+  return true;
+}

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { validateOrThrow, ValidationError, validationErrorResponse, proposalCreateSchema } from '@/lib/validations';
+import { validateOrThrow, ValidationError, validationErrorResponse, proposalCreateSchema, validateOrigin } from '@/lib/validations';
 
 // GET all proposals with optional dealId filter
 export async function GET(request: Request) {
@@ -52,6 +52,9 @@ export async function GET(request: Request) {
 // POST create new proposal
 export async function POST(request: Request) {
   try {
+    if (!validateOrigin(request)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     const rawBody = await request.json();
     const body = validateOrThrow(proposalCreateSchema, rawBody);
 

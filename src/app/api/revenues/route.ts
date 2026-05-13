@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { validateOrThrow, ValidationError, validationErrorResponse, revenueCreateSchema } from '@/lib/validations';
+import { validateOrThrow, ValidationError, validationErrorResponse, revenueCreateSchema, validateOrigin } from '@/lib/validations';
 
 // GET all revenues
 export async function GET(request: NextRequest) {
@@ -42,6 +42,9 @@ export async function GET(request: NextRequest) {
 // POST create a new revenue
 export async function POST(request: NextRequest) {
   try {
+    if (!validateOrigin(request)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     const rawBody = await request.json();
     const body = validateOrThrow(revenueCreateSchema, rawBody);
 

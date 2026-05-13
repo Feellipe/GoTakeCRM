@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { validateOrThrow, ValidationError, validationErrorResponse, dealUpdateSchema } from '@/lib/validations';
+import { validateOrThrow, ValidationError, validationErrorResponse, dealUpdateSchema, validateOrigin } from '@/lib/validations';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
@@ -48,13 +48,19 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
+    if (!validateOrigin(request)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     const rawBody = await request.json();
     // Apenas campos validados pelo schema sao repassados (protecao contra mass assignment)
     const body = validateOrThrow(dealUpdateSchema, rawBody);
 
+    // Destruturação explicita para whitelist de campos atualizáveis
+    const { title, description, status, value, currency } = body;
+
     const deal = await db.deal.update({
       where: { id },
-      data: body,
+      data: { title, description, status, value, currency },
       include: {
         client: true,
       },
@@ -76,6 +82,9 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+    if (!validateOrigin(request)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     // Todas as exclusoes em cascata dentro de uma unica transacao
     await db.$transaction([

@@ -50,6 +50,23 @@
 | 4.9 | Clean up metadata (add proper favicon, finalize OpenGraph) | Low | Low |
 | 4.10 | Add robots.txt and sitemap.xml | Low | Low |
 
+### Phase 2.8: Code Review Remediation
+
+Issues discovered during the Phase 3 code review. Medium-1 (rate limiting), Medium-5 (missing NEXTAUTH_URL), and all LOW findings were explicitly excluded.
+
+| # | Task | Priority | Effort |
+|---|------|----------|--------|
+| CRITICAL-1 | **Auth secret validation missing** -- `src/app/api/auth/[...nextauth]/route.ts` -- Add startup validation that `NEXTAUTH_SECRET`, `NEXTAUTH_GOOGLE_ID`, and `NEXTAUTH_GOOGLE_SECRET` are set. Throw a clear error if missing in production. | Critical | Low |
+| CRITICAL-2 | **Mass assignment still possible in PUT /api/deals/[id]** -- `src/app/api/deals/[id]/route.ts` -- The route spreads the entire request body into the Prisma update. Whitelist only the safe fields (`title`, `description`, `status`, `value`, `currency`) instead of spreading all input. | Critical | Low |
+| HIGH-1 | **Missing try/catch in middleware** -- `src/middleware.ts` -- Wrap the entire middleware handler in try/catch. If auth check fails, redirect to sign-in page instead of returning 500. | High | Low |
+| HIGH-2 | **Pipeline drag-and-drop missing useDroppable** -- `src/app/(dashboard)/pipeline/page.tsx` -- Kanban columns use plain divs as drop zones. Wrap each column's droppable area with @dnd-kit's `useDroppable` hook for reliable drop detection. | High | Medium |
+| HIGH-3 | **KeyboardSensor missing activation constraint** -- `src/app/(dashboard)/pipeline/page.tsx` -- Add `activationConstraint: { distance: 8 }` to KeyboardSensor to prevent accidental moves. | High | Low |
+| HIGH-4 | **Production schema not used at runtime** -- `src/lib/db.ts` -- The db.ts only switches `DATABASE_URL` in production but still uses the SQLite-generated Prisma client. Need to document that `prisma generate` must be run with the prod schema before deploying, or add a schema selection mechanism. | High | Medium |
+| MEDIUM-2 | **Dashboard layout over-fetches data** -- `src/app/(dashboard)/layout.tsx` -- Fetches all clients and deals on mount regardless of which page is active. Consider lazy-loading or only fetching what each page needs. | Medium | Medium |
+| MEDIUM-3 | **No error boundaries per route** -- `src/app/(dashboard)/` routes -- Each route under `(dashboard)/` should have its own `error.tsx` and `loading.tsx` for granular error handling. | Medium | Medium |
+| MEDIUM-4 | **Calendar page has no month navigation** -- `src/app/(dashboard)/calendar/page.tsx` -- Currently hardcoded to "this week" only. Add prev/next week navigation and current month view. | Medium | Medium |
+| MEDIUM-6 | **No CSRF protection on state-changing routes** -- All POST/PUT/DELETE API routes -- Add origin/referer checking or use NextAuth CSRF tokens for state-changing operations. | Medium | Medium |
+
 ### Future Phases (Out of Scope for Now)
 
 | Feature | Status |

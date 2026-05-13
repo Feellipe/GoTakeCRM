@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { validateOrThrow, ValidationError, validationErrorResponse, expenseCreateSchema } from '@/lib/validations';
+import { validateOrThrow, ValidationError, validationErrorResponse, expenseCreateSchema, validateOrigin } from '@/lib/validations';
 
 // GET all expenses
 export async function GET() {
@@ -31,6 +31,9 @@ export async function GET() {
 // POST create new expense
 export async function POST(request: Request) {
   try {
+    if (!validateOrigin(request)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     const rawBody = await request.json();
     const body = validateOrThrow(expenseCreateSchema, rawBody);
 

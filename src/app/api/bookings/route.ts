@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { validateOrThrow, ValidationError, validationErrorResponse, bookingCreateSchema } from '@/lib/validations';
+import { validateOrThrow, ValidationError, validationErrorResponse, bookingCreateSchema, validateOrigin } from '@/lib/validations';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
@@ -40,6 +40,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    if (!validateOrigin(request)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     const rawBody = await request.json();
     const body = validateOrThrow(bookingCreateSchema, rawBody);
 

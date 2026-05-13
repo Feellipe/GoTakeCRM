@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { validateOrThrow, ValidationError, validationErrorResponse, packageUpdateSchema } from '@/lib/validations';
+import { validateOrThrow, ValidationError, validationErrorResponse, packageUpdateSchema, validateOrigin } from '@/lib/validations';
 
 // GET single package
 export async function GET(
@@ -29,6 +29,9 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
+    if (!validateOrigin(request)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     const rawBody = await request.json();
     // Apenas campos validados pelo schema sao repassados (protecao contra mass assignment)
     const body = validateOrThrow(packageUpdateSchema, rawBody);
@@ -54,6 +57,9 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+    if (!validateOrigin(request)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     await db.package.delete({
       where: { id },
     });

@@ -139,6 +139,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   };
 
+  // TODO (Phase 3): Consider lazy-loading data per page instead of fetching all on mount
   // Initial data load
   useEffect(() => {
     const load = async () => {
