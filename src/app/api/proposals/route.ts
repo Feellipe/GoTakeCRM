@@ -1,9 +1,13 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { validateOrThrow, ValidationError, validationErrorResponse, proposalCreateSchema, validateOrigin } from '@/lib/validations';
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 // GET all proposals with optional dealId filter
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+  const rl = rateLimit(request, { limit: 100, windowMs: 60_000 });
+  if (!rl.success) return rateLimitResponse(rl.resetAt);
+
   try {
     const { searchParams } = new URL(request.url);
     const dealId = searchParams.get('dealId');
@@ -50,7 +54,10 @@ export async function GET(request: Request) {
 }
 
 // POST create new proposal
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const rl = rateLimit(request, { limit: 20, windowMs: 60_000 });
+  if (!rl.success) return rateLimitResponse(rl.resetAt);
+
   try {
     if (!validateOrigin(request)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });

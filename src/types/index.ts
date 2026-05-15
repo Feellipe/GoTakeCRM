@@ -67,11 +67,11 @@ export interface DashboardData {
     totalClients: number;
   };
   dealsByStatus: {
-    novo: number;
+    new: number;
     briefing: number;
-    contando: number;
-    producao: number;
-    finalizado: number;
+    quoting: number;
+    production: number;
+    completed: number;
   };
   monthlyRevenue: Array<{ month: string; revenue: number; expenses: number; profit: number }>;
   expensesByCategory: Array<{ category: string; amount: number }>;
@@ -86,8 +86,8 @@ export interface DashboardData {
   }>;
   topClients: Array<{ name: string; value: number; deals: number }>;
   pipeline: {
-    novo: AppDeal[]; briefing: AppDeal[]; contando: AppDeal[];
-    producao: AppDeal[]; finalizado: AppDeal[];
+    new: AppDeal[]; briefing: AppDeal[]; quoting: AppDeal[];
+    production: AppDeal[]; completed: AppDeal[];
   };
 }
 

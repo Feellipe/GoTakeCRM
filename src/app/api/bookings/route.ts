@@ -1,8 +1,12 @@
 import { db } from '@/lib/db';
 import { validateOrThrow, ValidationError, validationErrorResponse, bookingCreateSchema, validateOrigin } from '@/lib/validations';
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
+  const rl = rateLimit(request, { limit: 100, windowMs: 60_000 });
+  if (!rl.success) return rateLimitResponse(rl.resetAt);
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const status = searchParams.get('status') || '';
@@ -39,6 +43,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const rl = rateLimit(request, { limit: 20, windowMs: 60_000 });
+  if (!rl.success) return rateLimitResponse(rl.resetAt);
+
   try {
     if (!validateOrigin(request)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });

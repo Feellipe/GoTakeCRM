@@ -1,67 +1,115 @@
 import { db } from '@/lib/db';
-import { NextResponse } from 'next/server';
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const rl = rateLimit(request, { limit: 100, windowMs: 60_000 });
+  if (!rl.success) return rateLimitResponse(rl.resetAt);
+
   try {
-    // Get all deals with client info
-    const deals = await db.deal.findMany({
-      include: {
-        client: true,
-        briefings: true,
-        expenses: true,
-        revenue: true,
-      },
-    });
+    // Paraleliza todas as chamadas ao banco (async-parallel)
+    const [
+      deals,
+      clients,
+      bookings,
+      expenses,
+      revenue,
+      totalRevenueAgg,
+      totalExpensesAgg,
+      pipelineValueAgg,
+      activeClientsCount,
+      totalDealsCount,
+      totalClientsCount,
+      dealsByStatusRaw,
+      expensesByCategoryRaw,
+    ] = await Promise.all([
+      // Dados completos necessarios para upcomingBookings, recentDeals, topClients, pipeline
+      db.deal.findMany({
+        include: {
+          client: true,
+          briefings: true,
+          expenses: true,
+          revenue: true,
+        },
+      }),
+      db.client.findMany(),
+      db.booking.findMany({
+        include: { client: true },
+        orderBy: { eventDate: 'asc' },
+      }),
+      db.expense.findMany(),
+      db.revenue.findMany(),
 
-    // Get all clients
-    const clients = await db.client.findMany();
+      // Agregacoes Prisma (substituem filtros/reduces JS)
+      db.revenue.aggregate({
+        _sum: { amount: true },
+        where: { status: 'received' },
+      }),
+      db.expense.aggregate({
+        _sum: { amount: true },
+      }),
+      db.deal.aggregate({
+        _sum: { value: true },
+        where: { status: { not: 'completed' } },
+      }),
+      db.client.count({
+        where: { status: 'active' },
+      }),
+      db.deal.count(),
+      db.client.count(),
 
-    // Get all bookings
-    const bookings = await db.booking.findMany({
-      include: {
-        client: true,
-      },
-      orderBy: {
-        eventDate: 'asc',
-      },
-    });
+      // groupBy para deals por status
+      db.deal.groupBy({
+        by: ['status'],
+        _count: true,
+      }),
 
-    // Get all expenses
-    const expenses = await db.expense.findMany();
+      // groupBy para expenses por categoria (somente amount > 0)
+      db.expense.groupBy({
+        by: ['category'],
+        _sum: { amount: true },
+        where: { amount: { gt: 0 } },
+      }),
+    ]);
 
-    // Get all revenue
-    const revenue = await db.revenue.findMany();
+    // Extrai resultados das agregacoes
+    const totalRevenue = totalRevenueAgg._sum.amount ?? 0;
+    const totalExpenses = totalExpensesAgg._sum.amount ?? 0;
+    const pipelineValue = pipelineValueAgg._sum.value ?? 0;
+    const activeClients = activeClientsCount;
+    const totalDeals = totalDealsCount;
+    const totalClients = totalClientsCount;
 
-    // Calculate KPIs
-    const totalRevenue = revenue
-      .filter(r => r.status === 'received')
-      .reduce((sum, r) => sum + r.amount, 0);
-
-    const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
-
-    const pipelineValue = deals
-      .filter(d => d.status !== 'finalizado')
-      .reduce((sum, d) => sum + d.value, 0);
-
-    const activeClients = clients.filter(c => c.status === 'active').length;
-
-    // Deals by status
+    // Constroi dealsByStatus a partir do groupBy
     const dealsByStatus = {
-      novo: deals.filter(d => d.status === 'novo').length,
-      briefing: deals.filter(d => d.status === 'briefing').length,
-      contando: deals.filter(d => d.status === 'contando').length,
-      producao: deals.filter(d => d.status === 'producao').length,
-      finalizado: deals.filter(d => d.status === 'finalizado').length,
+      new: 0,
+      briefing: 0,
+      quoting: 0,
+      production: 0,
+      completed: 0,
     };
+    for (const group of dealsByStatusRaw) {
+      if (group.status in dealsByStatus) {
+        (dealsByStatus as Record<string, number>)[group.status] = group._count;
+      }
+    }
 
-    // Revenue by month (last 6 months)
+    // Constroi expensesByCategory a partir do groupBy
+    const expensesByCategory = expensesByCategoryRaw
+      .map((group) => ({
+        category: group.category,
+        amount: group._sum.amount ?? 0,
+      }))
+      .filter((item) => item.amount > 0);
+
+    // Revenue por mes (ultimos 6 meses) — mantido como loop JS
+    // Prisma SQLite nao possui date_trunc para groupBy temporal
     const now = new Date();
-    
     const monthlyRevenue: { month: string; revenue: number; expenses: number; profit: number }[] = [];
     for (let i = 0; i < 6; i++) {
       const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
-      
+
       const monthRevenue = revenue
         .filter(r => {
           const date = new Date(r.date);
@@ -84,43 +132,21 @@ export async function GET() {
       });
     }
 
-    // Expenses by category
-    const expenseCategories = [
-      'Equipment Rental',
-      'Location Fee',
-      'Crew',
-      'Props',
-      'Travel',
-      'Post-Production',
-      'Insurance',
-      'Other',
-    ];
-
-    const expensesByCategory = expenseCategories.reduce((acc, category) => {
-      const total = expenses
-        .filter(e => e.category === category)
-        .reduce((sum, e) => sum + e.amount, 0);
-      if (total > 0) {
-        acc.push({ category, amount: total });
-      }
-      return acc;
-    }, [] as { category: string; amount: number }[]);
-
-    // Upcoming bookings (next 7 days)
+    // Upcoming bookings (proximos 7 dias) — necessita registros completos
     const sevenDaysFromNow = new Date();
     sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
-    
+
     const upcomingBookings = bookings.filter(b => {
       const eventDate = new Date(b.eventDate);
       return eventDate >= now && eventDate <= sevenDaysFromNow && b.status !== 'cancelled';
     });
 
-    // Recent activity (last 10 deals created/updated)
+    // Atividade recente (ultimos 10 deals criados/atualizados)
     const recentDeals = deals
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 10);
 
-    // Top clients by deal value
+    // Top clientes por valor de deals — necessita registros completos
     const clientValues = new Map<string, { name: string; value: number; deals: number }>();
     deals.forEach(deal => {
       const existing = clientValues.get(deal.clientId);
@@ -147,8 +173,8 @@ export async function GET() {
         profit: totalRevenue - totalExpenses,
         pipelineValue,
         activeClients,
-        totalDeals: deals.length,
-        totalClients: clients.length,
+        totalDeals,
+        totalClients,
       },
       dealsByStatus,
       monthlyRevenue,
@@ -157,11 +183,11 @@ export async function GET() {
       recentDeals,
       topClients,
       pipeline: {
-        novo: deals.filter(d => d.status === 'novo'),
+        new: deals.filter(d => d.status === 'new'),
         briefing: deals.filter(d => d.status === 'briefing'),
-        contando: deals.filter(d => d.status === 'contando'),
-        producao: deals.filter(d => d.status === 'producao'),
-        finalizado: deals.filter(d => d.status === 'finalizado'),
+        quoting: deals.filter(d => d.status === 'quoting'),
+        production: deals.filter(d => d.status === 'production'),
+        completed: deals.filter(d => d.status === 'completed'),
       },
     });
   } catch (error) {

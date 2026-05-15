@@ -4,6 +4,8 @@
 // This switches from SQLite to PostgreSQL client code.
 // Ensure DATABASE_URL is set to your Supabase PostgreSQL connection string.
 
+import { logger } from '@/lib/logger';
+
 if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL environment variable is required in production');
 }

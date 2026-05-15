@@ -52,18 +52,18 @@ interface DealFormModalProps {
 }
 
 const statusOptions = [
-  { value: 'novo', label: 'New', color: 'bg-blue-500' },
+  { value: 'new', label: 'New', color: 'bg-blue-500' },
   { value: 'briefing', label: 'Briefing', color: 'bg-purple-500' },
-  { value: 'contando', label: 'Quoting', color: 'bg-amber-500' },
-  { value: 'producao', label: 'Production', color: 'bg-green-500' },
-  { value: 'finalizado', label: 'Completed', color: 'bg-warm-700' },
+  { value: 'quoting', label: 'Quoting', color: 'bg-amber-500' },
+  { value: 'production', label: 'Production', color: 'bg-green-500' },
+  { value: 'completed', label: 'Completed', color: 'bg-warm-700' },
 ];
 
 export function DealFormModal({ open, onOpenChange, deal, clients, onSave, onDelete }: DealFormModalProps) {
   const [formData, setFormData] = React.useState<Partial<Deal>>({
     title: '',
     description: '',
-    status: 'novo',
+    status: 'new',
     value: 0,
     clientId: '',
   });
@@ -78,7 +78,7 @@ export function DealFormModal({ open, onOpenChange, deal, clients, onSave, onDel
       setFormData({
         title: '',
         description: '',
-        status: 'novo',
+        status: 'new',
         value: 0,
         clientId: clients[0]?.id || '',
       });

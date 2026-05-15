@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { validateOrThrow, ValidationError, validationErrorResponse, clientUpdateSchema, validateOrigin } from '@/lib/validations';
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
@@ -38,6 +39,9 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const rl = rateLimit(request, { limit: 20, windowMs: 60_000 });
+  if (!rl.success) return rateLimitResponse(rl.resetAt);
+
   try {
     const { id } = await params;
     if (!validateOrigin(request)) {
@@ -66,6 +70,9 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const rl = rateLimit(request, { limit: 20, windowMs: 60_000 });
+  if (!rl.success) return rateLimitResponse(rl.resetAt);
+
   try {
     const { id } = await params;
     if (!validateOrigin(request)) {

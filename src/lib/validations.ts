@@ -23,11 +23,11 @@ export const ClientSourceEnum = z.enum([
 ]);
 
 export const DealStatusEnum = z.enum([
-  "novo",
+  "new",
   "briefing",
-  "contando",
-  "producao",
-  "finalizado",
+  "quoting",
+  "production",
+  "completed",
 ]);
 
 export const ExpenseCategoryEnum = z.enum([
@@ -106,7 +106,7 @@ export const dealCreateSchema = z.object({
   clientId: z.string().min(1, "Client ID is required"),
   title: z.string().min(1, "Title is required").max(300),
   description: z.string().optional().nullable(),
-  status: DealStatusEnum.default("novo"),
+  status: DealStatusEnum.default("new"),
   value: z.number().min(0).default(0),
   currency: z.string().default("BRL"),
 });

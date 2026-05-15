@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Plus,
@@ -34,6 +34,7 @@ import {
   useDroppable,
   useSensor,
   useSensors,
+  DragStartEvent,
   DragEndEvent,
 } from '@dnd-kit/core';
 import {
@@ -43,7 +44,7 @@ import {
 } from '@dnd-kit/sortable';
 
 // Componente de zona droppável para colunas do pipeline
-function DroppableColumn({ id, children }: { id: string; children: React.ReactNode }) {
+const DroppableColumn = React.memo(function DroppableColumn({ id, children }: { id: string; children: React.ReactNode }) {
   const { setNodeRef, isOver } = useDroppable({ id });
   return (
     <div
@@ -55,7 +56,7 @@ function DroppableColumn({ id, children }: { id: string; children: React.ReactNo
       {children}
     </div>
   );
-}
+});
 
 export default function PipelinePage() {
   const { deals, fetchDeals, fetchDashboardData, setEditingDeal, setShowDealModal, clients } = useDashboard();
@@ -85,14 +86,23 @@ export default function PipelinePage() {
     })
   );
 
-  const handleDragEnd = async (event: DragEndEvent) => {
+  // useMemo: pre-grupo deals por status para evitar filtros repetidos no render (rerender-memo)
+  const dealsByStage = useMemo(() => ({
+    new: deals.filter((d: AppDeal) => d.status === 'new'),
+    briefing: deals.filter((d: AppDeal) => d.status === 'briefing'),
+    quoting: deals.filter((d: AppDeal) => d.status === 'quoting'),
+    production: deals.filter((d: AppDeal) => d.status === 'production'),
+    completed: deals.filter((d: AppDeal) => d.status === 'completed'),
+  }), [deals]);
+
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveDeal(null);
     if (!over) return;
-    const dealId = active.id as string;
-    const newStatus = over.id as string;
-    if (['novo', 'briefing', 'contando', 'producao', 'finalizado'].includes(newStatus)) {
-      const deal = deals.find(d => d.id === dealId);
+    const dealId = String(active.id);
+    const newStatus = String(over.id);
+    if (['new', 'briefing', 'quoting', 'production', 'completed'].includes(newStatus)) {
+      const deal = deals.find((d: AppDeal) => d.id === dealId);
       if (deal && deal.status !== newStatus) {
         try {
           await fetch(`/api/deals/${dealId}`, {
@@ -107,18 +117,18 @@ export default function PipelinePage() {
         }
       }
     }
-  };
+  }, [deals, fetchDeals, fetchDashboardData]);
 
-  const handleDragStart = (event: { active: { id: string } }) => {
-    const deal = deals.find(d => d.id === event.active.id);
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    const deal = deals.find((d: AppDeal) => d.id === String(event.active.id));
     setActiveDeal(deal || null);
-  };
+  }, [deals]);
 
-  const openEditDealModal = (deal: AppDeal) => {
+  const openEditDealModal = useCallback((deal: AppDeal) => {
     setEditingDeal(deal);
     setShowDealModal(true);
     setSelectedDeal(null);
-  };
+  }, []);
 
   return (
     <div className="p-8 flex-1 overflow-hidden">
@@ -130,9 +140,9 @@ export default function PipelinePage() {
       >
         <ScrollArea className="h-full">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 min-h-[calc(100vh-16rem)]">
-            {['novo', 'briefing', 'contando', 'producao', 'finalizado'].map((status) => {
-              const stageDeals = deals.filter(d => d.status === status);
-              const stageValue = stageDeals.reduce((sum, d) => sum + d.value, 0);
+            {['new', 'briefing', 'quoting', 'production', 'completed'].map((status) => {
+              const stageDeals = dealsByStage[status as keyof typeof dealsByStage];
+              const stageValue = stageDeals.reduce((sum: number, d: AppDeal) => sum + d.value, 0);
               return (
                 <div key={status} className="flex flex-col">
                   {/* Stage Header */}
@@ -152,10 +162,10 @@ export default function PipelinePage() {
                   {/* Deal Cards - Droppable Zone */}
                   <DroppableColumn id={status}>
                     <SortableContext
-                      items={stageDeals.map(d => d.id)}
+                      items={stageDeals.map((d: AppDeal) => d.id)}
                       strategy={verticalListSortingStrategy}
                     >
-                      {stageDeals.map((deal) => (
+                      {stageDeals.map((deal: AppDeal) => (
                         <DraggableDealCard
                           key={deal.id}
                           deal={deal}
@@ -182,6 +192,7 @@ export default function PipelinePage() {
                       </div>
                     )}
                   </DroppableColumn>
+                </div>
               );
             })}
           </div>

@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { withAuth } from 'next-auth/middleware';
+import { logger } from '@/lib/logger';
 
 export default async function middleware(request: NextRequest) {
+  // Skip auth in development to allow local testing without Google OAuth
+  if (process.env.NODE_ENV === 'development') {
+    return NextResponse.next();
+  }
+
   try {
     return await withAuth({
       pages: {
@@ -10,8 +16,7 @@ export default async function middleware(request: NextRequest) {
       },
     })(request);
   } catch (error) {
-    console.error('Middleware error:', error);
-    // Redireciona para signin em caso de falha na autenticacao
+    logger.error('Middleware error', { error: String(error), path: request.nextUrl.pathname });
     return NextResponse.redirect(new URL('/api/auth/signin', request.url));
   }
 }

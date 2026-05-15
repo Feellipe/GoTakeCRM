@@ -1,15 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { validateOrThrow, ValidationError, validationErrorResponse, revenueCreateSchema, validateOrigin } from '@/lib/validations';
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 // GET all revenues
 export async function GET(request: NextRequest) {
+  const rl = rateLimit(request, { limit: 100, windowMs: 60_000 });
+  if (!rl.success) return rateLimitResponse(rl.resetAt);
+
   try {
     const { searchParams } = new URL(request.url);
     const dealId = searchParams.get('dealId');
-    
+
     const whereClause = dealId ? { dealId } : {};
-    
+
     const revenues = await db.revenue.findMany({
       where: whereClause,
       include: {
@@ -41,6 +45,9 @@ export async function GET(request: NextRequest) {
 
 // POST create a new revenue
 export async function POST(request: NextRequest) {
+  const rl = rateLimit(request, { limit: 20, windowMs: 60_000 });
+  if (!rl.success) return rateLimitResponse(rl.resetAt);
+
   try {
     if (!validateOrigin(request)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });

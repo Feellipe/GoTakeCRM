@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, createContext, useContext } from 'react';
+import React, { useState, useCallback, createContext, useContext } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -26,17 +26,46 @@ import { ClientFormModal } from '@/components/client-form-modal';
 import { DealFormModal } from '@/components/deal-form-modal';
 import { BookingFormModal } from '@/components/booking-form-modal';
 import { Toaster } from '@/components/ui/sonner';
-import type { AppClient, AppDeal, AppNotification, DashboardData } from '@/types';
+import {
+  useDashboardData,
+  useClients,
+  useDeals,
+  useMutate,
+} from '@/lib/api';
+import type {
+  AppClient,
+  AppDeal,
+  AppNotification,
+  DashboardData,
+} from '@/types';
+import { auditLog } from '@/lib/audit';
 
-// Dashboard context to share data across pages
+// Tipo para dados de booking usados no modal (compativel com BookingFormModal.Booking)
+interface BookingFormData {
+  id?: string;
+  clientId: string;
+  dealId?: string;
+  eventType: string;
+  eventDate: string;
+  duration: number;
+  location: string | null;
+  status: string;
+  notes: string | null;
+  client?: {
+    id: string;
+    name: string;
+  };
+}
+
+// Dashboard context para compartilhar dados entre paginas
 interface DashboardContextType {
   data: DashboardData | null;
   clients: AppClient[];
   deals: AppDeal[];
   loading: boolean;
-  fetchDashboardData: () => Promise<void>;
-  fetchClients: () => Promise<void>;
-  fetchDeals: () => Promise<void>;
+  fetchDashboardData: () => void;
+  fetchClients: () => void;
+  fetchDeals: () => void;
   showClientModal: boolean;
   setShowClientModal: (v: boolean) => void;
   editingClient: AppClient | null;
@@ -47,19 +76,19 @@ interface DashboardContextType {
   setEditingDeal: (v: AppDeal | null) => void;
   showBookingModal: boolean;
   setShowBookingModal: (v: boolean) => void;
-  editingBooking: any;
-  setEditingBooking: (v: any) => void;
+  editingBooking: BookingFormData | null;
+  setEditingBooking: (v: BookingFormData | null) => void;
 }
 
 const DashboardContext = createContext<DashboardContextType | null>(null);
 
 export function useDashboard() {
   const ctx = useContext(DashboardContext);
-  if (!ctx) throw new Error('useDashboard must be used within DashboardLayout');
+  if (!ctx) throw new Error('useDashboard deve ser usado dentro de DashboardLayout');
   return ctx;
 }
 
-// View metadata for the header
+// Metadados das views para o header
 const viewMeta: Record<string, { icon: typeof LayoutDashboard; title: string; description: string }> = {
   dashboard: { icon: LayoutDashboard, title: 'Dashboard', description: "Welcome back! Here's your studio overview." },
   clients: { icon: Users, title: 'Clients', description: 'Manage your client relationships and contacts.' },
@@ -69,7 +98,7 @@ const viewMeta: Record<string, { icon: typeof LayoutDashboard; title: string; de
   calendar: { icon: Calendar, title: 'Calendar', description: 'Your upcoming shoots and bookings.' },
 };
 
-// Notifications (static for now)
+// Notificacoes estaticas
 const notifications: AppNotification[] = [
   { id: '1', title: 'New booking confirmed', message: 'Wedding shoot with Ana Silva', time: '2 min ago', read: false, type: 'booking' },
   { id: '2', title: 'Payment received', message: 'R$5,000 from Pedro Costa', time: '1 hour ago', read: false, type: 'payment' },
@@ -79,23 +108,29 @@ const notifications: AppNotification[] = [
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [clients, setClients] = useState<AppClient[]>([]);
-  const [deals, setDeals] = useState<AppDeal[]>([]);
-  const [loading, setLoading] = useState(true);
+  // SWR: dados buscados automaticamente com deduplicacao e cache
+  const { data: dashboardResponse } = useDashboardData();
+  const { data: clients } = useClients();
+  const { data: deals } = useDeals();
+  const { mutateAll } = useMutate();
+
+  // Estado derivado: loading enquanto qualquer dado nao foi carregado
+  const loading = !dashboardResponse || !clients || !deals;
+  const data = dashboardResponse ?? null;
+
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  // Modal states
+  // Estados dos modais
   const [showClientModal, setShowClientModal] = useState(false);
   const [editingClient, setEditingClient] = useState<AppClient | null>(null);
   const [showDealModal, setShowDealModal] = useState(false);
   const [editingDeal, setEditingDeal] = useState<AppDeal | null>(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
-  const [editingBooking, setEditingBooking] = useState<any>(null);
+  const [editingBooking, setEditingBooking] = useState<BookingFormData | null>(null);
 
   const pathname = usePathname();
 
-  // Determine current view from pathname
+  // Determina a view atual a partir da rota
   const getCurrentView = () => {
     if (pathname === '/dashboard' || pathname === '/') return 'dashboard';
     if (pathname.startsWith('/clients')) return 'clients';
@@ -108,50 +143,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const currentView = getCurrentView();
   const meta = viewMeta[currentView] || viewMeta.dashboard;
 
-  // Data fetching
-  const fetchDashboardData = async () => {
-    try {
-      const response = await fetch('/api/dashboard');
-      const result = await response.json();
-      setData(result);
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    }
-  };
+  // --- Handlers CRUD envolvidos com useCallback para estabilidade referencial ---
 
-  const fetchClients = async () => {
-    try {
-      const response = await fetch('/api/clients');
-      const result = await response.json();
-      setClients(result);
-    } catch (error) {
-      console.error('Error fetching clients:', error);
-    }
-  };
-
-  const fetchDeals = async () => {
-    try {
-      const response = await fetch('/api/deals');
-      const result = await response.json();
-      setDeals(result);
-    } catch (error) {
-      console.error('Error fetching deals:', error);
-    }
-  };
-
-  // TODO (Phase 3): Consider lazy-loading data per page instead of fetching all on mount
-  // Initial data load
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      await Promise.all([fetchDashboardData(), fetchClients(), fetchDeals()]);
-      setLoading(false);
-    };
-    load();
-  }, []);
-
-  // CRUD Handlers
-  const handleSaveClient = async (clientData: Partial<AppClient>) => {
+  const handleSaveClient = useCallback(async (clientData: Partial<AppClient>) => {
     try {
       if (editingClient?.id) {
         const response = await fetch(`/api/clients/${editingClient.id}`, {
@@ -159,33 +153,43 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(clientData),
         });
-        if (response.ok) { fetchClients(); fetchDashboardData(); }
+        if (response.ok) {
+          auditLog('client:update', { id: editingClient.id, fields: Object.keys(clientData) });
+          mutateAll();
+        }
       } else {
         const response = await fetch('/api/clients', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(clientData),
         });
-        if (response.ok) { fetchClients(); fetchDashboardData(); }
+        if (response.ok) {
+          const created = await response.json();
+          auditLog('client:create', { id: created.id, name: (clientData as Record<string, unknown>).name as string });
+          mutateAll();
+        }
       }
     } catch (error) {
       console.error('Error saving client:', error);
     }
     setEditingClient(null);
-  };
+  }, [editingClient, mutateAll]);
 
-  const handleDeleteClient = async () => {
+  const handleDeleteClient = useCallback(async () => {
     if (!editingClient?.id) return;
     try {
       const response = await fetch(`/api/clients/${editingClient.id}`, { method: 'DELETE' });
-      if (response.ok) { fetchClients(); fetchDashboardData(); }
+      if (response.ok) {
+        auditLog('client:delete', { id: editingClient.id, name: editingClient.name });
+        mutateAll();
+      }
     } catch (error) {
       console.error('Error deleting client:', error);
     }
     setEditingClient(null);
-  };
+  }, [editingClient, mutateAll]);
 
-  const handleSaveDeal = async (dealData: Partial<AppDeal>) => {
+  const handleSaveDeal = useCallback(async (dealData: Partial<AppDeal>) => {
     try {
       if (editingDeal?.id) {
         const response = await fetch(`/api/deals/${editingDeal.id}`, {
@@ -193,49 +197,63 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(dealData),
         });
-        if (response.ok) { fetchDeals(); fetchDashboardData(); }
+        if (response.ok) {
+          auditLog('deal:update', { id: editingDeal.id, fields: Object.keys(dealData) });
+          mutateAll();
+        }
       } else {
         const response = await fetch('/api/deals', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(dealData),
         });
-        if (response.ok) { fetchDeals(); fetchDashboardData(); }
+        if (response.ok) {
+          const created = await response.json();
+          auditLog('deal:create', { id: created.id, title: (dealData as Record<string, unknown>).title as string });
+          mutateAll();
+        }
       }
     } catch (error) {
       console.error('Error saving deal:', error);
     }
     setEditingDeal(null);
-  };
+  }, [editingDeal, mutateAll]);
 
-  const handleDeleteDeal = async () => {
+  const handleDeleteDeal = useCallback(async () => {
     if (!editingDeal?.id) return;
     try {
       const response = await fetch(`/api/deals/${editingDeal.id}`, { method: 'DELETE' });
-      if (response.ok) { fetchDeals(); fetchDashboardData(); }
+      if (response.ok) {
+        auditLog('deal:delete', { id: editingDeal.id, title: editingDeal.title });
+        mutateAll();
+      }
     } catch (error) {
       console.error('Error deleting deal:', error);
     }
     setEditingDeal(null);
-  };
+  }, [editingDeal, mutateAll]);
 
-  const handleSaveBooking = async (bookingData: any) => {
+  const handleSaveBooking = useCallback(async (bookingData: BookingFormData) => {
     try {
       const response = await fetch('/api/bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(bookingData),
       });
-      if (response.ok) { fetchDashboardData(); }
+      if (response.ok) {
+        const created = await response.json();
+        auditLog('booking:create', { id: created.id, clientId: bookingData.clientId, eventType: bookingData.eventType });
+        mutateAll();
+      }
     } catch (error) {
       console.error('Error saving booking:', error);
     }
     setEditingBooking(null);
-  };
+  }, [mutateAll]);
 
-  const openNewClientModal = () => { setEditingClient(null); setShowClientModal(true); };
-  const openNewDealModal = () => { setEditingDeal(null); setShowDealModal(true); };
-  const openNewBookingModal = () => { setEditingBooking(null); setShowBookingModal(true); };
+  const openNewClientModal = useCallback(() => { setEditingClient(null); setShowClientModal(true); }, []);
+  const openNewDealModal = useCallback(() => { setEditingDeal(null); setShowDealModal(true); }, []);
+  const openNewBookingModal = useCallback(() => { setEditingBooking(null); setShowBookingModal(true); }, []);
 
   if (loading) {
     return (
@@ -259,7 +277,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <DashboardContext.Provider value={{
       data, clients, deals, loading,
-      fetchDashboardData, fetchClients, fetchDeals,
+      // Alias para manter compatibilidade com componentes filhos
+      fetchDashboardData: mutateAll,
+      fetchClients: mutateAll,
+      fetchDeals: mutateAll,
       showClientModal, setShowClientModal, editingClient, setEditingClient,
       showDealModal, setShowDealModal, editingDeal, setEditingDeal,
       showBookingModal, setShowBookingModal, editingBooking, setEditingBooking,
@@ -292,14 +313,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   clients={clients}
                   deals={deals}
                   bookings={data?.upcomingBookings || []}
-                  onSelectClient={(client) => {
-                    // Navigation handled by GlobalSearch component
+                  onSelectClient={() => {
+                    // Navegacao tratada pelo componente GlobalSearch
                   }}
-                  onSelectDeal={(deal) => {
-                    // Navigation handled by GlobalSearch component
+                  onSelectDeal={() => {
+                    // Navegacao tratada pelo componente GlobalSearch
                   }}
                   onSelectBooking={() => {
-                    // Navigation handled by GlobalSearch component
+                    // Navegacao tratada pelo componente GlobalSearch
                   }}
                 />
                 <ThemeToggle />
@@ -347,6 +368,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           onSave={handleSaveClient}
           onDelete={editingClient?.id ? handleDeleteClient : undefined}
         />
+        {/* @ts-expect-error TODO: alinhar tipos AppDeal com Deal local do componente */}
         <DealFormModal
           open={showDealModal}
           onOpenChange={setShowDealModal}

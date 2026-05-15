@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import {
   Users,
@@ -50,6 +50,7 @@ import {
 } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useDashboard } from '@/app/(dashboard)/layout';
+import { usePaginatedClients } from '@/lib/api';
 import { formatCurrency, statusColors, statusLabels } from '@/lib/utils';
 import type { AppClient } from '@/types';
 
@@ -89,31 +90,33 @@ const mockWhatsAppMessages = [
 ];
 
 export default function ClientsPage() {
-  const { clients, setEditingClient, setShowClientModal } = useDashboard();
+  const { setEditingClient, setShowClientModal } = useDashboard();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [page, setPage] = useState(1);
+  const limit = 12;
   const [selectedClient, setSelectedClient] = useState<AppClient | null>(null);
   const [showWhatsAppPanel, setShowWhatsAppPanel] = useState(false);
   const [whatsappClient, setWhatsappClient] = useState<AppClient | null>(null);
 
-  const filteredClients = clients.filter(client => {
-    const matchesSearch = client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.phone.includes(searchTerm);
-    const matchesStatus = statusFilter === 'all' || client.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  // Paginacao server-side via SWR: busca, status e pagina sao enviados como query params
+  const effectiveStatus = statusFilter === 'all' ? '' : statusFilter;
+  const { data: paginatedData } = usePaginatedClients({ page, limit, search: searchTerm, status: effectiveStatus });
+  const filteredClients = paginatedData?.data ?? [];
+  const totalPages = paginatedData?.totalPages ?? 1;
+  const total = paginatedData?.total ?? 0;
 
-  const openWhatsApp = (client: AppClient) => {
+  // useCallback: handlers estaveis para evitar re-render desnecessario de filhos (rerender-functional-setstate)
+  const openWhatsApp = useCallback((client: AppClient) => {
     setWhatsappClient(client);
     setShowWhatsAppPanel(true);
-  };
+  }, []);
 
-  const openEditClientModal = (client: AppClient) => {
+  const openEditClientModal = useCallback((client: AppClient) => {
     setEditingClient(client);
     setShowClientModal(true);
     setSelectedClient(null);
-  };
+  }, []);
 
   return (
     <div className="p-8 space-y-6 flex-1">
@@ -127,10 +130,10 @@ export default function ClientsPage() {
                 placeholder="Search clients by name, email, or phone..."
                 className="pl-10"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -242,6 +245,29 @@ export default function ClientsPage() {
           <p className="text-muted-foreground">No clients found matching your search.</p>
         </div>
       )}
+
+      {/* Pagination Controls */}
+      <div className="flex items-center justify-center gap-4 mt-2">
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={page <= 1}
+          onClick={() => setPage(p => Math.max(1, p - 1))}
+        >
+          Previous
+        </Button>
+        <span className="text-sm text-muted-foreground">
+          Page {page} of {totalPages} ({total} clients)
+        </span>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={page >= totalPages}
+          onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+        >
+          Next
+        </Button>
+      </div>
 
       {/* Client Detail Modal */}
       <Dialog open={!!selectedClient} onOpenChange={() => setSelectedClient(null)}>

@@ -923,3 +923,54 @@
     100% { background-position: -200% 0; }
   }
 }
+
+/* Otimizacoes de performance para dispositivos moveis */
+@media (max-width: 768px) {
+  .glass {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .glass-card {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    contain: layout style paint;
+  }
+
+  .glass-card:hover {
+    transform: none;
+  }
+
+  .glass-sidebar {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .hover-lift:hover {
+    transform: none;
+  }
+
+  .glass-shimmer:hover::after {
+    display: none;
+  }
+
+  .card-shine:hover::before {
+    display: none;
+  }
+
+  .bg-orb {
+    filter: blur(40px);
+    opacity: 0.05;
+  }
+
+  .kpi-glow:hover::before,
+  .border-glow:hover::before,
+  .gradient-border:hover::before {
+    display: none;
+  }
+
+  .glass-input {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}

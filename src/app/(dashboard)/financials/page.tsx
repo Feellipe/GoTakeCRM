@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import {
   DollarSign,
@@ -49,16 +49,25 @@ const chartConfig: ChartConfig = {
 export default function FinancialsPage() {
   const { data, deals, fetchDashboardData } = useDashboard();
 
+  // useMemo: KPI cards derivados do dashboard (rerender-memo)
+  const financialKpis = useMemo(() => [
+    { title: 'Total Revenue', value: formatCurrency(data?.kpis.totalRevenue || 0), icon: TrendingUp, color: 'text-green-500', bgColor: 'bg-green-500/10', change: '+12.5%' },
+    { title: 'Total Expenses', value: formatCurrency(data?.kpis.totalExpenses || 0), icon: TrendingDown, color: 'text-red-500', bgColor: 'bg-red-500/10', change: '+8.3%' },
+    { title: 'Net Profit', value: formatCurrency(data?.kpis.profit || 0), icon: Wallet, color: (data?.kpis.profit || 0) > 0 ? 'text-green-500' : 'text-red-500', bgColor: (data?.kpis.profit || 0) > 0 ? 'bg-green-500/10' : 'bg-red-500/10', change: (data?.kpis.profit || 0) > 0 ? '+15.2%' : '-5.1%' },
+    { title: 'Profit Margin', value: `${Math.round(((data?.kpis.profit || 0) / (data?.kpis.totalRevenue || 1)) * 100)}%`, icon: DollarSign, color: 'text-primary', bgColor: 'bg-primary/10', change: '+2.1%' },
+  ], [data?.kpis]);
+
+  // useMemo: expenses por categoria para legenda (rerender-memo)
+  const expensesCategoryLegend = useMemo(
+    () => (data?.expensesByCategory || []).slice(0, 5),
+    [data?.expensesByCategory]
+  );
+
   return (
     <div className="p-8 space-y-6 flex-1">
       {/* Financial KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {[
-          { title: 'Total Revenue', value: formatCurrency(data?.kpis.totalRevenue || 0), icon: TrendingUp, color: 'text-green-500', bgColor: 'bg-green-500/10', change: '+12.5%' },
-          { title: 'Total Expenses', value: formatCurrency(data?.kpis.totalExpenses || 0), icon: TrendingDown, color: 'text-red-500', bgColor: 'bg-red-500/10', change: '+8.3%' },
-          { title: 'Net Profit', value: formatCurrency(data?.kpis.profit || 0), icon: Wallet, color: (data?.kpis.profit || 0) > 0 ? 'text-green-500' : 'text-red-500', bgColor: (data?.kpis.profit || 0) > 0 ? 'bg-green-500/10' : 'bg-red-500/10', change: (data?.kpis.profit || 0) > 0 ? '+15.2%' : '-5.1%' },
-          { title: 'Profit Margin', value: `${Math.round(((data?.kpis.profit || 0) / (data?.kpis.totalRevenue || 1)) * 100)}%`, icon: DollarSign, color: 'text-primary', bgColor: 'bg-primary/10', change: '+2.1%' },
-        ].map((kpi) => (
+        {financialKpis.map((kpi) => (
           <Card key={kpi.title} className="glass-card hover:shadow-xl transition-all duration-300 group cursor-pointer">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
@@ -133,7 +142,7 @@ export default function FinancialsPage() {
               </ResponsiveContainer>
             </ChartContainer>
             <div className="flex flex-wrap gap-2 mt-4 justify-center">
-              {(data?.expensesByCategory || []).slice(0, 5).map((item, index) => (
+              {expensesCategoryLegend.map((item, index) => (
                 <div key={item.category} className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }} />
                   <span className="text-xs text-muted-foreground">{item.category.split(' ')[0]}</span>

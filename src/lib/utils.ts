@@ -17,30 +17,39 @@ export const formatCurrency = (value: number) => {
 
 // Status colors for deal stages and client/booking statuses
 export const statusColors: Record<string, string> = {
-  novo: 'bg-blue-500',
+  new: 'bg-blue-500',
   briefing: 'bg-purple-500',
-  contando: 'bg-amber-500',
-  producao: 'bg-green-500',
-  finalizado: 'bg-warm-700',
+  quoting: 'bg-amber-500',
+  production: 'bg-green-500',
+  completed: 'bg-warm-700',
   pending: 'bg-amber-500',
   confirmed: 'bg-green-500',
-  completed: 'bg-warm-700',
   cancelled: 'bg-red-500',
   active: 'bg-green-500',
   lead: 'bg-blue-500',
   inactive: 'bg-warm-500',
+  // Portuguese legacy aliases (backward compat during transition)
+  novo: 'bg-blue-500',
+  contando: 'bg-amber-500',
+  producao: 'bg-green-500',
+  finalizado: 'bg-warm-700',
 };
 
 // Human-readable status labels
 export const statusLabels: Record<string, string> = {
-  novo: 'New',
+  new: 'New',
   briefing: 'Briefing',
-  contando: 'Quoting',
-  producao: 'Production',
-  finalizado: 'Completed',
+  quoting: 'Quoting',
+  production: 'Production',
+  completed: 'Completed',
   active: 'Active',
   lead: 'Lead',
   inactive: 'Inactive',
+  // Portuguese legacy aliases (backward compat during transition)
+  novo: 'New',
+  contando: 'Quoting',
+  producao: 'Production',
+  finalizado: 'Completed',
 };
 
 // Chart color palette

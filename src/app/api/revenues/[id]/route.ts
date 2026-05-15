@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { validateOrThrow, ValidationError, validationErrorResponse, revenueUpdateSchema, validateOrigin } from '@/lib/validations';
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 // GET a single revenue by ID
 export async function GET(
@@ -9,7 +10,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    
+
     const revenue = await db.revenue.findUnique({
       where: { id },
       include: {
@@ -45,6 +46,9 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const rl = rateLimit(request, { limit: 20, windowMs: 60_000 });
+  if (!rl.success) return rateLimitResponse(rl.resetAt);
+
   try {
     const { id } = await params;
     if (!validateOrigin(request)) {
@@ -95,6 +99,9 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const rl = rateLimit(request, { limit: 20, windowMs: 60_000 });
+  if (!rl.success) return rateLimitResponse(rl.resetAt);
+
   try {
     const { id } = await params;
     if (!validateOrigin(request)) {

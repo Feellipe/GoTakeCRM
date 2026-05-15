@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import {
   DollarSign,
@@ -49,48 +49,54 @@ const chartConfig: ChartConfig = {
 export default function DashboardPage() {
   const { data } = useDashboard();
 
+  // useMemo: dados dos KPI cards derivados do dashboard (rerender-memo)
+  const kpis = useMemo(() => [
+    {
+      title: 'Total Revenue',
+      value: formatCurrency(data?.kpis.totalRevenue || 0),
+      change: '+12.5%',
+      trend: 'up',
+      icon: DollarSign,
+      color: 'from-gold to-gold-light',
+      description: 'vs last month',
+    },
+    {
+      title: 'Pipeline Value',
+      value: formatCurrency(data?.kpis.pipelineValue || 0),
+      change: `${data?.kpis.totalDeals || 0} deals`,
+      trend: 'neutral',
+      icon: FolderKanban,
+      color: 'from-blue-500 to-blue-600',
+      description: 'Active opportunities',
+    },
+    {
+      title: 'Active Clients',
+      value: data?.kpis.activeClients || 0,
+      change: `of ${data?.kpis.totalClients || 0} total`,
+      trend: 'neutral',
+      icon: UserCheck,
+      color: 'from-green-500 to-green-600',
+      description: 'Client relationships',
+    },
+    {
+      title: 'Net Profit',
+      value: formatCurrency(data?.kpis.profit || 0),
+      change: `${Math.round(((data?.kpis.profit || 0) / (data?.kpis.totalRevenue || 1)) * 100)}% margin`,
+      trend: (data?.kpis.profit || 0) > 0 ? 'up' : 'down',
+      icon: Wallet,
+      color: (data?.kpis.profit || 0) > 0 ? 'from-emerald-500 to-emerald-600' : 'from-red-500 to-red-600',
+      description: 'After expenses',
+    },
+  ], [data?.kpis]);
+
+  // useMemo: deals recentes filtrados para exibicao (rerender-memo)
+  const recentDealsList = useMemo(() => (data?.recentDeals || []).slice(0, 5), [data?.recentDeals]);
+
   return (
     <div className="p-8 space-y-8 flex-1">
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[
-          {
-            title: 'Total Revenue',
-            value: formatCurrency(data?.kpis.totalRevenue || 0),
-            change: '+12.5%',
-            trend: 'up',
-            icon: DollarSign,
-            color: 'from-gold to-gold-light',
-            description: 'vs last month',
-          },
-          {
-            title: 'Pipeline Value',
-            value: formatCurrency(data?.kpis.pipelineValue || 0),
-            change: `${data?.kpis.totalDeals || 0} deals`,
-            trend: 'neutral',
-            icon: FolderKanban,
-            color: 'from-blue-500 to-blue-600',
-            description: 'Active opportunities',
-          },
-          {
-            title: 'Active Clients',
-            value: data?.kpis.activeClients || 0,
-            change: `of ${data?.kpis.totalClients || 0} total`,
-            trend: 'neutral',
-            icon: UserCheck,
-            color: 'from-green-500 to-green-600',
-            description: 'Client relationships',
-          },
-          {
-            title: 'Net Profit',
-            value: formatCurrency(data?.kpis.profit || 0),
-            change: `${Math.round(((data?.kpis.profit || 0) / (data?.kpis.totalRevenue || 1)) * 100)}% margin`,
-            trend: (data?.kpis.profit || 0) > 0 ? 'up' : 'down',
-            icon: Wallet,
-            color: (data?.kpis.profit || 0) > 0 ? 'from-emerald-500 to-emerald-600' : 'from-red-500 to-red-600',
-            description: 'After expenses',
-          },
-        ].map((kpi, index) => (
+        {kpis.map((kpi, index) => (
           <Card
             key={kpi.title}
             className="glass-card kpi-glow animate-fade-in-up group cursor-pointer hover:shadow-2xl transition-all duration-500"
@@ -338,7 +344,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {(data?.recentDeals || []).slice(0, 5).map((deal) => (
+              {recentDealsList.map((deal) => (
                 <div
                   key={deal.id}
                   className="flex items-center gap-4 p-3 rounded-xl hover:bg-muted/50 transition-all duration-300 cursor-pointer group border border-transparent hover:border-primary/20"

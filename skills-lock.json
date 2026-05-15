@@ -13,6 +13,12 @@
       "skillPath": "pdf-extraction/SKILL.md",
       "computedHash": "44ec33ec9d178e3c04c3dd210a98cb6ad0c3a45f9383019071bc9556cfc323e6"
     },
+    "prisma-database-setup": {
+      "source": "prisma/skills",
+      "sourceType": "github",
+      "skillPath": "prisma-database-setup/SKILL.md",
+      "computedHash": "0d6f44ac34b1ed3f8ed2970ecf90483d0f658fd1d204458f62bfefa28f31b095"
+    },
     "react-pdf": {
       "source": "vercel-labs/json-render",
       "sourceType": "github",

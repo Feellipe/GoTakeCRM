@@ -45,7 +45,7 @@ model Deal {
   clientId    String
   title       String
   description String?
-  status      String   @default("novo") // novo, briefing, contando, producao, finalizado
+  status      String   @default("new") // new, briefing, quoting, production, completed
   value       Float    @default(0)
   currency    String   @default("BRL")
   createdAt   DateTime @default(now())

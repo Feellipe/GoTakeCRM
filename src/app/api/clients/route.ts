@@ -1,13 +1,19 @@
 import { db } from '@/lib/db';
 import { validateOrThrow, ValidationError, validationErrorResponse, clientCreateSchema, validateOrigin } from '@/lib/validations';
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
+  const rl = rateLimit(request, { limit: 100, windowMs: 60_000 });
+  if (!rl.success) return rateLimitResponse(rl.resetAt);
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const search = searchParams.get('search') || '';
     const status = searchParams.get('status') || '';
     const eventType = searchParams.get('eventType') || '';
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+    const limit = Math.max(1, Math.min(100, parseInt(searchParams.get('limit') || '20', 10)));
 
     const where: Record<string, unknown> = {};
 
@@ -27,32 +33,51 @@ export async function GET(request: NextRequest) {
       where.eventType = eventType;
     }
 
-    const clients = await db.client.findMany({
-      where,
-      include: {
-        deals: {
-          include: {
-            briefings: true,
-            expenses: true,
-            revenue: true,
+    // Paraleliza a contagem e a busca (async-parallel)
+    const [total, clients] = await Promise.all([
+      db.client.count({ where }),
+      db.client.findMany({
+        where,
+        include: {
+          deals: {
+            include: {
+              briefings: true,
+              expenses: true,
+              revenue: true,
+            },
           },
+          bookings: true,
+          documents: true,
         },
-        bookings: true,
-        documents: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+        orderBy: {
+          createdAt: 'desc',
+        },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+    ]);
 
-    // Add computed fields
+    // Computed fields
     const clientsWithStats = clients.map(client => ({
       ...client,
       totalDeals: client.deals.length,
       totalValue: client.deals.reduce((sum, d) => sum + d.value, 0),
-      activeDeals: client.deals.filter(d => d.status !== 'finalizado').length,
+      activeDeals: client.deals.filter(d => d.status !== 'completed').length,
     }));
 
+    // Se a requisicao veio com params de paginacao, retorna formato paginado
+    const hasPagination = searchParams.has('page') || searchParams.has('limit');
+    if (hasPagination) {
+      return NextResponse.json({
+        data: clientsWithStats,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      });
+    }
+
+    // Sem params de paginacao: retorna array plano (compatibilidade com SWR)
     return NextResponse.json(clientsWithStats);
   } catch (error) {
     console.error('Error fetching clients:', error);
@@ -61,6 +86,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const rl = rateLimit(request, { limit: 20, windowMs: 60_000 });
+  if (!rl.success) return rateLimitResponse(rl.resetAt);
+
   try {
     if (!validateOrigin(request)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });

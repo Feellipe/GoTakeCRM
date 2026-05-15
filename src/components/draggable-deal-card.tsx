@@ -32,7 +32,7 @@ interface DraggableDealCardProps {
   hasProposal?: boolean;
 }
 
-export function DraggableDealCard({
+export const DraggableDealCard = React.memo(function DraggableDealCard({
   deal,
   statusColors,
   statusLabels,
@@ -116,4 +116,4 @@ export function DraggableDealCard({
       </CardContent>
     </Card>
   );
-}
+});
