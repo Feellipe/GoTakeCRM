@@ -9,6 +9,12 @@ export default async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Portfolio mode: acesso publico, sem autenticacao necessaria
+  if (process.env.APP_MODE === 'portfolio') {
+    return NextResponse.next();
+  }
+
+  // Client mode: autenticacao completa obrigatoria
   try {
     return await withAuth({
       pages: {

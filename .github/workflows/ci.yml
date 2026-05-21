@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, deploy/portfolio]
   pull_request:
-    branches: [main]
+    branches: [main, deploy/portfolio]
 
 jobs:
   validate:
@@ -20,3 +20,17 @@ jobs:
       - run: npx tsc --noEmit
       - run: npm run lint
       - run: npm run build
+      - run: npm run test
+
+  validate-prod-schema:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - run: npm ci
+      # Gera client com schema de producao e verifica se compila
+      - run: npx prisma generate --schema=prisma/schema.prod.prisma
+      - run: npx tsc --noEmit
