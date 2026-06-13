@@ -3,8 +3,18 @@ import path from 'path';
 
 export default defineConfig({
   test: {
-    environment: 'node',
     globals: true,
+    environment: 'node',
+    setupFiles: ['./src/__tests__/setup.ts'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      include: ['src/lib/**', 'src/app/api/**'],
+      thresholds: {
+        'src/lib/': { branches: 80, functions: 80, lines: 80 },
+        'src/app/api/': { branches: 70, functions: 70, lines: 70 },
+      },
+    },
   },
   resolve: {
     alias: {
