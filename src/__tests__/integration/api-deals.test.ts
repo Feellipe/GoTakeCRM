@@ -18,6 +18,7 @@ describe('GET /api/deals', () => {
   const mockDeals = [
     {
       id: 'deal_1',
+      organizationId: 'org_1',
       clientId: 'cl_1',
       title: 'Wedding Package',
       description: 'Full wedding coverage',
@@ -35,6 +36,7 @@ describe('GET /api/deals', () => {
     },
     {
       id: 'deal_2',
+      organizationId: 'org_1',
       clientId: 'cl_2',
       title: 'Corporate Video',
       description: null,
@@ -167,6 +169,7 @@ describe('GET /api/deals', () => {
 
 describe('POST /api/deals', () => {
   const validBody = {
+    organizationId: 'org_1',
     clientId: 'cl_1',
     title: 'New Deal',
     description: 'A test deal',
@@ -183,6 +186,7 @@ describe('POST /api/deals', () => {
   it('creates a deal and returns 201', async () => {
     const createdDeal = {
       id: 'deal_new',
+      organizationId: 'org_1',
       ...validBody,
       createdAt: '2026-01-01T00:00:00Z',
       updatedAt: '2026-01-01T00:00:00Z',
@@ -214,6 +218,7 @@ describe('POST /api/deals', () => {
   it('applies defaults for status, value, and currency', async () => {
     const createdDeal = {
       id: 'deal_new',
+      organizationId: 'org_1',
       clientId: 'cl_1',
       title: 'Minimal Deal',
       description: null,
@@ -229,7 +234,7 @@ describe('POST /api/deals', () => {
     const request = new NextRequest('http://localhost/api/deals', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ clientId: 'cl_1', title: 'Minimal Deal' }),
+      body: JSON.stringify({ organizationId: 'org_1', clientId: 'cl_1', title: 'Minimal Deal' }),
     });
     const response = await POST(request);
 
@@ -292,6 +297,7 @@ describe('PATCH /api/deals', () => {
   it('updates a deal and returns updated data', async () => {
     const updatedDeal = {
       id: 'deal_1',
+      organizationId: 'org_1',
       clientId: 'cl_1',
       title: 'Updated Title',
       description: 'Updated',
@@ -337,6 +343,7 @@ describe('PATCH /api/deals', () => {
   it('strips unknown fields via Zod whitelist', async () => {
     const updatedDeal = {
       id: 'deal_1',
+      organizationId: 'org_1',
       clientId: 'cl_1',
       title: 'Updated',
       description: null,

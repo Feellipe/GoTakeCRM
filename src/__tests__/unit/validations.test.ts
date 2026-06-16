@@ -75,6 +75,7 @@ describe('Enums', () => {
 
 describe('Client Create Schema', () => {
   const validClient = {
+    organizationId: 'org_1',
     phone: '+5511999999999',
     name: 'Test Client',
     eventType: 'wedding',
@@ -204,7 +205,7 @@ describe('Client Update Schema', () => {
 // ─── Deal Schemas ──────────────────────────────────────────────
 
 describe('Deal Create Schema', () => {
-  const validDeal = { clientId: 'cl_123', title: 'Test Deal' };
+  const validDeal = { organizationId: 'org_1', clientId: 'cl_123', title: 'Test Deal' };
 
   it('accepts valid payload with all fields', () => {
     const data = {
@@ -419,6 +420,7 @@ describe('Revenue Update Schema', () => {
 
 describe('Booking Create Schema', () => {
   const validBooking = {
+    organizationId: 'org_1',
     clientId: 'cl_1',
     eventType: 'wedding',
     eventDate: '2026-06-15',
@@ -499,6 +501,7 @@ describe('Booking Update Schema', () => {
 describe('Document Create Schema', () => {
   it('accepts valid payload', () => {
     const result = validateOrThrow(documentCreateSchema, {
+      organizationId: 'org_1',
       clientId: 'cl_1',
       type: 'contract',
       title: 'Wedding Contract',
@@ -511,6 +514,7 @@ describe('Document Create Schema', () => {
 
   it('accepts nullable dealId', () => {
     const result = validateOrThrow(documentCreateSchema, {
+      organizationId: 'org_1',
       clientId: 'cl_1',
       type: 'invoice',
       title: 'Invoice',
@@ -524,6 +528,7 @@ describe('Document Create Schema', () => {
   it('rejects missing clientId', () => {
     expect(() =>
       validateOrThrow(documentCreateSchema, {
+        organizationId: 'org_1',
         type: 'contract',
         title: 'Contract',
         filename: 'c.pdf',
@@ -537,6 +542,7 @@ describe('Document Create Schema', () => {
 
 describe('Package Create Schema', () => {
   const validPackage = {
+    organizationId: 'org_1',
     name: 'Gold Package',
     description: 'Premium photography package',
     price: 8000,
@@ -587,6 +593,7 @@ describe('Package Update Schema', () => {
 
 describe('Proposal Create Schema', () => {
   const validProposal = {
+    organizationId: 'org_1',
     clientId: 'cl_1',
     title: 'Wedding Proposal',
     packages: 'Gold Package',
@@ -664,6 +671,7 @@ describe('Proposal Update Schema', () => {
 
 describe('Proposal Template Create Schema', () => {
   const validTemplate = {
+    organizationId: 'org_1',
     name: 'Wedding Template',
   };
 
@@ -709,6 +717,7 @@ describe('Proposal Template Create Schema', () => {
 describe('validateOrThrow', () => {
   it('returns parsed data on valid input', () => {
     const result = validateOrThrow(clientCreateSchema, {
+      organizationId: 'org_1',
       phone: '+5511999999999',
       name: 'Test',
       eventType: 'wedding',

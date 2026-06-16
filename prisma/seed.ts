@@ -1,12 +1,17 @@
 /**
- * Prisma Seed Script — GoTakeCRM
- * =================================
- * Popula o banco de dados SQLite de desenvolvimento com dados realistas
+ * Prisma Seed Script — GoTakeCRM (Multi-tenant)
+ * ================================================
+ * Popula o banco de dados de desenvolvimento com dados realistas
  * para um CRM de estúdio de fotografia e filmagem baseado no Brasil.
  *
- * Modelos semeados:
- *   Client → Deal → Briefing, Expense, Revenue
- *   Booking, Package, ProposalTemplate
+ * Estrutura multi-tenant:
+ *   Organization → User (via UserOrganization, role "owner")
+ *   Organization → DashboardSettings (1 por organização)
+ *   Organization → Client → Deal → Briefing, Expense, Revenue
+ *   Organization → Booking, Package, ProposalTemplate
+ *
+ * Modelos-filhos (Briefing, Expense, Revenue, Message) NÃO recebem
+ * organizationId — são acessados via pai (Deal/Conversation).
  *
  * Execução:
  *   npx tsx prisma/seed.ts
@@ -16,20 +21,12 @@
  * transações do Prisma por grupo de entidade.
  */
 
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient({
-  log: ["error", "warn"],
-});
+import { db } from "../src/lib/db";
+import bcrypt from "bcryptjs";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-/** Retorna um objeto Date representando a data atual (usado para datas de criação). */
-function now(): Date {
-  return new Date();
-}
 
 /**
  * Cria um Date a partir de uma string de data no formato ISO (YYYY-MM-DD).
@@ -49,40 +46,109 @@ async function main() {
   // -----------------------------------------------------------------------
   // 1. LIMPEZA DO BANCO (ordem reversa das dependências)
   // -----------------------------------------------------------------------
-  console.log("[1/14] Limpando registros existentes...");
+  console.log("[1/15] Limpando registros existentes...");
 
   // A ordem de exclusão respeita as restrições de chave estrangeira:
   //  - Primeiro removemos as tabelas-filhas (que referenciam outras),
   //  - Depois as tabelas-pais (que são referenciadas).
-  //  - Tabelas sem dependências (Template, Package, DashboardSettings)
-  //    podem ser limpas em qualquer ponto.
+  //  - Tabelas multi-tenant (Client, Deal, etc.) dependem de Organization.
+  //  - ClientShare referencia Client e Organization.
+  //  - UserOrganization referencia User e Organization.
 
-  await prisma.message.deleteMany();
-  await prisma.conversation.deleteMany();
-  await prisma.briefing.deleteMany();
-  await prisma.expense.deleteMany();
-  await prisma.revenue.deleteMany();
-  await prisma.booking.deleteMany();
-  await prisma.document.deleteMany();
-  await prisma.proposal.deleteMany();
-  await prisma.deal.deleteMany();
-  await prisma.client.deleteMany();
-  await prisma.template.deleteMany();
-  await prisma.package.deleteMany();
-  await prisma.proposalTemplate.deleteMany();
-  await prisma.dashboardSettings.deleteMany();
+  await db.message.deleteMany();
+  await db.conversation.deleteMany();
+  await db.briefing.deleteMany();
+  await db.expense.deleteMany();
+  await db.revenue.deleteMany();
+  await db.booking.deleteMany();
+  await db.document.deleteMany();
+  await db.proposal.deleteMany();
+  await db.deal.deleteMany();
+  await db.clientShare.deleteMany();
+  await db.client.deleteMany();
+  await db.template.deleteMany();
+  await db.package.deleteMany();
+  await db.proposalTemplate.deleteMany();
+  await db.dashboardSettings.deleteMany();
+  await db.userOrganization.deleteMany();
+  await db.user.deleteMany();
+  await db.organization.deleteMany();
 
   console.log("  ✓ Banco limpo.\n");
 
   // -----------------------------------------------------------------------
-  // 2. CLIENTS — 8 clientes com diversidade de status, tipo de evento,
+  // 2. ORGANIZATION — Tenant raiz "GoTake Studio"
+  // -----------------------------------------------------------------------
+  console.log("[2/15] Criando organização...");
+
+  const org = await db.organization.create({
+    data: {
+      name: "GoTake Studio",
+      slug: "gotake-studio",
+      plan: "solo",
+    },
+  });
+
+  console.log(`  ✓ Organização criada: ${org.name} (slug: ${org.slug})\n`);
+
+  // -----------------------------------------------------------------------
+  // 3. USER — Usuário demo para login via Credentials Provider
+  // -----------------------------------------------------------------------
+  console.log("[3/15] Criando usuário demo...");
+
+  const passwordHash = await bcrypt.hash("demo2026", 12);
+
+  const demoUser = await db.user.create({
+    data: {
+      email: "demo@gotakecrm.com",
+      name: "Demo User",
+      passwordHash,
+    },
+  });
+
+  console.log(`  ✓ Usuário demo criado: ${demoUser.email}\n`);
+
+  // -----------------------------------------------------------------------
+  // 4. USER ORGANIZATION — Vincula o usuário demo como "owner" da org
+  // -----------------------------------------------------------------------
+  console.log("[4/15] Vinculando usuário à organização...");
+
+  await db.userOrganization.create({
+    data: {
+      userId: demoUser.id,
+      organizationId: org.id,
+      role: "owner",
+    },
+  });
+
+  console.log(`  ✓ Usuário vinculado como owner.\n`);
+
+  // -----------------------------------------------------------------------
+  // 5. DASHBOARD SETTINGS — Configuração padrão do dashboard (1 por org)
+  // -----------------------------------------------------------------------
+  console.log("[5/15] Criando configuração do dashboard...");
+
+  await db.dashboardSettings.create({
+    data: {
+      organizationId: org.id,
+      businessName: "GoTake Studio",
+      currency: "BRL",
+      timezone: "America/Sao_Paulo",
+    },
+  });
+
+  console.log("  ✓ Configuração do dashboard criada.\n");
+
+  // -----------------------------------------------------------------------
+  // 6. CLIENTS — 8 clientes com diversidade de status, tipo de evento,
   //    origem e dados de contato. Nomes brasileiros realistas.
   // -----------------------------------------------------------------------
-  console.log("[2/14] Criando clientes...");
+  console.log("[6/15] Criando clientes...");
 
-  const clients = await prisma.$transaction([
-    prisma.client.create({
+  const clients = await db.$transaction([
+    db.client.create({
       data: {
+        organizationId: org.id,
         phone: "+5511998765432",
         name: "Juliana Costa",
         email: "juliana.costa@email.com",
@@ -92,8 +158,9 @@ async function main() {
         status: "active",
       },
     }),
-    prisma.client.create({
+    db.client.create({
       data: {
+        organizationId: org.id,
         phone: "+5521987654321",
         name: "Rafael Oliveira",
         email: "rafael.oliveira@techcorp.com.br",
@@ -103,8 +170,9 @@ async function main() {
         status: "active",
       },
     }),
-    prisma.client.create({
+    db.client.create({
       data: {
+        organizationId: org.id,
         phone: "+5531996543210",
         name: "Camila Santos",
         email: null,
@@ -114,8 +182,9 @@ async function main() {
         status: "active",
       },
     }),
-    prisma.client.create({
+    db.client.create({
       data: {
+        organizationId: org.id,
         phone: "+5541995432109",
         name: "Bruno Almeida",
         email: "bruno.almeida@lojasuniao.com",
@@ -125,8 +194,9 @@ async function main() {
         status: "active",
       },
     }),
-    prisma.client.create({
+    db.client.create({
       data: {
+        organizationId: org.id,
         phone: "+5551994321098",
         name: "Fernanda Lima",
         email: null,
@@ -136,8 +206,9 @@ async function main() {
         status: "active",
       },
     }),
-    prisma.client.create({
+    db.client.create({
       data: {
+        organizationId: org.id,
         phone: "+5561993210987",
         name: "Thiago Pereira",
         email: "thiago.pereira@banda.com",
@@ -147,8 +218,9 @@ async function main() {
         status: "lead",
       },
     }),
-    prisma.client.create({
+    db.client.create({
       data: {
+        organizationId: org.id,
         phone: "+5571992109876",
         name: "Marina Rodrigues",
         email: "marina@imobiliarianova.com.br",
@@ -158,8 +230,9 @@ async function main() {
         status: "lead",
       },
     }),
-    prisma.client.create({
+    db.client.create({
       data: {
+        organizationId: org.id,
         phone: "+5581991098765",
         name: "Lucas Carvalho",
         email: "lucas.carvalho@gmail.com",
@@ -180,17 +253,18 @@ async function main() {
   );
 
   // -----------------------------------------------------------------------
-  // 3. DEALS — 13 negócios distribuídos por todos os estágios do pipeline.
+  // 7. DEALS — 13 negócios distribuídos por todos os estágios do pipeline.
   //    Pipeline: new → briefing → quoting → production → completed
   //    Distribuição: 3 new, 3 briefing, 3 quoting, 2 production, 2 completed
   //    Cada cliente tem pelo menos 1 deal.
   // -----------------------------------------------------------------------
-  console.log("[3/14] Criando deals...");
+  console.log("[7/15] Criando deals...");
 
-  const deals = await prisma.$transaction([
+  const deals = await db.$transaction([
     // --- NEW (3) ---
-    prisma.deal.create({
+    db.deal.create({
       data: {
+        organizationId: org.id,
         clientId: juliana.id,
         title: "Casamento Juliana & Marcos",
         description: "Cerimônia na Paróquia Sant'Ana e recepção no Villa Amalfi. 200 convidados.",
@@ -199,8 +273,9 @@ async function main() {
         currency: "BRL",
       },
     }),
-    prisma.deal.create({
+    db.deal.create({
       data: {
+        organizationId: org.id,
         clientId: rafael.id,
         title: "Fotos Corporativas TechCorp 2026",
         description: null,
@@ -209,8 +284,9 @@ async function main() {
         currency: "BRL",
       },
     }),
-    prisma.deal.create({
+    db.deal.create({
       data: {
+        organizationId: org.id,
         clientId: camila.id,
         title: "Ensaio de Retrato - Book Profissional",
         description: "Ensaio para portfólio de atriz. Locação externa no Parque Ibirapuera.",
@@ -221,8 +297,9 @@ async function main() {
     }),
 
     // --- BRIEFING (3) ---
-    prisma.deal.create({
+    db.deal.create({
       data: {
+        organizationId: org.id,
         clientId: juliana.id,
         title: "Making Of Casamento Ribeirão",
         description: "Cobertura em vídeo do casamento da irmã da Juliana. Fazenda em Ribeirão Preto.",
@@ -231,8 +308,9 @@ async function main() {
         currency: "BRL",
       },
     }),
-    prisma.deal.create({
+    db.deal.create({
       data: {
+        organizationId: org.id,
         clientId: bruno.id,
         title: "Catálogo Verão 2027 - Linha Praia",
         description: "Ensaio de produto para nova coleção de moda praia. 40 peças.",
@@ -241,8 +319,9 @@ async function main() {
         currency: "BRL",
       },
     }),
-    prisma.deal.create({
+    db.deal.create({
       data: {
+        organizationId: org.id,
         clientId: thiago.id,
         title: "Clipe - Reverbera 'Horizonte'",
         description: "Videoclipe completo com narrativa. 2 dias de gravação + edição.",
@@ -253,8 +332,9 @@ async function main() {
     }),
 
     // --- QUOTING (3) ---
-    prisma.deal.create({
+    db.deal.create({
       data: {
+        organizationId: org.id,
         clientId: rafael.id,
         title: "Vídeo Institucional TechCorp 2026",
         description: "Vídeo de 3 minutos com depoimentos e tomadas da fábrica. Inclui drone.",
@@ -263,8 +343,9 @@ async function main() {
         currency: "BRL",
       },
     }),
-    prisma.deal.create({
+    db.deal.create({
       data: {
+        organizationId: org.id,
         clientId: camila.id,
         title: "Ensaio Gestante - Parque da Água Branca",
         description: "Ensaio externo com vestidos. Parceira maquiadora incluso no valor.",
@@ -273,8 +354,9 @@ async function main() {
         currency: "BRL",
       },
     }),
-    prisma.deal.create({
+    db.deal.create({
       data: {
+        organizationId: org.id,
         clientId: fernanda.id,
         title: "Evento Lançamento - Tech Summit 2026",
         description: null,
@@ -285,8 +367,9 @@ async function main() {
     }),
 
     // --- PRODUCTION (2) ---
-    prisma.deal.create({
+    db.deal.create({
       data: {
+        organizationId: org.id,
         clientId: marina.id,
         title: "Fotos Imobiliária - Lançamento Residencial Aurora",
         description: "Fotos de 2 apartamentos decorados e áreas comuns. 3 torres.",
@@ -295,8 +378,9 @@ async function main() {
         currency: "BRL",
       },
     }),
-    prisma.deal.create({
+    db.deal.create({
       data: {
+        organizationId: org.id,
         clientId: lucas.id,
         title: "Cobertura - Feira de Artesanato Regional",
         description: null,
@@ -307,8 +391,9 @@ async function main() {
     }),
 
     // --- COMPLETED (2) ---
-    prisma.deal.create({
+    db.deal.create({
       data: {
+        organizationId: org.id,
         clientId: bruno.id,
         title: "Catálogo Outono 2026 - Lojas União",
         description:
@@ -318,8 +403,9 @@ async function main() {
         currency: "BRL",
       },
     }),
-    prisma.deal.create({
+    db.deal.create({
       data: {
+        organizationId: org.id,
         clientId: fernanda.id,
         title: "Cobertura Confraternização Anual Grupo Sollari",
         description:
@@ -353,13 +439,14 @@ async function main() {
   );
 
   // -----------------------------------------------------------------------
-  // 4. BRIEFINGS — 7 briefings criativos para deals nos estágios
+  // 8. BRIEFINGS — 7 briefings criativos para deals nos estágios
   //    "briefing" ou posteriores (briefing, quoting, production).
+  //    (Modelo-filho de Deal — sem organizationId)
   // -----------------------------------------------------------------------
-  console.log("[4/14] Criando briefings...");
+  console.log("[8/15] Criando briefings...");
 
-  const briefings = await prisma.$transaction([
-    prisma.briefing.create({
+  const briefings = await db.$transaction([
+    db.briefing.create({
       data: {
         dealId: dealBrief01.id, // Making Of Casamento Ribeirão (briefing)
         content: [
@@ -382,7 +469,7 @@ async function main() {
         author: "Juliana Costa",
       },
     }),
-    prisma.briefing.create({
+    db.briefing.create({
       data: {
         dealId: dealBrief02.id, // Catálogo Verão 2027 (briefing)
         content: [
@@ -403,7 +490,7 @@ async function main() {
         author: "Bruno Almeida",
       },
     }),
-    prisma.briefing.create({
+    db.briefing.create({
       data: {
         dealId: dealBrief03.id, // Clipe Reverbera (briefing)
         content: [
@@ -427,7 +514,7 @@ async function main() {
         author: "Thiago Pereira",
       },
     }),
-    prisma.briefing.create({
+    db.briefing.create({
       data: {
         dealId: dealQuote01.id, // Vídeo Institucional TechCorp (quoting)
         content: [
@@ -449,7 +536,7 @@ async function main() {
         author: "Rafael Oliveira",
       },
     }),
-    prisma.briefing.create({
+    db.briefing.create({
       data: {
         dealId: dealQuote02.id, // Ensaio Gestante (quoting)
         content: [
@@ -469,7 +556,7 @@ async function main() {
         author: "Camila Santos",
       },
     }),
-    prisma.briefing.create({
+    db.briefing.create({
       data: {
         dealId: dealQuote03.id, // Tech Summit 2026 (quoting)
         content: [
@@ -491,7 +578,7 @@ async function main() {
         author: "Fernanda Lima",
       },
     }),
-    prisma.briefing.create({
+    db.briefing.create({
       data: {
         dealId: dealProd01.id, // Fotos Imobiliária (production)
         content: [
@@ -518,15 +605,16 @@ async function main() {
   );
 
   // -----------------------------------------------------------------------
-  // 5. EXPENSES — 10 despesas para deals nos estágios "quoting"
+  // 9. EXPENSES — 10 despesas para deals nos estágios "quoting"
   //    ou posteriores (quoting, production, completed).
   //    Categorias: equipment, location, crew, travel.
+  //    (Modelo-filho de Deal — sem organizationId)
   // -----------------------------------------------------------------------
-  console.log("[5/14] Criando despesas...");
+  console.log("[9/15] Criando despesas...");
 
-  const expenses = await prisma.$transaction([
+  const expenses = await db.$transaction([
     // Deal: Vídeo Institucional TechCorp (quoting) — 2 despesas
-    prisma.expense.create({
+    db.expense.create({
       data: {
         dealId: dealQuote01.id,
         category: "equipment",
@@ -535,7 +623,7 @@ async function main() {
         currency: "BRL",
       },
     }),
-    prisma.expense.create({
+    db.expense.create({
       data: {
         dealId: dealQuote01.id,
         category: "travel",
@@ -546,7 +634,7 @@ async function main() {
     }),
 
     // Deal: Ensaio Gestante (quoting) — 1 despesa
-    prisma.expense.create({
+    db.expense.create({
       data: {
         dealId: dealQuote02.id,
         category: "crew",
@@ -557,7 +645,7 @@ async function main() {
     }),
 
     // Deal: Tech Summit 2026 (quoting) — 2 despesas
-    prisma.expense.create({
+    db.expense.create({
       data: {
         dealId: dealQuote03.id,
         category: "crew",
@@ -566,7 +654,7 @@ async function main() {
         currency: "BRL",
       },
     }),
-    prisma.expense.create({
+    db.expense.create({
       data: {
         dealId: dealQuote03.id,
         category: "travel",
@@ -577,7 +665,7 @@ async function main() {
     }),
 
     // Deal: Fotos Imobiliária Aurora (production) — 3 despesas
-    prisma.expense.create({
+    db.expense.create({
       data: {
         dealId: dealProd01.id,
         category: "equipment",
@@ -586,7 +674,7 @@ async function main() {
         currency: "BRL",
       },
     }),
-    prisma.expense.create({
+    db.expense.create({
       data: {
         dealId: dealProd01.id,
         category: "location",
@@ -595,7 +683,7 @@ async function main() {
         currency: "BRL",
       },
     }),
-    prisma.expense.create({
+    db.expense.create({
       data: {
         dealId: dealProd01.id,
         category: "crew",
@@ -606,7 +694,7 @@ async function main() {
     }),
 
     // Deal: Feira de Artesanato (production) — 1 despesa
-    prisma.expense.create({
+    db.expense.create({
       data: {
         dealId: dealProd02.id,
         category: "travel",
@@ -617,7 +705,7 @@ async function main() {
     }),
 
     // Deal: Catálogo Outono Lojas União (completed) — 1 despesa
-    prisma.expense.create({
+    db.expense.create({
       data: {
         dealId: dealDone01.id,
         category: "equipment",
@@ -633,14 +721,15 @@ async function main() {
   );
 
   // -----------------------------------------------------------------------
-  // 6. REVENUES — 7 receitas para deals nos estágios "production"
-  //    e "completed". Distribuídas entre status "pending" e "received".
+  // 10. REVENUES — 7 receitas para deals nos estágios "production"
+  //     e "completed". Distribuídas entre status "pending" e "received".
+  //     (Modelo-filho de Deal — sem organizationId)
   // -----------------------------------------------------------------------
-  console.log("[6/14] Criando receitas...");
+  console.log("[10/15] Criando receitas...");
 
-  const revenues = await prisma.$transaction([
+  const revenues = await db.$transaction([
     // Deal: Fotos Imobiliária Aurora (production) — 1 pending
-    prisma.revenue.create({
+    db.revenue.create({
       data: {
         dealId: dealProd01.id,
         description: "Sinal 40% — Fotos Imobiliária Aurora",
@@ -652,7 +741,7 @@ async function main() {
     }),
 
     // Deal: Feira de Artesanato (production) — 1 received + 1 pending
-    prisma.revenue.create({
+    db.revenue.create({
       data: {
         dealId: dealProd02.id,
         description: "Sinal 50% — Feira de Artesanato Regional",
@@ -662,7 +751,7 @@ async function main() {
         date: dateFromStr("2026-03-22"),
       },
     }),
-    prisma.revenue.create({
+    db.revenue.create({
       data: {
         dealId: dealProd02.id,
         description: "Pagamento final — Feira de Artesanato Regional",
@@ -673,7 +762,7 @@ async function main() {
     }),
 
     // Deal: Catálogo Outono Lojas União (completed) — 2 received
-    prisma.revenue.create({
+    db.revenue.create({
       data: {
         dealId: dealDone01.id,
         description: "Sinal 50% — Catálogo Outono",
@@ -683,7 +772,7 @@ async function main() {
         date: dateFromStr("2026-02-15"),
       },
     }),
-    prisma.revenue.create({
+    db.revenue.create({
       data: {
         dealId: dealDone01.id,
         description: "Pagamento final — Catálogo Outono",
@@ -695,7 +784,7 @@ async function main() {
     }),
 
     // Deal: Confraternização Sollari (completed) — 2 received
-    prisma.revenue.create({
+    db.revenue.create({
       data: {
         dealId: dealDone02.id,
         description: "Sinal 50% — Confraternização Sollari",
@@ -705,7 +794,7 @@ async function main() {
         date: dateFromStr("2025-12-01"),
       },
     }),
-    prisma.revenue.create({
+    db.revenue.create({
       data: {
         dealId: dealDone02.id,
         description: "Pagamento final — Confraternização Sollari",
@@ -727,16 +816,17 @@ async function main() {
   );
 
   // -----------------------------------------------------------------------
-  // 7. BOOKINGS — 6 agendamentos com diversidade de status, datas
-  //    e tipos de evento.
-  //    - 2 pending, 2 confirmed, 1 completed, 1 cancelled
-  //    - Datas: esta semana, próxima semana, mês passado
+  // 11. BOOKINGS — 6 agendamentos com diversidade de status, datas
+  //     e tipos de evento.
+  //     - 2 pending, 2 confirmed, 1 completed, 1 cancelled
+  //     - Datas: esta semana, próxima semana, mês passado
   // -----------------------------------------------------------------------
-  console.log("[7/14] Criando bookings...");
+  console.log("[11/15] Criando bookings...");
 
-  const bookings = await prisma.$transaction([
-    prisma.booking.create({
+  const bookings = await db.$transaction([
+    db.booking.create({
       data: {
+        organizationId: org.id,
         clientId: juliana.id,
         dealId: dealBrief01.id,
         eventType: "wedding",
@@ -747,8 +837,9 @@ async function main() {
         notes: "Chegar às 8h para fotos do making of da noiva.",
       },
     }),
-    prisma.booking.create({
+    db.booking.create({
       data: {
+        organizationId: org.id,
         clientId: rafael.id,
         dealId: dealQuote01.id,
         eventType: "corporate",
@@ -759,8 +850,9 @@ async function main() {
         notes: "Início às 9h. Entrar pela recepção e procurar Rafael.",
       },
     }),
-    prisma.booking.create({
+    db.booking.create({
       data: {
+        organizationId: org.id,
         clientId: camila.id,
         dealId: dealQuote02.id,
         eventType: "portrait",
@@ -771,8 +863,9 @@ async function main() {
         notes: null,
       },
     }),
-    prisma.booking.create({
+    db.booking.create({
       data: {
+        organizationId: org.id,
         clientId: bruno.id,
         dealId: dealBrief02.id,
         eventType: "product",
@@ -783,8 +876,9 @@ async function main() {
         notes: "Montagem do set às 7h. Primeira peça fotografada às 8h30.",
       },
     }),
-    prisma.booking.create({
+    db.booking.create({
       data: {
+        organizationId: org.id,
         clientId: fernanda.id,
         dealId: null, // booking sem deal vinculado
         eventType: "event",
@@ -795,8 +889,9 @@ async function main() {
         notes: "Cliente cancelou por conflito de agenda. Reagendar para próximo mês.",
       },
     }),
-    prisma.booking.create({
+    db.booking.create({
       data: {
+        organizationId: org.id,
         clientId: thiago.id,
         dealId: null, // booking sem deal vinculado
         eventType: "other",
@@ -814,15 +909,16 @@ async function main() {
   );
 
   // -----------------------------------------------------------------------
-  // 8. PACKAGES — 5 pacotes de serviço com nomes, preços e deliverables
-  //    realistas para o mercado brasileiro de foto/vídeo.
-  //    Categorias: photography, videography, both.
+  // 12. PACKAGES — 5 pacotes de serviço com nomes, preços e deliverables
+  //     realistas para o mercado brasileiro de foto/vídeo.
+  //     Categorias: photography, videography, both.
   // -----------------------------------------------------------------------
-  console.log("[8/14] Criando pacotes de serviço...");
+  console.log("[12/15] Criando pacotes de serviço...");
 
-  const packages = await prisma.$transaction([
-    prisma.package.create({
+  const packages = await db.$transaction([
+    db.package.create({
       data: {
+        organizationId: org.id,
         name: "Ensaio Essencial",
         description:
           "Pacote básico para ensaios fotográficos individuais ou casais. Ideal para portfólio e redes sociais.",
@@ -839,8 +935,9 @@ async function main() {
         active: true,
       },
     }),
-    prisma.package.create({
+    db.package.create({
       data: {
+        organizationId: org.id,
         name: "Book Premium",
         description:
           "Ensaio fotográfico completo com produção e múltiplos looks. Perfeito para atores, modelos e profissionais liberais.",
@@ -859,8 +956,9 @@ async function main() {
         active: true,
       },
     }),
-    prisma.package.create({
+    db.package.create({
       data: {
+        organizationId: org.id,
         name: "Making Of Corporativo",
         description:
           "Vídeo institucional completo com entrevistas e drone. Comunicação visual para sua empresa.",
@@ -880,8 +978,9 @@ async function main() {
         active: true,
       },
     }),
-    prisma.package.create({
+    db.package.create({
       data: {
+        organizationId: org.id,
         name: "Casamento Completo",
         description:
           "Cobertura completa de foto e vídeo para casamentos. Do making of da noiva até o último convidado.",
@@ -902,8 +1001,9 @@ async function main() {
         active: true,
       },
     }),
-    prisma.package.create({
+    db.package.create({
       data: {
+        organizationId: org.id,
         name: "Social Media Pack",
         description:
           "Pacote de conteúdo audiovisual otimizado para redes sociais. Ideal para influenciadores e marcas.",
@@ -929,14 +1029,15 @@ async function main() {
   );
 
   // -----------------------------------------------------------------------
-  // 9. PROPOSAL TEMPLATES — 3 templates de proposta para diferentes
-  //    segmentos. Um inativo para testar filtros.
+  // 13. PROPOSAL TEMPLATES — 3 templates de proposta para diferentes
+  //     segmentos. Um inativo para testar filtros.
   // -----------------------------------------------------------------------
-  console.log("[9/14] Criando templates de proposta...");
+  console.log("[13/15] Criando templates de proposta...");
 
-  const proposalTemplates = await prisma.$transaction([
-    prisma.proposalTemplate.create({
+  const proposalTemplates = await db.$transaction([
+    db.proposalTemplate.create({
       data: {
+        organizationId: org.id,
         name: "Template Casamento",
         description:
           "Template para orçamentos de cobertura de casamento. Inclui cláusulas sobre direitos de imagem e entregáveis.",
@@ -954,8 +1055,9 @@ async function main() {
         isActive: true,
       },
     }),
-    prisma.proposalTemplate.create({
+    db.proposalTemplate.create({
       data: {
+        organizationId: org.id,
         name: "Template Corporativo",
         description:
           "Template para orçamentos de fotografia e vídeo corporativo. Abrange eventos, retratos executivos e vídeos institucionais.",
@@ -972,8 +1074,9 @@ async function main() {
         isActive: true,
       },
     }),
-    prisma.proposalTemplate.create({
+    db.proposalTemplate.create({
       data: {
+        organizationId: org.id,
         name: "Template Retrato & Book",
         description:
           "Template para orçamentos de ensaios de retrato, book profissional e ensaios lifestyle. Atualmente inativo.",
@@ -997,32 +1100,20 @@ async function main() {
   );
 
   // -----------------------------------------------------------------------
-  // 10. DASHBOARD SETTINGS — Configuração padrão do dashboard
-  // -----------------------------------------------------------------------
-  console.log("[10/10] Criando configuração do dashboard...");
-
-  await prisma.dashboardSettings.create({
-    data: {
-      businessName: "GoTake Studio",
-      currency: "BRL",
-      timezone: "America/Sao_Paulo",
-    },
-  });
-
-  console.log("  ✓ Configuração do dashboard criada.\n");
-
-  // -----------------------------------------------------------------------
   // RESUMO FINAL
   // -----------------------------------------------------------------------
   console.log("========== Seed concluído com sucesso! ==========\n");
   console.log("Resumo dos registros criados:");
-  console.log(`  Clients:          ${clients.length}`);
-  console.log(`  Deals:            ${deals.length}`);
-  console.log(`  Briefings:        ${briefings.length}`);
-  console.log(`  Expenses:         ${expenses.length}`);
-  console.log(`  Revenues:         ${revenues.length}`);
-  console.log(`  Bookings:         ${bookings.length}`);
-  console.log(`  Packages:         ${packages.length}`);
+  console.log(`  Organizations:     1`);
+  console.log(`  Users:             1`);
+  console.log(`  UserOrganizations: 1`);
+  console.log(`  Clients:           ${clients.length}`);
+  console.log(`  Deals:             ${deals.length}`);
+  console.log(`  Briefings:         ${briefings.length}`);
+  console.log(`  Expenses:          ${expenses.length}`);
+  console.log(`  Revenues:          ${revenues.length}`);
+  console.log(`  Bookings:          ${bookings.length}`);
+  console.log(`  Packages:          ${packages.length}`);
   console.log(`  ProposalTemplates: ${proposalTemplates.length}`);
   console.log(`  DashboardSettings: 1`);
   console.log(`\nValor total em pipeline: R$${deals.reduce((s, d) => s + d.value, 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`);
@@ -1035,5 +1126,5 @@ main()
     process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect();
+    await db.$disconnect();
   });

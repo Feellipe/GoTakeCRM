@@ -45,19 +45,28 @@ function createModelMock() {
 // Global mock for Prisma db client — mocked at the system boundary (per TDD)
 vi.mock('@/lib/db', () => ({
   db: {
+    // Multi-tenant core models
+    user: createModelMock(),
+    organization: createModelMock(),
+    userOrganization: createModelMock(),
+    clientShare: createModelMock(),
+    // Business models (top-level)
     client: createModelMock(),
     deal: createModelMock(),
+    conversation: createModelMock(),
     booking: createModelMock(),
+    document: createModelMock(),
+    template: createModelMock(),
+    package: createModelMock(),
+    proposalTemplate: createModelMock(),
+    proposal: createModelMock(),
+    dashboardSettings: createModelMock(),
+    // Child models
+    briefing: createModelMock(),
     expense: createModelMock(),
     revenue: createModelMock(),
-    package: createModelMock(),
-    proposal: createModelMock(),
-    proposalTemplate: createModelMock(),
-    briefing: createModelMock(),
-    document: createModelMock(),
-    conversation: createModelMock(),
     message: createModelMock(),
-    dashboardSettings: createModelMock(),
+    // Transaction
     $transaction: vi.fn(),
   },
 }));

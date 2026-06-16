@@ -25,6 +25,7 @@ describe('GET /api/proposals', () => {
   const mockProposals = [
     {
       id: 'pr_1',
+      organizationId: 'org_1',
       clientId: 'cl_1',
       dealId: 'deal_1',
       templateId: null,
@@ -61,6 +62,7 @@ describe('GET /api/proposals', () => {
     },
     {
       id: 'pr_2',
+      organizationId: 'org_1',
       clientId: 'cl_2',
       dealId: 'deal_2',
       templateId: null,
@@ -144,6 +146,7 @@ describe('GET /api/proposals', () => {
 
 describe('POST /api/proposals', () => {
   const validBody = {
+    organizationId: 'org_1',
     clientId: 'cl_1',
     title: 'Wedding Package Proposal',
     packages: 'Photography + Video',
@@ -158,6 +161,7 @@ describe('POST /api/proposals', () => {
   it('creates a proposal and returns 201', async () => {
     const createdProposal = {
       id: 'pr_new',
+      organizationId: 'org_1',
       clientId: 'cl_1',
       dealId: null,
       templateId: null,
@@ -204,6 +208,7 @@ describe('POST /api/proposals', () => {
   it('applies defaults (status: draft, currency: BRL, totalValue: 0)', async () => {
     const createdProposal = {
       id: 'pr_new',
+      organizationId: 'org_1',
       clientId: 'cl_1',
       dealId: null,
       templateId: null,
@@ -278,6 +283,7 @@ describe('POST /api/proposals', () => {
 describe('GET /api/proposals/[id]', () => {
   const mockProposal = {
     id: 'pr_1',
+    organizationId: 'org_1',
     clientId: 'cl_1',
     dealId: 'deal_1',
     templateId: 'tpl_1',
@@ -356,6 +362,7 @@ describe('PUT /api/proposals/[id]', () => {
   it('updates a proposal and returns updated data', async () => {
     const updatedProposal = {
       id: 'pr_1',
+      organizationId: 'org_1',
       clientId: 'cl_1',
       dealId: 'deal_1',
       templateId: null,

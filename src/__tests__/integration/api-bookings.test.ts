@@ -18,6 +18,7 @@ describe('GET /api/bookings', () => {
   const mockBookings = [
     {
       id: 'bk_1',
+      organizationId: 'org_1',
       clientId: 'cl_1',
       dealId: null,
       eventType: 'wedding',
@@ -33,6 +34,7 @@ describe('GET /api/bookings', () => {
     },
     {
       id: 'bk_2',
+      organizationId: 'org_1',
       clientId: 'cl_2',
       dealId: 'deal_1',
       eventType: 'corporate',
@@ -109,6 +111,7 @@ describe('GET /api/bookings', () => {
 
 describe('POST /api/bookings', () => {
   const validBody = {
+    organizationId: 'org_1',
     clientId: 'cl_1',
     eventType: 'wedding',
     eventDate: '2026-05-10T12:00:00.000Z',
@@ -123,6 +126,7 @@ describe('POST /api/bookings', () => {
   it('creates a booking and returns 201', async () => {
     const createdBooking = {
       id: 'bk_new',
+      organizationId: 'org_1',
       clientId: 'cl_1',
       dealId: null,
       eventType: 'wedding',
@@ -161,6 +165,7 @@ describe('POST /api/bookings', () => {
   it('applies defaults (status: pending, duration: 60)', async () => {
     const createdBooking = {
       id: 'bk_new',
+      organizationId: 'org_1',
       clientId: 'cl_1',
       dealId: null,
       eventType: 'wedding',

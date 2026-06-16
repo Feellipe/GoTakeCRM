@@ -22,6 +22,7 @@ const makeParams = (id: string) => ({ params: Promise.resolve({ id }) });
 describe('GET /api/clients/[id]', () => {
   const mockClient = {
     id: 'cl_1',
+    organizationId: 'org_1',
     phone: '+5511999999999',
     name: 'Alice',
     email: 'alice@example.com',
@@ -35,6 +36,7 @@ describe('GET /api/clients/[id]', () => {
     deals: [
       {
         id: 'deal_1',
+        organizationId: 'org_1',
         title: 'Wedding Package',
         status: 'new',
         value: 8000,
@@ -47,6 +49,7 @@ describe('GET /api/clients/[id]', () => {
     bookings: [
       {
         id: 'bk_1',
+        organizationId: 'org_1',
         eventType: 'wedding',
         eventDate: '2026-02-01T12:00:00Z',
         status: 'confirmed',
@@ -55,6 +58,7 @@ describe('GET /api/clients/[id]', () => {
     documents: [
       {
         id: 'doc_1',
+        organizationId: 'org_1',
         type: 'contract',
         title: 'Service Contract',
         filename: 'contract.pdf',
@@ -135,6 +139,7 @@ describe('PUT /api/clients/[id]', () => {
   it('updates client with validated fields only', async () => {
     const updatedClient = {
       id: 'cl_1',
+      organizationId: 'org_1',
       phone: '+5511999999999',
       name: 'Alice Updated',
       email: 'alice.updated@example.com',

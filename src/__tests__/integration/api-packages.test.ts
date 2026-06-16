@@ -27,6 +27,7 @@ describe('GET /api/packages', () => {
   const mockPackages = [
     {
       id: 'pkg_1',
+      organizationId: 'org_1',
       name: 'Wedding Premium',
       description: 'Full wedding coverage',
       price: 8000,
@@ -39,6 +40,7 @@ describe('GET /api/packages', () => {
     },
     {
       id: 'pkg_2',
+      organizationId: 'org_1',
       name: 'Corporate Video',
       description: 'Corporate promotional video',
       price: 5000,
@@ -87,6 +89,7 @@ describe('GET /api/packages', () => {
 
 describe('POST /api/packages', () => {
   const validBody = {
+    organizationId: 'org_1',
     name: 'Wedding Premium',
     description: 'Full wedding coverage',
     price: 8000,
@@ -102,6 +105,7 @@ describe('POST /api/packages', () => {
   it('creates a package and returns 201', async () => {
     const createdPackage = {
       id: 'pkg_new',
+      organizationId: 'org_1',
       name: 'Wedding Premium',
       description: 'Full wedding coverage',
       price: 8000,
@@ -137,6 +141,7 @@ describe('POST /api/packages', () => {
   it('applies category default (photography) and active default (true)', async () => {
     const createdPackage = {
       id: 'pkg_new',
+      organizationId: 'org_1',
       name: 'Wedding Premium',
       description: 'Full wedding coverage',
       price: 8000,
@@ -212,6 +217,7 @@ describe('POST /api/packages', () => {
 describe('GET /api/packages/[id]', () => {
   const mockPackage = {
     id: 'pkg_1',
+    organizationId: 'org_1',
     name: 'Wedding Premium',
     description: 'Full wedding coverage',
     price: 8000,
@@ -265,6 +271,7 @@ describe('PUT /api/packages/[id]', () => {
   it('updates a package and returns updated data', async () => {
     const updatedPackage = {
       id: 'pkg_1',
+      organizationId: 'org_1',
       name: 'Wedding Premium Plus',
       description: 'Full wedding coverage',
       price: 9500,

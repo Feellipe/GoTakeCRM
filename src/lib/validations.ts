@@ -81,6 +81,7 @@ export const PackageCategoryEnum = z.enum([
 // --- Create Schemas ---
 
 export const clientCreateSchema = z.object({
+  organizationId: z.string().min(1, "Organization ID is required"),
   phone: z.string().min(1, "Phone is required"),
   name: z.string().min(1, "Name is required").max(200),
   email: z.string().email().optional().nullable(),
@@ -103,6 +104,7 @@ export const clientUpdateSchema = z.object({
 });
 
 export const dealCreateSchema = z.object({
+  organizationId: z.string().min(1, "Organization ID is required"),
   clientId: z.string().min(1, "Client ID is required"),
   title: z.string().min(1, "Title is required").max(300),
   description: z.string().optional().nullable(),
@@ -160,6 +162,7 @@ export const revenueUpdateSchema = z.object({
 });
 
 export const bookingCreateSchema = z.object({
+  organizationId: z.string().min(1, "Organization ID is required"),
   clientId: z.string().min(1, "Client ID is required"),
   dealId: z.string().optional().nullable(),
   eventType: z.string().min(1, "Event type is required"),
@@ -180,6 +183,7 @@ export const bookingUpdateSchema = z.object({
 });
 
 export const documentCreateSchema = z.object({
+  organizationId: z.string().min(1, "Organization ID is required"),
   clientId: z.string().min(1),
   dealId: z.string().optional().nullable(),
   type: DocumentTypeEnum,
@@ -189,6 +193,7 @@ export const documentCreateSchema = z.object({
 });
 
 export const packageCreateSchema = z.object({
+  organizationId: z.string().min(1, "Organization ID is required"),
   name: z.string().min(1),
   description: z.string().min(1),
   price: z.number().positive(),
@@ -209,6 +214,7 @@ export const packageUpdateSchema = z.object({
 });
 
 export const proposalCreateSchema = z.object({
+  organizationId: z.string().min(1, "Organization ID is required"),
   clientId: z.string().min(1),
   dealId: z.string().optional().nullable(),
   templateId: z.string().optional().nullable(),
@@ -240,6 +246,7 @@ export const proposalUpdateSchema = z.object({
 });
 
 export const proposalTemplateCreateSchema = z.object({
+  organizationId: z.string().min(1, "Organization ID is required"),
   name: z.string().min(1),
   description: z.string().optional().nullable(),
   defaultTerms: z.string().optional().nullable(),

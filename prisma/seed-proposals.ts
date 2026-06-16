@@ -3,6 +3,16 @@ import { db } from '../src/lib/db';
 async function seed() {
   console.log('Seeding packages and templates...');
 
+  // Resolve a organização multi-tenant pelo slug (criada pelo seed principal).
+  const org = await db.organization.findUnique({
+    where: { slug: 'gotake-studio' },
+  });
+
+  if (!org) {
+    console.log('Organization "gotake-studio" not found. Please run the main seed first.');
+    return;
+  }
+
   // Create default packages
   const packages = await Promise.all([
     db.package.upsert({
@@ -10,6 +20,7 @@ async function seed() {
       update: {},
       create: {
         id: 'pkg-wedding-basic',
+        organizationId: org.id,
         name: 'Wedding Essential',
         description: 'Perfect for intimate weddings. Coverage of the ceremony and reception.',
         price: 3500,
@@ -29,6 +40,7 @@ async function seed() {
       update: {},
       create: {
         id: 'pkg-wedding-premium',
+        organizationId: org.id,
         name: 'Wedding Premium',
         description: 'Complete wedding coverage with two photographers and engagement session.',
         price: 6500,
@@ -51,6 +63,7 @@ async function seed() {
       update: {},
       create: {
         id: 'pkg-portrait-basic',
+        organizationId: org.id,
         name: 'Portrait Session',
         description: 'Professional portrait session for individuals or couples.',
         price: 500,
@@ -70,6 +83,7 @@ async function seed() {
       update: {},
       create: {
         id: 'pkg-portrait-premium',
+        organizationId: org.id,
         name: 'Portrait Extended',
         description: 'Extended portrait session with multiple outfits and locations.',
         price: 900,
@@ -91,6 +105,7 @@ async function seed() {
       update: {},
       create: {
         id: 'pkg-video-wedding',
+        organizationId: org.id,
         name: 'Wedding Cinematic',
         description: 'Cinematic wedding film with ceremony and reception highlights.',
         price: 4500,
@@ -112,6 +127,7 @@ async function seed() {
       update: {},
       create: {
         id: 'pkg-corporate',
+        organizationId: org.id,
         name: 'Corporate Event',
         description: 'Professional coverage for corporate events, conferences, and meetings.',
         price: 2000,
@@ -132,6 +148,7 @@ async function seed() {
       update: {},
       create: {
         id: 'pkg-graduation',
+        organizationId: org.id,
         name: 'Graduation Session',
         description: 'Celebrate your achievement with professional graduation photos.',
         price: 400,
@@ -157,6 +174,7 @@ async function seed() {
       update: {},
       create: {
         id: 'tpl-wedding',
+        organizationId: org.id,
         name: 'Wedding Photography',
         description: 'Template for wedding photography proposals with premium packages.',
         defaultTerms: `Payment Terms:
@@ -181,6 +199,7 @@ Timeline:
       update: {},
       create: {
         id: 'tpl-portrait',
+        organizationId: org.id,
         name: 'Portrait & Personal',
         description: 'Template for portrait sessions, family photos, and personal branding.',
         defaultTerms: `Payment Terms:
@@ -203,6 +222,7 @@ Timeline:
       update: {},
       create: {
         id: 'tpl-corporate',
+        organizationId: org.id,
         name: 'Corporate & Events',
         description: 'Template for corporate events, conferences, and commercial projects.',
         defaultTerms: `Payment Terms:
@@ -242,6 +262,7 @@ Timeline:
       {
         dealId: deals[0]?.id,
         clientId: deals[0]?.clientId,
+        organizationId: org.id,
         templateId: 'tpl-wedding',
         title: `Wedding Photography Proposal - ${deals[0]?.title || 'Project'}`,
         description: 'Complete wedding photography package with premium coverage.',
@@ -257,6 +278,7 @@ Timeline:
       {
         dealId: deals[1]?.id,
         clientId: deals[1]?.clientId,
+        organizationId: org.id,
         templateId: 'tpl-portrait',
         title: `Portrait Session - ${deals[1]?.title || 'Project'}`,
         description: 'Professional portrait session with multiple outfit changes.',
@@ -273,6 +295,7 @@ Timeline:
       {
         dealId: deals[2]?.id,
         clientId: deals[2]?.clientId,
+        organizationId: org.id,
         templateId: 'tpl-corporate',
         title: `Corporate Event Coverage - ${deals[2]?.title || 'Project'}`,
         description: 'Full day corporate event photography and videography.',
@@ -291,6 +314,7 @@ Timeline:
       {
         dealId: deals[3]?.id || deals[0]?.id,
         clientId: deals[3]?.clientId || deals[0]?.clientId,
+        organizationId: org.id,
         templateId: 'tpl-wedding',
         title: `Wedding Video Package - ${deals[3]?.title || deals[0]?.title || 'Project'}`,
         description: 'Cinematic wedding film with drone footage.',

@@ -71,8 +71,8 @@ function setupMocks(overrides: Partial<{
 
 function buildClients() {
   return [
-    { id: 'cl_1', name: 'Alice Tanaka', phone: '+5511', status: 'active' },
-    { id: 'cl_2', name: 'Bob Sato', phone: '+5512', status: 'active' },
+    { id: 'cl_1', organizationId: 'org_1', name: 'Alice Tanaka', phone: '+5511', status: 'active' },
+    { id: 'cl_2', organizationId: 'org_1', name: 'Bob Sato', phone: '+5512', status: 'active' },
   ];
 }
 
@@ -80,6 +80,7 @@ function buildDeals() {
   return [
     {
       id: 'deal_1',
+      organizationId: 'org_1',
       clientId: 'cl_1',
       title: 'Casamento Alice',
       status: 'completed',
@@ -94,6 +95,7 @@ function buildDeals() {
     },
     {
       id: 'deal_2',
+      organizationId: 'org_1',
       clientId: 'cl_2',
       title: 'Corporativo Bob',
       status: 'new',
@@ -108,6 +110,7 @@ function buildDeals() {
     },
     {
       id: 'deal_3',
+      organizationId: 'org_1',
       clientId: 'cl_1',
       title: 'Pre-wedding Alice',
       status: 'briefing',
@@ -122,6 +125,7 @@ function buildDeals() {
     },
     {
       id: 'deal_4',
+      organizationId: 'org_1',
       clientId: 'cl_2',
       title: 'Produto Bob',
       status: 'quoting',
@@ -168,6 +172,7 @@ function buildBookings() {
   return [
     {
       id: 'bk_1',
+      organizationId: 'org_1',
       clientId: 'cl_1',
       dealId: null,
       eventType: 'wedding',
@@ -182,6 +187,7 @@ function buildBookings() {
     },
     {
       id: 'bk_2',
+      organizationId: 'org_1',
       clientId: 'cl_2',
       dealId: 'deal_2',
       eventType: 'corporate',
@@ -196,6 +202,7 @@ function buildBookings() {
     },
     {
       id: 'bk_3',
+      organizationId: 'org_1',
       clientId: 'cl_1',
       dealId: null,
       eventType: 'portrait',

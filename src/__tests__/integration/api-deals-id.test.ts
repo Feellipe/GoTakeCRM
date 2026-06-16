@@ -31,6 +31,7 @@ describe('GET /api/deals/[id]', () => {
   it('returns deal with computed stats (totalExpenses, totalRevenue, profit)', async () => {
     const mockDeal = {
       id: 'deal_1',
+      organizationId: 'org_1',
       clientId: 'cl_1',
       title: 'Wedding Package',
       description: 'Full wedding coverage',
@@ -92,6 +93,7 @@ describe('GET /api/deals/[id]', () => {
 
 describe('PUT /api/deals/[id]', () => {
   const validBody = {
+    organizationId: 'org_1',
     title: 'Updated Title',
     description: 'Updated description',
     status: 'quoting',
@@ -107,6 +109,7 @@ describe('PUT /api/deals/[id]', () => {
   it('updates deal with validated fields', async () => {
     const updatedDeal = {
       id: 'deal_1',
+      organizationId: 'org_1',
       clientId: 'cl_1',
       title: 'Updated Title',
       description: 'Updated description',
@@ -147,6 +150,7 @@ describe('PUT /api/deals/[id]', () => {
   it('whitelists only safe fields (no clientId)', async () => {
     const updatedDeal = {
       id: 'deal_1',
+      organizationId: 'org_1',
       clientId: 'cl_1',
       title: 'Updated',
       description: null,

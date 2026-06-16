@@ -19,6 +19,7 @@ describe('GET /api/clients', () => {
   const mockClients = [
     {
       id: 'cl_1',
+      organizationId: 'org_1',
       phone: '+5511999999999',
       name: 'Alice',
       email: 'alice@example.com',
@@ -35,6 +36,7 @@ describe('GET /api/clients', () => {
     },
     {
       id: 'cl_2',
+      organizationId: 'org_1',
       phone: '+5511888888888',
       name: 'Bob',
       email: null,
@@ -175,6 +177,7 @@ describe('GET /api/clients', () => {
 
 describe('POST /api/clients', () => {
   const validBody = {
+    organizationId: 'org_1',
     phone: '+5511999999999',
     name: 'New Client',
     eventType: 'wedding',
@@ -189,6 +192,7 @@ describe('POST /api/clients', () => {
   it('creates a client and returns 201', async () => {
     const createdClient = {
       id: 'cl_new',
+      organizationId: 'org_1',
       ...validBody,
       email: null,
       notes: null,
@@ -227,6 +231,7 @@ describe('POST /api/clients', () => {
   it('applies defaults for source and status', async () => {
     const createdClient = {
       id: 'cl_new',
+      organizationId: 'org_1',
       phone: '+5511888888888',
       name: 'Minimal',
       email: null,
@@ -243,7 +248,7 @@ describe('POST /api/clients', () => {
     const request = new NextRequest('http://localhost/api/clients', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone: '+5511888888888', name: 'Minimal', eventType: 'corporate' }),
+      body: JSON.stringify({ organizationId: 'org_1', phone: '+5511888888888', name: 'Minimal', eventType: 'corporate' }),
     });
     const response = await POST(request);
 
@@ -313,6 +318,7 @@ describe('POST /api/clients', () => {
   it('saves nullable fields correctly', async () => {
     const createdClient = {
       id: 'cl_new',
+      organizationId: 'org_1',
       ...validBody,
       email: null,
       notes: null,

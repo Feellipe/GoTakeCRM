@@ -16,6 +16,7 @@ describe('GET /api/proposal-templates', () => {
   const mockTemplates = [
     {
       id: 'tpl_1',
+      organizationId: 'org_1',
       name: 'Wedding Package',
       description: 'Standard wedding template',
       defaultTerms: 'Terms here',
@@ -28,6 +29,7 @@ describe('GET /api/proposal-templates', () => {
     },
     {
       id: 'tpl_2',
+      organizationId: 'org_1',
       name: 'Corporate Video',
       description: null,
       defaultTerms: null,
@@ -82,6 +84,7 @@ describe('GET /api/proposal-templates', () => {
 
 describe('POST /api/proposal-templates', () => {
   const validBody = {
+    organizationId: 'org_1',
     name: 'Wedding Package',
     description: 'Standard wedding template',
     defaultTerms: 'Terms here',
@@ -96,6 +99,7 @@ describe('POST /api/proposal-templates', () => {
   it('creates a template and returns 201', async () => {
     const createdTemplate = {
       id: 'tpl_new',
+      organizationId: 'org_1',
       name: 'Wedding Package',
       description: 'Standard wedding template',
       defaultTerms: 'Terms here',
@@ -132,6 +136,7 @@ describe('POST /api/proposal-templates', () => {
   it('applies isActive default (true) when not provided', async () => {
     const createdTemplate = {
       id: 'tpl_new',
+      organizationId: 'org_1',
       name: 'Wedding Package',
       description: null,
       defaultTerms: null,
@@ -163,6 +168,7 @@ describe('POST /api/proposal-templates', () => {
   it('saves nullable fields correctly', async () => {
     const createdTemplate = {
       id: 'tpl_new',
+      organizationId: 'org_1',
       name: 'Minimal Template',
       description: null,
       defaultTerms: null,
