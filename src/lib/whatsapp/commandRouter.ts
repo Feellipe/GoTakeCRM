@@ -24,7 +24,7 @@ const MAX_INPUT_LENGTH = 4096;
  *          The command is always returned in lowercase.
  */
 export function detectCommand(text: string): { command: string } | null {
-  if (!text || typeof text !== 'string') return null;
+  if (!text) return null;
   if (text.length > MAX_INPUT_LENGTH) return null;
 
   const trimmed = text.trim();

@@ -103,4 +103,15 @@ describe('detectCommand', () => {
   it('returns null for emoji text', () => {
     expect(detectCommand('/🚀')).toBeNull();
   });
+
+  // ─── MAX_INPUT_LENGTH guard ─────────────────────────────────────
+  it('rejects input exceeding MAX_INPUT_LENGTH (4097 chars)', () => {
+    const longInput = '/' + 'a'.repeat(4096);
+    expect(detectCommand(longInput)).toBeNull();
+  });
+
+  it('accepts input at exactly MAX_INPUT_LENGTH (4096 chars)', () => {
+    const exactInput = '/' + 'a'.repeat(4095);
+    expect(detectCommand(exactInput)).toBeNull(); // unknown command, but passes length guard
+  });
 });
