@@ -5,6 +5,11 @@ vi.mock('@/lib/whatsapp/flowOrchestrator', () => ({
   handleMessage: vi.fn(),
 }));
 
+// Mock the WhatsApp API client
+vi.mock('@/lib/whatsapp/whatsappApi', () => ({
+  sendMessage: vi.fn(),
+}));
+
 // Proper mock for next/server — supports both NextResponse.json() and new NextResponse()
 vi.mock('next/server', () => {
   class MockNextResponse extends Response {
@@ -50,16 +55,16 @@ vi.mock('next/server', () => {
 });
 
 import { handleMessage } from '@/lib/whatsapp/flowOrchestrator';
+import { sendMessage } from '@/lib/whatsapp/whatsappApi';
 import { GET, POST } from '@/app/api/whatsapp/route';
 
-const VALID_TOKEN = 'my_verify_token_123';
+const VALID_TOKEN='my_verify_token_123';
 const FAKE_PHONE = '5511999999999';
 
 function makeNextRequest(
   url: string,
   init?: RequestInit & { nextUrl?: URL }
 ): any {
-  // We bypass the mock and construct directly since the mock is on next/server
   const { NextRequest } = require('next/server');
   return new NextRequest(url, init);
 }
@@ -104,8 +109,9 @@ describe('GET /api/whatsapp — Webhook verification', () => {
 // ─── POST — Incoming Messages ────────────────────────────────────
 
 describe('POST /api/whatsapp — Incoming messages', () => {
-  it('processes a text message and calls handleMessage, returns 200', async () => {
+  it('processes a text message and sends response back via WhatsApp API', async () => {
     vi.mocked(handleMessage).mockResolvedValue('Qual o nome do cliente?');
+    vi.mocked(sendMessage).mockResolvedValue({});
 
     const body = JSON.stringify({
       entry: [{
@@ -131,9 +137,69 @@ describe('POST /api/whatsapp — Incoming messages', () => {
     const res = await POST(req);
     expect(res.status).toBe(200);
     expect(vi.mocked(handleMessage)).toHaveBeenCalledWith(FAKE_PHONE, '/novodeal');
+    expect(vi.mocked(sendMessage)).toHaveBeenCalledWith(FAKE_PHONE, 'Qual o nome do cliente?');
   });
 
-  it('returns 200 for non-text messages (e.g., image) without processing', async () => {
+  it('does not send response when handleMessage returns empty string', async () => {
+    vi.mocked(handleMessage).mockResolvedValue('');
+
+    const body = JSON.stringify({
+      entry: [{
+        changes: [{
+          value: {
+            messages: [{
+              from: FAKE_PHONE,
+              text: { body: 'mensagem qualquer' },
+              type: 'text',
+            }],
+          },
+        }],
+      }],
+    });
+
+    const req = makeNextRequest('https://graph.facebook.com/api/whatsapp', {
+      method: 'POST',
+      body,
+      headers: { 'Content-Type': 'application/json' } as any,
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    expect(vi.mocked(handleMessage)).toHaveBeenCalled();
+    expect(vi.mocked(sendMessage)).not.toHaveBeenCalled();
+  });
+
+  it('still returns 200 when sendMessage fails', async () => {
+    vi.mocked(handleMessage).mockResolvedValue('Qual o nome do cliente?');
+    vi.mocked(sendMessage).mockRejectedValue(new Error('API error'));
+
+    const body = JSON.stringify({
+      entry: [{
+        changes: [{
+          value: {
+            messages: [{
+              from: FAKE_PHONE,
+              text: { body: '/novodeal' },
+              type: 'text',
+            }],
+          },
+        }],
+      }],
+    });
+
+    const req = makeNextRequest('https://graph.facebook.com/api/whatsapp', {
+      method: 'POST',
+      body,
+      headers: { 'Content-Type': 'application/json' } as any,
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    expect(vi.mocked(handleMessage)).toHaveBeenCalled();
+    expect(vi.mocked(sendMessage)).toHaveBeenCalled();
+  });
+
+  it('returns 200 for non-text messages without processing', async () => {
     const body = JSON.stringify({
       entry: [{
         changes: [{
@@ -157,6 +223,7 @@ describe('POST /api/whatsapp — Incoming messages', () => {
     const res = await POST(req);
     expect(res.status).toBe(200);
     expect(vi.mocked(handleMessage)).not.toHaveBeenCalled();
+    expect(vi.mocked(sendMessage)).not.toHaveBeenCalled();
   });
 
   it('returns 400 for malformed JSON body', async () => {
@@ -168,6 +235,8 @@ describe('POST /api/whatsapp — Incoming messages', () => {
 
     const res = await POST(req);
     expect(res.status).toBe(400);
+    expect(vi.mocked(handleMessage)).not.toHaveBeenCalled();
+    expect(vi.mocked(sendMessage)).not.toHaveBeenCalled();
   });
 
   it('returns 400 for empty body', async () => {
@@ -181,7 +250,7 @@ describe('POST /api/whatsapp — Incoming messages', () => {
     expect(res.status).toBe(400);
   });
 
-  it('returns 200 for messages without text body (status updates)', async () => {
+  it('returns 200 for status updates without processing', async () => {
     const body = JSON.stringify({
       entry: [{
         changes: [{
@@ -204,9 +273,10 @@ describe('POST /api/whatsapp — Incoming messages', () => {
     const res = await POST(req);
     expect(res.status).toBe(200);
     expect(vi.mocked(handleMessage)).not.toHaveBeenCalled();
+    expect(vi.mocked(sendMessage)).not.toHaveBeenCalled();
   });
 
-  it('returns 200 and does not crash when payload has no messages array', async () => {
+  it('returns 200 when payload has no messages array', async () => {
     const body = JSON.stringify({
       entry: [{
         changes: [{
@@ -226,5 +296,6 @@ describe('POST /api/whatsapp — Incoming messages', () => {
     const res = await POST(req);
     expect(res.status).toBe(200);
     expect(vi.mocked(handleMessage)).not.toHaveBeenCalled();
+    expect(vi.mocked(sendMessage)).not.toHaveBeenCalled();
   });
 });

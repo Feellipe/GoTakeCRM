@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { handleMessage } from '@/lib/whatsapp/flowOrchestrator';
+import { sendMessage } from '@/lib/whatsapp/whatsappApi';
 
 /**
  * GET /api/whatsapp — Webhook verification (required by WhatsApp Cloud API).
@@ -89,7 +90,16 @@ export async function POST(request: NextRequest) {
   }
 
   // Process the message through the flow orchestrator
-  await handleMessage(phone, text);
+  const responseText = await handleMessage(phone, text);
+
+  // Send response back via WhatsApp API (if there's something to say)
+  if (responseText) {
+    try {
+      await sendMessage(phone, responseText);
+    } catch (error) {
+      console.error('Failed to send WhatsApp response:', error);
+    }
+  }
 
   return new NextResponse('OK', { status: 200 });
 }
