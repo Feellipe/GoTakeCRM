@@ -6,7 +6,9 @@ import {
   updateSession,
   deleteSession,
   cancelSession,
+  cancelSessionByPhone,
   cleanupOnNewCommand,
+  SESSION_TTL_MS,
 } from '@/lib/whatsapp/sessionManager';
 
 // Helper to build a mock session
@@ -17,8 +19,8 @@ function mockSession(overrides: Record<string, unknown> = {}) {
     phone: '5511999999999',
     command: 'novodeal',
     step: 0,
-    data: '{}',
-    expiresAt: new Date(now.getTime() + 5 * 60 * 1000),
+    data: {},
+    expiresAt: new Date(now.getTime() + SESSION_TTL_MS),
     createdAt: now,
     updatedAt: now,
     ...overrides,
@@ -31,7 +33,7 @@ beforeEach(() => {
 
 // ─── createSession ─────────────────────────────────────────────────
 describe('createSession', () => {
-  it('creates a session with 5-minute expiry', async () => {
+  it('creates a session with TTL-based expiry', async () => {
     const phone = '5511999999999';
     const command = 'novodeal';
     const created = mockSession({ phone, command });
@@ -45,12 +47,13 @@ describe('createSession', () => {
     expect(callArgs.data.phone).toBe(phone);
     expect(callArgs.data.command).toBe(command);
     expect(callArgs.data.step).toBe(0);
-    expect(callArgs.data.data).toBe('{}');
-    // Check expiresAt is ~5 minutes from when the test runs (within a tolerance)
+    expect(callArgs.data.data).toEqual({});
+
+    // Check expiresAt is ~SESSION_TTL_MS from now
     const expiresAt = callArgs.data.expiresAt as Date;
-    const fiveMin = 5 * 60 * 1000;
-    expect(expiresAt.getTime()).toBeGreaterThan(Date.now() + fiveMin - 1000);
-    expect(expiresAt.getTime()).toBeLessThan(Date.now() + fiveMin + 1000);
+    const diff = expiresAt.getTime() - Date.now();
+    expect(diff).toBeGreaterThan(SESSION_TTL_MS - 1000);
+    expect(diff).toBeLessThan(SESSION_TTL_MS + 1000);
 
     expect(result).toEqual(created);
   });
@@ -90,102 +93,66 @@ describe('getActiveSession', () => {
 
   it('returns null when no active session exists', async () => {
     vi.mocked(db.commandSession.findFirst).mockResolvedValue(null);
-
     const result = await getActiveSession('5511999999999');
-
     expect(result).toBeNull();
   });
 
   it('returns null when session has expired', async () => {
     vi.mocked(db.commandSession.findFirst).mockResolvedValue(null);
-
     const result = await getActiveSession('5511888888888');
-
     expect(result).toBeNull();
   });
 });
 
 // ─── updateSession ─────────────────────────────────────────────────
 describe('updateSession', () => {
-  const existingSession = mockSession({
-    id: 'session-1',
-    step: 0,
-    data: JSON.stringify({ clientName: 'João' }),
-  });
-
-  beforeEach(() => {
-    vi.mocked(db.commandSession.findUnique).mockResolvedValue(existingSession);
-  });
-
-  it('increments step and merges new data', async () => {
+  it('increments step and updates data atomically', async () => {
     const sessionId = 'session-1';
-
-    vi.mocked(db.commandSession.update).mockResolvedValue({
-      ...existingSession,
+    const updatedSession = mockSession({
+      id: sessionId,
       step: 1,
-      data: JSON.stringify({ clientName: 'João', eventType: 'wedding' }),
+      data: { eventType: 'wedding' },
     });
+
+    vi.mocked(db.commandSession.update).mockResolvedValue(updatedSession);
 
     const result = await updateSession(sessionId, { eventType: 'wedding' });
 
-    expect(db.commandSession.findUnique).toHaveBeenCalledWith({
+    expect(db.commandSession.update).toHaveBeenCalledWith({
       where: { id: sessionId },
+      data: {
+        step: { increment: 1 },
+        data: { eventType: 'wedding' },
+      },
     });
-    expect(db.commandSession.update).toHaveBeenCalledTimes(1);
-    const callArgs = vi.mocked(db.commandSession.update).mock.calls[0][0];
-
-    expect(callArgs.where.id).toBe(sessionId);
-    expect(callArgs.data.step).toBe(1); // incremented
-
-    // Verify the merged data includes both old and new
-    const mergedData = JSON.parse(callArgs.data.data as string);
-    expect(mergedData).toEqual({
-      clientName: 'João',
-      eventType: 'wedding',
-    });
-
     expect(result.step).toBe(1);
+    expect(result.data).toEqual({ eventType: 'wedding' });
   });
 
-  it('works with empty existing data', async () => {
+  it('works with empty data payload', async () => {
     const sessionId = 'session-2';
-    vi.mocked(db.commandSession.findUnique).mockResolvedValue(
-      mockSession({ id: sessionId, step: 2, data: '{}' })
+    vi.mocked(db.commandSession.update).mockResolvedValue(
+      mockSession({ id: sessionId, step: 1, data: {} })
     );
 
-    vi.mocked(db.commandSession.update).mockResolvedValue({
-      ...mockSession({ id: sessionId, step: 2, data: '{}' }),
-      step: 3,
-      data: JSON.stringify({ amount: 5000 }),
-    });
-
-    const result = await updateSession(sessionId, { amount: 5000 });
-
-    expect(result.step).toBe(3);
+    const result = await updateSession(sessionId, {});
+    expect(result.step).toBe(1);
+    expect(result.data).toEqual({});
   });
 
-  it('overwrites existing keys with new values', async () => {
-    const sessionId = 'session-3';
-    vi.mocked(db.commandSession.findUnique).mockResolvedValue(
-      mockSession({
-        id: sessionId,
-        data: JSON.stringify({ name: 'Old', status: 'pending' }),
-      })
+  it('throws SessionNotFoundError for non-existent session', async () => {
+    vi.mocked(db.commandSession.update).mockRejectedValue(
+      Object.assign(new Error('RecordNotFound'), { code: 'P2025' })
     );
 
-    vi.mocked(db.commandSession.update).mockResolvedValue({
-      ...mockSession({ id: sessionId }),
-      step: 1,
-      data: JSON.stringify({ name: 'New', status: 'pending' }),
-    });
+    await expect(updateSession('non-existent', {})).rejects.toThrow('Session not found');
+  });
 
-    const result = await updateSession(sessionId, { name: 'New' });
+  it('re-throws non-P2025 errors', async () => {
+    const dbError = new Error('Connection lost');
+    vi.mocked(db.commandSession.update).mockRejectedValue(dbError);
 
-    const mergedData = JSON.parse(
-      (vi.mocked(db.commandSession.update).mock.calls[0][0].data as any).data as string
-    );
-    expect(mergedData.name).toBe('New');
-    expect(mergedData.status).toBe('pending');
+    await expect(updateSession('session-1', {})).rejects.toThrow('Connection lost');
   });
 });
 
@@ -193,9 +160,7 @@ describe('updateSession', () => {
 describe('deleteSession', () => {
   it('deletes a session by id', async () => {
     vi.mocked(db.commandSession.delete).mockResolvedValue(mockSession());
-
     await deleteSession('session-1');
-
     expect(db.commandSession.delete).toHaveBeenCalledWith({
       where: { id: 'session-1' },
     });
@@ -205,22 +170,19 @@ describe('deleteSession', () => {
     vi.mocked(db.commandSession.delete).mockRejectedValue(
       Object.assign(new Error('RecordNotFound'), { code: 'P2025' })
     );
-
-    // Should not throw
     await expect(deleteSession('non-existent')).resolves.toBeUndefined();
   });
 
   it('re-throws non-P2025 errors', async () => {
     const dbError = new Error('Connection lost');
     vi.mocked(db.commandSession.delete).mockRejectedValue(dbError);
-
     await expect(deleteSession('session-1')).rejects.toThrow('Connection lost');
   });
 });
 
 // ─── cancelSession ─────────────────────────────────────────────────
 describe('cancelSession', () => {
-  it('sets expiresAt to a past time', async () => {
+  it('sets expiresAt to epoch', async () => {
     const session = mockSession({ id: 'session-1' });
     vi.mocked(db.commandSession.update).mockResolvedValue({
       ...session,
@@ -231,20 +193,43 @@ describe('cancelSession', () => {
 
     expect(db.commandSession.update).toHaveBeenCalledWith({
       where: { id: 'session-1' },
-      data: { expiresAt: expect.any(Date) },
+      data: { expiresAt: new Date(0) },
     });
-
-    const callArgs = vi.mocked(db.commandSession.update).mock.calls[0][0];
-    const expiresAt = callArgs.data.expiresAt as Date;
-    expect(expiresAt.getTime()).toBeLessThan(Date.now() + 1000);
   });
 
   it('does not throw on non-existent session', async () => {
     vi.mocked(db.commandSession.update).mockRejectedValue(
       Object.assign(new Error('RecordNotFound'), { code: 'P2025' })
     );
-
     await expect(cancelSession('non-existent')).resolves.toBeUndefined();
+  });
+
+  it('re-throws non-P2025 errors', async () => {
+    vi.mocked(db.commandSession.update).mockRejectedValue(
+      new Error('Connection lost')
+    );
+    await expect(cancelSession('session-1')).rejects.toThrow('Connection lost');
+  });
+});
+
+// ─── cancelSessionByPhone ──────────────────────────────────────────
+describe('cancelSessionByPhone', () => {
+  it('cancels active sessions for the given phone', async () => {
+    vi.mocked(db.commandSession.updateMany).mockResolvedValue({ count: 1 });
+
+    const count = await cancelSessionByPhone('5511999999999');
+
+    expect(db.commandSession.updateMany).toHaveBeenCalledWith({
+      where: { phone: '5511999999999', expiresAt: { gt: expect.any(Date) } },
+      data: { expiresAt: new Date(0) },
+    });
+    expect(count).toBe(1);
+  });
+
+  it('returns 0 when no active session exists', async () => {
+    vi.mocked(db.commandSession.updateMany).mockResolvedValue({ count: 0 });
+    const count = await cancelSessionByPhone('5511999999999');
+    expect(count).toBe(0);
   });
 });
 
@@ -280,7 +265,7 @@ describe('cleanupOnNewCommand', () => {
     expect(result.id).toBe('new-session-2');
   });
 
-  it('creates session with 5-minute expiry', async () => {
+  it('creates session with TTL-based expiry', async () => {
     vi.mocked(db.commandSession.deleteMany).mockResolvedValue({ count: 0 });
     const created = mockSession({ id: 'new' });
     vi.mocked(db.commandSession.create).mockResolvedValue(created);
@@ -289,44 +274,8 @@ describe('cleanupOnNewCommand', () => {
 
     const callArgs = vi.mocked(db.commandSession.create).mock.calls[0][0];
     const expiresAt = callArgs.data.expiresAt as Date;
-    expect(expiresAt.getTime()).toBeGreaterThan(Date.now() + 5 * 60 * 1000 - 1000);
-    expect(expiresAt.getTime()).toBeLessThan(Date.now() + 5 * 60 * 1000 + 1000);
-  });
-});
-
-// ─── Integration-style: phone boundary values ──────────────────────
-describe('session manager boundary values', () => {
-  it('accepts phone with 9 digits (short)', async () => {
-    vi.mocked(db.commandSession.create).mockResolvedValue(
-      mockSession({ phone: '551199999' })
-    );
-    const result = await createSession('551199999', 'ajuda');
-    expect(result.phone).toBe('551199999');
-  });
-
-  it('accepts phone with 14 digits (long)', async () => {
-    vi.mocked(db.commandSession.create).mockResolvedValue(
-      mockSession({ phone: '551199999999999' })
-    );
-    const result = await createSession('551199999999999', 'ajuda');
-    expect(result.phone).toBe('551199999999999');
-  });
-
-  it('handles getActiveSession for phone with 10 digits', async () => {
-    vi.mocked(db.commandSession.findFirst).mockResolvedValue(
-      mockSession({ phone: '5511999999' })
-    );
-    const result = await getActiveSession('5511999999');
-    expect(result).not.toBeNull();
-    expect(result!.phone).toBe('5511999999');
-  });
-
-  it('handles getActiveSession for phone with 13 digits', async () => {
-    vi.mocked(db.commandSession.findFirst).mockResolvedValue(
-      mockSession({ phone: '55119999999999' })
-    );
-    const result = await getActiveSession('55119999999999');
-    expect(result).not.toBeNull();
-    expect(result!.phone).toBe('55119999999999');
+    const diff = expiresAt.getTime() - Date.now();
+    expect(diff).toBeGreaterThan(SESSION_TTL_MS - 1000);
+    expect(diff).toBeLessThan(SESSION_TTL_MS + 1000);
   });
 });

@@ -1,94 +1,95 @@
 import { db } from '@/lib/db';
 
+/** Session time-to-live: 5 minutes in milliseconds */
+export const SESSION_TTL_MS = 5 * 60 * 1000;
+
+/** Session result interface matching the Prisma CommandSession model */
+export interface SessionResult {
+  id: string;
+  phone: string;
+  command: string;
+  step: number;
+  data: Record<string, unknown>;
+  expiresAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export class SessionNotFoundError extends Error {
+  constructor(sessionId: string) {
+    super(`Session not found: ${sessionId}`);
+    this.name = 'SessionNotFoundError';
+  }
+}
+
+function toSessionResult(session: any): SessionResult {
+  return {
+    ...session,
+    data: typeof session.data === 'string' ? JSON.parse(session.data) : (session.data ?? {}),
+  };
+}
+
 /**
- * Creates a new command session with a 5-minute expiry.
+ * Creates a new command session with a TTL-based expiry.
  */
 export async function createSession(
   phone: string,
   command: string
-): Promise<{
-  id: string;
-  phone: string;
-  command: string;
-  step: number;
-  data: string;
-  expiresAt: Date;
-  createdAt: Date;
-  updatedAt: Date;
-}> {
-  const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
-
-  return db.commandSession.create({
+): Promise<SessionResult> {
+  const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
+  const session = await db.commandSession.create({
     data: {
       phone,
       command,
       step: 0,
-      data: '{}',
+      data: {},
       expiresAt,
     },
   });
+  return toSessionResult(session);
 }
 
 /**
  * Returns the active session for a given phone, or null if none exists
- * or has expired.
+ * or has expired. Uses the compound [phone, expiresAt] index.
  */
 export async function getActiveSession(
   phone: string
-): Promise<{
-  id: string;
-  phone: string;
-  command: string;
-  step: number;
-  data: string;
-  expiresAt: Date;
-  createdAt: Date;
-  updatedAt: Date;
-} | null> {
-  return db.commandSession.findFirst({
+): Promise<SessionResult | null> {
+  const session = await db.commandSession.findFirst({
     where: {
       phone,
       expiresAt: { gt: new Date() },
     },
   });
+  return session ? toSessionResult(session) : null;
 }
 
 /**
- * Updates a session: increments the step and merges the partial data into
- * the existing JSON data.
+ * Updates a session using a single atomic Prisma call.
+ * Uses step increment and overwrite data with the provided partial.
+ * Throws SessionNotFoundError if the session doesn't exist.
  */
 export async function updateSession(
   sessionId: string,
   partialData: Record<string, unknown>
-): Promise<{
-  id: string;
-  phone: string;
-  command: string;
-  step: number;
-  data: string;
-  expiresAt: Date;
-  createdAt: Date;
-  updatedAt: Date;
-}> {
-  // First fetch the current session to get existing data
-  const current = await db.commandSession.findUnique({
-    where: { id: sessionId },
-  });
-
-  if (!current) {
-    throw new Error('Session not found');
+): Promise<SessionResult> {
+  try {
+    const session = await db.commandSession.update({
+      where: { id: sessionId },
+      data: {
+        step: { increment: 1 },
+        data: partialData,
+      },
+    });
+    return toSessionResult(session);
+  } catch (error: unknown) {
+    const prismaError = error as { code?: string };
+    if (prismaError.code === 'P2025') {
+      throw new SessionNotFoundError(sessionId);
+    }
+    throw error;
   }
-
-  const existingData = JSON.parse(current.data || '{}');
-  const mergedData = { ...existingData, ...partialData };
-
-  return db.commandSession.update({
-    where: { id: sessionId },
-    data: {
-      step: current.step + 1,
-      data: JSON.stringify(mergedData),
-    },
-  });
 }
 
 /**
@@ -102,33 +103,39 @@ export async function deleteSession(sessionId: string): Promise<void> {
     });
   } catch (error: unknown) {
     const prismaError = error as { code?: string };
-    if (prismaError.code === 'P2025') {
-      // Record not found — safe to ignore
-      return;
-    }
+    if (prismaError.code === 'P2025') return;
     throw error;
   }
 }
 
 /**
- * Cancels a session by setting its expiresAt to the current time,
- * effectively making it expired immediately.
- * Does not throw if the session doesn't exist.
+ * Cancels a session by setting its expiresAt to epoch (Jan 1, 1970),
+ * reliably making it expired immediately.
  */
 export async function cancelSession(sessionId: string): Promise<void> {
   try {
     await db.commandSession.update({
       where: { id: sessionId },
-      data: { expiresAt: new Date() },
+      data: { expiresAt: new Date(0) },
     });
   } catch (error: unknown) {
     const prismaError = error as { code?: string };
-    if (prismaError.code === 'P2025') {
-      // Record not found — safe to ignore
-      return;
-    }
+    if (prismaError.code === 'P2025') return;
     throw error;
   }
+}
+
+/**
+ * Cancels the active session for a given phone by setting expiresAt to epoch.
+ * More ergonomic than cancelSession(sessionId) — the router has the phone
+ * but not the sessionId.
+ */
+export async function cancelSessionByPhone(phone: string): Promise<number> {
+  const result = await db.commandSession.updateMany({
+    where: { phone, expiresAt: { gt: new Date() } },
+    data: { expiresAt: new Date(0) },
+  });
+  return result.count;
 }
 
 /**
@@ -139,21 +146,9 @@ export async function cancelSession(sessionId: string): Promise<void> {
 export async function cleanupOnNewCommand(
   phone: string,
   command: string
-): Promise<{
-  id: string;
-  phone: string;
-  command: string;
-  step: number;
-  data: string;
-  expiresAt: Date;
-  createdAt: Date;
-  updatedAt: Date;
-}> {
-  // Delete any existing sessions for this phone
+): Promise<SessionResult> {
   await db.commandSession.deleteMany({
     where: { phone },
   });
-
-  // Create a new session
   return createSession(phone, command);
 }

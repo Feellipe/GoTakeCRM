@@ -13,6 +13,9 @@ const VALID_COMMANDS = new Set([
   'cancelar',
 ]);
 
+/** Maximum allowed input length for command detection (WhatsApp limit is 4096) */
+const MAX_INPUT_LENGTH = 4096;
+
 /**
  * Detects a WhatsApp slash command from a text message.
  *
@@ -22,6 +25,7 @@ const VALID_COMMANDS = new Set([
  */
 export function detectCommand(text: string): { command: string } | null {
   if (!text || typeof text !== 'string') return null;
+  if (text.length > MAX_INPUT_LENGTH) return null;
 
   const trimmed = text.trim();
   if (!trimmed) return null;
