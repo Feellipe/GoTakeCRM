@@ -43,6 +43,8 @@ context.md
 next-env.d.ts
 local-*
 .claude/
+.omp/
+.ompignore
 .z-ai-config
 .zscripts/
 *.log

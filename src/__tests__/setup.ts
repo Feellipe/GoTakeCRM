@@ -66,6 +66,8 @@ vi.mock('@/lib/db', () => ({
     expense: createModelMock(),
     revenue: createModelMock(),
     message: createModelMock(),
+    // WhatsApp slash commands
+    commandSession: createModelMock(),
     // Transaction
     $transaction: vi.fn(),
   },
