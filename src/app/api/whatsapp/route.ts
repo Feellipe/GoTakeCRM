@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { handleMessage } from '@/lib/whatsapp/flowOrchestrator';
+import { getOrgByPhoneNumberId } from '@/lib/whatsapp/orgLookup';
 import { sendMessage } from '@/lib/whatsapp/whatsappApi';
 
 /**
@@ -36,8 +37,9 @@ export async function GET(request: NextRequest) {
 /**
  * POST /api/whatsapp — Receive incoming WhatsApp messages.
  *
- * WhatsApp sends a JSON payload. We extract the phone number and text
- * from the first message entry and pass it to the flow orchestrator.
+ * Multi-tenant: looks up the Organization by the webhook payload's
+ * metadata.phone_number_id, then uses that org's WhatsApp credentials
+ * to respond.
  *
  * Always returns 200 OK — WhatsApp requires a 2xx for all deliveries.
  */
@@ -70,6 +72,9 @@ export async function POST(request: NextRequest) {
             type?: string;
             text?: { body?: string };
           }>;
+          metadata?: {
+            phone_number_id?: string;
+          };
         };
       }>;
     }>;
@@ -89,13 +94,27 @@ export async function POST(request: NextRequest) {
     return new NextResponse('OK', { status: 200 });
   }
 
+  // Look up the organization by phone_number_id (multi-tenant)
+  const phoneNumberId =
+    payload?.entry?.[0]?.changes?.[0]?.value?.metadata?.phone_number_id;
+
+  if (!phoneNumberId) {
+    return new NextResponse('OK', { status: 200 });
+  }
+
+  const org = await getOrgByPhoneNumberId(phoneNumberId);
+
+  if (!org) {
+    return new NextResponse('OK', { status: 200 });
+  }
+
   // Process the message through the flow orchestrator
   const responseText = await handleMessage(phone, text);
 
   // Send response back via WhatsApp API (if there's something to say)
   if (responseText) {
     try {
-      await sendMessage(phone, responseText);
+      await sendMessage(phone, responseText, org.token, org.phoneId);
     } catch (error) {
       console.error('Failed to send WhatsApp response:', error);
     }

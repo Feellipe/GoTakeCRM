@@ -5,9 +5,14 @@ vi.mock('@/lib/whatsapp/flowOrchestrator', () => ({
   handleMessage: vi.fn(),
 }));
 
-// Mock the WhatsApp API client
+// Mock the WhatsApp API client — matches new 4-param signature
 vi.mock('@/lib/whatsapp/whatsappApi', () => ({
   sendMessage: vi.fn(),
+}));
+
+// Mock the org lookup utility
+vi.mock('@/lib/whatsapp/orgLookup', () => ({
+  getOrgByPhoneNumberId: vi.fn(),
 }));
 
 // Proper mock for next/server — supports both NextResponse.json() and new NextResponse()
@@ -56,10 +61,17 @@ vi.mock('next/server', () => {
 
 import { handleMessage } from '@/lib/whatsapp/flowOrchestrator';
 import { sendMessage } from '@/lib/whatsapp/whatsappApi';
+import { getOrgByPhoneNumberId } from '@/lib/whatsapp/orgLookup';
 import { GET, POST } from '@/app/api/whatsapp/route';
 
 const VALID_TOKEN='my_verify_token_123';
 const FAKE_PHONE = '5511999999999';
+const FAKE_PHONE_NUMBER_ID = 'whatsapp-phone-id-456';
+const FAKE_ORG_CONFIG = {
+  id: 'org-1',
+  token: 'org-token-abc',
+  phoneId: FAKE_PHONE_NUMBER_ID,
+};
 
 function makeNextRequest(
   url: string,
@@ -109,7 +121,8 @@ describe('GET /api/whatsapp — Webhook verification', () => {
 // ─── POST — Incoming Messages ────────────────────────────────────
 
 describe('POST /api/whatsapp — Incoming messages', () => {
-  it('processes a text message and sends response back via WhatsApp API', async () => {
+  it('processes a text message using org credentials and sends response', async () => {
+    vi.mocked(getOrgByPhoneNumberId).mockResolvedValue(FAKE_ORG_CONFIG);
     vi.mocked(handleMessage).mockResolvedValue('Qual o nome do cliente?');
     vi.mocked(sendMessage).mockResolvedValue({});
 
@@ -122,7 +135,7 @@ describe('POST /api/whatsapp — Incoming messages', () => {
               text: { body: '/novodeal' },
               type: 'text',
             }],
-            metadata: { phone_number_id: '123456' },
+            metadata: { phone_number_id: FAKE_PHONE_NUMBER_ID },
           },
         }],
       }],
@@ -136,11 +149,44 @@ describe('POST /api/whatsapp — Incoming messages', () => {
 
     const res = await POST(req);
     expect(res.status).toBe(200);
+    expect(vi.mocked(getOrgByPhoneNumberId)).toHaveBeenCalledWith(FAKE_PHONE_NUMBER_ID);
     expect(vi.mocked(handleMessage)).toHaveBeenCalledWith(FAKE_PHONE, '/novodeal');
-    expect(vi.mocked(sendMessage)).toHaveBeenCalledWith(FAKE_PHONE, 'Qual o nome do cliente?');
+    expect(vi.mocked(sendMessage)).toHaveBeenCalledWith(FAKE_PHONE, 'Qual o nome do cliente?', FAKE_ORG_CONFIG.token, FAKE_ORG_CONFIG.phoneId);
+  });
+
+  it('does not process message when org lookup returns null', async () => {
+    vi.mocked(getOrgByPhoneNumberId).mockResolvedValue(null);
+
+    const body = JSON.stringify({
+      entry: [{
+        changes: [{
+          value: {
+            messages: [{
+              from: FAKE_PHONE,
+              text: { body: '/novodeal' },
+              type: 'text',
+            }],
+            metadata: { phone_number_id: 'unknown-phone-id' },
+          },
+        }],
+      }],
+    });
+
+    const req = makeNextRequest('https://graph.facebook.com/api/whatsapp', {
+      method: 'POST',
+      body,
+      headers: { 'Content-Type': 'application/json' } as any,
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    expect(vi.mocked(getOrgByPhoneNumberId)).toHaveBeenCalledWith('unknown-phone-id');
+    expect(vi.mocked(handleMessage)).not.toHaveBeenCalled();
+    expect(vi.mocked(sendMessage)).not.toHaveBeenCalled();
   });
 
   it('does not send response when handleMessage returns empty string', async () => {
+    vi.mocked(getOrgByPhoneNumberId).mockResolvedValue(FAKE_ORG_CONFIG);
     vi.mocked(handleMessage).mockResolvedValue('');
 
     const body = JSON.stringify({
@@ -152,6 +198,7 @@ describe('POST /api/whatsapp — Incoming messages', () => {
               text: { body: 'mensagem qualquer' },
               type: 'text',
             }],
+            metadata: { phone_number_id: FAKE_PHONE_NUMBER_ID },
           },
         }],
       }],
@@ -165,11 +212,13 @@ describe('POST /api/whatsapp — Incoming messages', () => {
 
     const res = await POST(req);
     expect(res.status).toBe(200);
+    expect(vi.mocked(getOrgByPhoneNumberId)).toHaveBeenCalled();
     expect(vi.mocked(handleMessage)).toHaveBeenCalled();
     expect(vi.mocked(sendMessage)).not.toHaveBeenCalled();
   });
 
   it('still returns 200 when sendMessage fails', async () => {
+    vi.mocked(getOrgByPhoneNumberId).mockResolvedValue(FAKE_ORG_CONFIG);
     vi.mocked(handleMessage).mockResolvedValue('Qual o nome do cliente?');
     vi.mocked(sendMessage).mockRejectedValue(new Error('API error'));
 
@@ -182,6 +231,7 @@ describe('POST /api/whatsapp — Incoming messages', () => {
               text: { body: '/novodeal' },
               type: 'text',
             }],
+            metadata: { phone_number_id: FAKE_PHONE_NUMBER_ID },
           },
         }],
       }],
@@ -195,6 +245,7 @@ describe('POST /api/whatsapp — Incoming messages', () => {
 
     const res = await POST(req);
     expect(res.status).toBe(200);
+    expect(vi.mocked(getOrgByPhoneNumberId)).toHaveBeenCalled();
     expect(vi.mocked(handleMessage)).toHaveBeenCalled();
     expect(vi.mocked(sendMessage)).toHaveBeenCalled();
   });
@@ -222,6 +273,7 @@ describe('POST /api/whatsapp — Incoming messages', () => {
 
     const res = await POST(req);
     expect(res.status).toBe(200);
+    expect(vi.mocked(getOrgByPhoneNumberId)).not.toHaveBeenCalled();
     expect(vi.mocked(handleMessage)).not.toHaveBeenCalled();
     expect(vi.mocked(sendMessage)).not.toHaveBeenCalled();
   });
@@ -235,6 +287,7 @@ describe('POST /api/whatsapp — Incoming messages', () => {
 
     const res = await POST(req);
     expect(res.status).toBe(400);
+    expect(vi.mocked(getOrgByPhoneNumberId)).not.toHaveBeenCalled();
     expect(vi.mocked(handleMessage)).not.toHaveBeenCalled();
     expect(vi.mocked(sendMessage)).not.toHaveBeenCalled();
   });
@@ -272,6 +325,7 @@ describe('POST /api/whatsapp — Incoming messages', () => {
 
     const res = await POST(req);
     expect(res.status).toBe(200);
+    expect(vi.mocked(getOrgByPhoneNumberId)).not.toHaveBeenCalled();
     expect(vi.mocked(handleMessage)).not.toHaveBeenCalled();
     expect(vi.mocked(sendMessage)).not.toHaveBeenCalled();
   });
@@ -295,6 +349,7 @@ describe('POST /api/whatsapp — Incoming messages', () => {
 
     const res = await POST(req);
     expect(res.status).toBe(200);
+    expect(vi.mocked(getOrgByPhoneNumberId)).not.toHaveBeenCalled();
     expect(vi.mocked(handleMessage)).not.toHaveBeenCalled();
     expect(vi.mocked(sendMessage)).not.toHaveBeenCalled();
   });

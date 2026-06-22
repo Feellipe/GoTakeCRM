@@ -9,18 +9,21 @@ const { sendMessage } = await import('@/lib/whatsapp/whatsappApi');
 
 beforeEach(() => {
   vi.clearAllMocks();
-  process.env.WHATSAPP_PHONE_ID = 'test-phone-id';
-  process.env.WHATSAPP_TOKEN = 'test-token';
 });
 
 describe('sendMessage', () => {
-  it('sends a text message successfully', async () => {
+  const TEST_PHONE = '5511999999999';
+  const TEST_TEXT = 'Olá, tudo bem?';
+  const TEST_TOKEN = 'test-token';
+  const TEST_PHONE_ID = 'test-phone-id';
+
+  it('sends a text message successfully with provided credentials', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ messaging_product: 'whatsapp', messages: [{ id: 'msg-1' }] }),
     });
 
-    const result = await sendMessage('5511999999999', 'Olá, tudo bem?');
+    const result = await sendMessage(TEST_PHONE, TEST_TEXT, TEST_TOKEN, TEST_PHONE_ID);
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
     expect(mockFetch).toHaveBeenCalledWith(
@@ -31,35 +34,19 @@ describe('sendMessage', () => {
           Authorization: 'Bearer test-token',
           'Content-Type': 'application/json',
         },
-        body: expect.stringContaining('5511999999999'),
+        body: expect.stringContaining(TEST_PHONE),
       })
     );
 
     const callBody = JSON.parse(mockFetch.mock.calls[0][1].body);
     expect(callBody.messaging_product).toBe('whatsapp');
-    expect(callBody.to).toBe('5511999999999');
-    expect(callBody.text.body).toBe('Olá, tudo bem?');
+    expect(callBody.to).toBe(TEST_PHONE);
+    expect(callBody.text.body).toBe(TEST_TEXT);
 
     expect(result).toEqual({
       messaging_product: 'whatsapp',
       messages: [{ id: 'msg-1' }],
     });
-  });
-
-  it('throws when WHATSAPP_PHONE_ID is missing', async () => {
-    delete process.env.WHATSAPP_PHONE_ID;
-
-    await expect(sendMessage('5511999999999', 'teste')).rejects.toThrow(
-      'WHATSAPP_PHONE_ID and WHATSAPP_TOKEN must be set'
-    );
-  });
-
-  it('throws when WHATSAPP_TOKEN is missing', async () => {
-    delete process.env.WHATSAPP_TOKEN;
-
-    await expect(sendMessage('5511999999999', 'teste')).rejects.toThrow(
-      'WHATSAPP_PHONE_ID and WHATSAPP_TOKEN must be set'
-    );
   });
 
   it('throws on API error response', async () => {
@@ -69,7 +56,7 @@ describe('sendMessage', () => {
       text: () => Promise.resolve('Invalid credentials'),
     });
 
-    await expect(sendMessage('5511999999999', 'teste')).rejects.toThrow(
+    await expect(sendMessage(TEST_PHONE, TEST_TEXT, TEST_TOKEN, TEST_PHONE_ID)).rejects.toThrow(
       'WhatsApp API error (401): Invalid credentials'
     );
   });
@@ -77,6 +64,6 @@ describe('sendMessage', () => {
   it('throws on network error', async () => {
     mockFetch.mockRejectedValueOnce(new Error('Network failure'));
 
-    await expect(sendMessage('5511999999999', 'teste')).rejects.toThrow('Network failure');
+    await expect(sendMessage(TEST_PHONE, TEST_TEXT, TEST_TOKEN, TEST_PHONE_ID)).rejects.toThrow('Network failure');
   });
 });

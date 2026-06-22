@@ -1,9 +1,8 @@
 /**
  * WhatsApp Cloud API client for sending messages.
  *
- * Uses env vars:
- *   WHATSAPP_PHONE_ID — WhatsApp Business Phone Number ID
- *   WHATSAPP_TOKEN   — Permanent access token from Meta
+ * Multi-tenant: credentials (token & phoneId) are passed explicitly
+ * by the caller — no env var dependency.
  *
  * For tests, mock at the fetch boundary.
  */
@@ -13,24 +12,19 @@ const API_BASE = 'https://graph.facebook.com/v22.0';
 /**
  * Sends a text message via WhatsApp Cloud API.
  *
- * @param phone - Recipient phone number (digits only, with country code)
- * @param text  - Message body text
+ * @param phone   - Recipient phone number (digits only, with country code)
+ * @param text    - Message body text
+ * @param token   - WhatsApp permanent access token (per-org credential)
+ * @param phoneId - WhatsApp Business Phone Number ID (per-org credential)
  * @returns The API response JSON on success
- * @throws If env vars are missing or the API returns an error
+ * @throws If the API returns an error
  */
 export async function sendMessage(
   phone: string,
-  text: string
+  text: string,
+  token: string,
+  phoneId: string
 ): Promise<Record<string, unknown>> {
-  const phoneId = process.env.WHATSAPP_PHONE_ID;
-  const token = process.env.WHATSAPP_TOKEN;
-
-  if (!phoneId || !token) {
-    throw new Error(
-      'WHATSAPP_PHONE_ID and WHATSAPP_TOKEN must be set in environment'
-    );
-  }
-
   const url = `${API_BASE}/${phoneId}/messages`;
 
   const response = await fetch(url, {
