@@ -48,7 +48,7 @@ describe('/projeto — FlowHandler interface', () => {
 // ─── Step 0: Ask project ID ─────────────────────────────────────
 describe('/projeto — Step 0: Ask project ID', () => {
   it('asks for project ID on first call (input ignored)', async () => {
-    const result = await projetoHandler.handle('', {}, 0);
+    const result = await projetoHandler.handle('', {}, 0, 'org-1');
 
     expect(result.message).toContain('ID do projeto');
     expect(result.nextStep).toBe(1);
@@ -56,7 +56,7 @@ describe('/projeto — Step 0: Ask project ID', () => {
   });
 
   it('ignores any input text at step 0', async () => {
-    const result = await projetoHandler.handle('qualquer coisa', {}, 0);
+    const result = await projetoHandler.handle('qualquer coisa', {}, 0, 'org-1');
 
     expect(result.nextStep).toBe(1);
   });
@@ -67,10 +67,10 @@ describe('/projeto — Step 1: Show project details', () => {
   it('shows full project details with client, briefings, proposals, bookings', async () => {
     vi.mocked(db.deal.findUnique).mockResolvedValue(mockFullDeal());
 
-    const result = await projetoHandler.handle('deal-1', {}, 1);
+    const result = await projetoHandler.handle('deal-1', {}, 1, 'org-1');
 
     expect(db.deal.findUnique).toHaveBeenCalledWith({
-      where: { id: 'deal-1' },
+      where: { id: 'deal-1', organizationId: 'org-1' },
       include: {
         client: true,
         briefings: true,
@@ -92,7 +92,7 @@ describe('/projeto — Step 1: Show project details', () => {
   it('shows "Projeto não encontrado" when deal does not exist', async () => {
     vi.mocked(db.deal.findUnique).mockResolvedValue(null);
 
-    const result = await projetoHandler.handle('nonexistent', {}, 1);
+    const result = await projetoHandler.handle('nonexistent', {}, 1, 'org-1');
 
     expect(result.message).toBe('Projeto não encontrado.');
     expect(result.nextStep).toBe(1);
@@ -100,7 +100,7 @@ describe('/projeto — Step 1: Show project details', () => {
   });
 
   it('rejects empty project ID', async () => {
-    const result = await projetoHandler.handle('', {}, 1);
+    const result = await projetoHandler.handle('', {}, 1, 'org-1');
 
     expect(result.message).toBe('Por favor, informe um ID de projeto válido.');
     expect(result.nextStep).toBe(1);
@@ -109,7 +109,7 @@ describe('/projeto — Step 1: Show project details', () => {
   it('handles DB error gracefully', async () => {
     vi.mocked(db.deal.findUnique).mockRejectedValue(new Error('DB error'));
 
-    const result = await projetoHandler.handle('deal-1', {}, 1);
+    const result = await projetoHandler.handle('deal-1', {}, 1, 'org-1');
 
     expect(result.message).toContain('Erro ao processar');
     expect(result.nextStep).toBeNull();
@@ -119,7 +119,7 @@ describe('/projeto — Step 1: Show project details', () => {
 // ─── Edge cases ─────────────────────────────────────────────────
 describe('/projeto — Edge cases', () => {
   it('handles invalid step number gracefully', async () => {
-    const result = await projetoHandler.handle('test', {}, 99);
+    const result = await projetoHandler.handle('test', {}, 99, 'org-1');
 
     expect(result.message).toContain('Erro');
     expect(result.nextStep).toBeNull();

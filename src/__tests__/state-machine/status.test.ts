@@ -64,7 +64,7 @@ beforeEach(() => {
 // ─── Step 0: Ask project ID ─────────────────────────────────────
 describe('/status — Step 0: Ask project ID', () => {
   it('asks for project ID on first call (input ignored)', async () => {
-    const result = await statusHandler.handle('', {}, 0);
+    const result = await statusHandler.handle('', {}, 0, 'org-1');
 
     expect(result.message).toBe('Qual o ID do projeto?');
     expect(result.nextStep).toBe(1);
@@ -72,7 +72,7 @@ describe('/status — Step 0: Ask project ID', () => {
   });
 
   it('ignores any input text at step 0', async () => {
-    const result = await statusHandler.handle('qualquer coisa', {}, 0);
+    const result = await statusHandler.handle('qualquer coisa', {}, 0, 'org-1');
 
     expect(result.message).toBe('Qual o ID do projeto?');
     expect(result.nextStep).toBe(1);
@@ -84,10 +84,10 @@ describe('/status — Step 1: Show status summary', () => {
   it('shows full status summary for deal with all relations', async () => {
     vi.mocked(db.deal.findUnique).mockResolvedValue(mockDeal());
 
-    const result = await statusHandler.handle('deal-1', {}, 1);
+    const result = await statusHandler.handle('deal-1', {}, 1, 'org-1');
 
     expect(db.deal.findUnique).toHaveBeenCalledWith({
-      where: { id: 'deal-1' },
+      where: { id: 'deal-1', organizationId: 'org-1' },
       include: {
         client: true,
         briefings: true,
@@ -112,7 +112,7 @@ describe('/status — Step 1: Show status summary', () => {
   it('shows ❌ for missing briefings and proposals', async () => {
     vi.mocked(db.deal.findUnique).mockResolvedValue(mockDealNoRelations());
 
-    const result = await statusHandler.handle('deal-2', {}, 1);
+    const result = await statusHandler.handle('deal-2', {}, 1, 'org-1');
 
     expect(result.message).toContain('Ensaio Familiar');
     expect(result.message).toContain('❌'); // no briefing
@@ -124,10 +124,10 @@ describe('/status — Step 1: Show status summary', () => {
   it('strips # prefix from project ID', async () => {
     vi.mocked(db.deal.findUnique).mockResolvedValue(mockDeal());
 
-    const result = await statusHandler.handle('#deal-1', {}, 1);
+    const result = await statusHandler.handle('#deal-1', {}, 1, 'org-1');
 
     expect(db.deal.findUnique).toHaveBeenCalledWith({
-      where: { id: 'deal-1' },
+      where: { id: 'deal-1', organizationId: 'org-1' },
       include: expect.any(Object),
     });
     expect(result.nextStep).toBeNull();
@@ -136,7 +136,7 @@ describe('/status — Step 1: Show status summary', () => {
   it('shows "Projeto não encontrado" when deal does not exist', async () => {
     vi.mocked(db.deal.findUnique).mockResolvedValue(null);
 
-    const result = await statusHandler.handle('nonexistent-id', {}, 1);
+    const result = await statusHandler.handle('nonexistent-id', {}, 1, 'org-1');
 
     expect(result.message).toBe('Projeto não encontrado.');
     expect(result.nextStep).toBe(1);
@@ -144,7 +144,7 @@ describe('/status — Step 1: Show status summary', () => {
   });
 
   it('rejects empty ID input', async () => {
-    const result = await statusHandler.handle('', {}, 1);
+    const result = await statusHandler.handle('', {}, 1, 'org-1');
 
     expect(result.message).toBe('Por favor, informe um ID de projeto válido.');
     expect(result.nextStep).toBe(1);
@@ -153,7 +153,7 @@ describe('/status — Step 1: Show status summary', () => {
   it('handles DB error gracefully', async () => {
     vi.mocked(db.deal.findUnique).mockRejectedValue(new Error('DB error'));
 
-    const result = await statusHandler.handle('deal-1', {}, 1);
+    const result = await statusHandler.handle('deal-1', {}, 1, 'org-1');
 
     expect(result.message).toContain('Erro ao processar');
     expect(result.nextStep).toBeNull();
@@ -163,7 +163,7 @@ describe('/status — Step 1: Show status summary', () => {
 // ─── Edge cases ─────────────────────────────────────────────────
 describe('/status — Edge cases', () => {
   it('handles invalid step number gracefully', async () => {
-    const result = await statusHandler.handle('test', {}, 99);
+    const result = await statusHandler.handle('test', {}, 99, 'org-1');
 
     expect(result.message).toContain('Erro');
     expect(result.nextStep).toBeNull();

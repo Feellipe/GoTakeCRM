@@ -21,11 +21,13 @@ import { FLOWS } from './flows/index';
  *
  * @param phone - WhatsApp phone number (digits only)
  * @param body - Raw message text from WhatsApp
+ * @param organizationId - Organization ID for multi-tenant data isolation
  * @returns Response message string (empty if ignored)
  */
 export async function handleMessage(
   phone: string,
-  body: string
+  body: string,
+  organizationId: string
 ): Promise<string> {
   // 1. Detect if the input is a valid slash command
   const detected = detectCommand(body);
@@ -49,7 +51,7 @@ export async function handleMessage(
     }
 
     try {
-      const result = await flow.handle('', {}, 0);
+      const result = await flow.handle('', {}, 0, organizationId);
 
       // Update session data for the next step
       if (result.nextStep !== null) {
@@ -86,7 +88,7 @@ export async function handleMessage(
     }
 
     try {
-      const result = await flow.handle('', {}, 0);
+      const result = await flow.handle('', {}, 0, organizationId);
 
       if (result.nextStep !== null) {
         await updateSession(newSession.id, result.updatedData);
@@ -112,7 +114,7 @@ export async function handleMessage(
   }
 
   try {
-    const result = await flow.handle(body, session.data as Record<string, any>, session.step);
+    const result = await flow.handle(body, session.data as Record<string, any>, session.step, organizationId);
 
     if (result.nextStep === null) {
       // Flow completed — delete session

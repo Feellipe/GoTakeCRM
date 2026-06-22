@@ -11,7 +11,8 @@ export const ajudaHandler: FlowHandler = {
   async handle(
     _input: string,
     _data: Record<string, any>,
-    _step: number
+    _step: number,
+    _organizationId: string
   ): Promise<StepResult> {
     const lines: string[] = [
       '🤖 *Comandos disponíveis:*',

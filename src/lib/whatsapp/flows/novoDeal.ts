@@ -34,7 +34,8 @@ export const novoDealHandler: FlowHandler = {
   async handle(
     input: string,
     data: Record<string, any>,
-    step: number
+    step: number,
+    organizationId: string
   ): Promise<StepResult> {
     try {
       switch (step) {
@@ -43,15 +44,15 @@ export const novoDealHandler: FlowHandler = {
         case 1:
           return handleStep1(input, data);
         case 2:
-          return handleStep2(input, data);
+          return handleStep2(input, data, organizationId);
         case 3:
-          return handleStep3(input, data);
+          return handleStep3(input, data, organizationId);
         case 4:
           return handleStep4(input, data);
         case 5:
           return handleStep5(input, data);
         case 6:
-          return handleStep6(data);
+          return handleStep6(data, organizationId);
         default:
           return {
             message: 'Erro: passo inválido.',
@@ -110,7 +111,8 @@ function handleStep1(input: string, data: Record<string, any>): StepResult {
 // ─── Step 2: Receive phone, list packages ──────────────────────
 async function handleStep2(
   input: string,
-  data: Record<string, any>
+  data: Record<string, any>,
+  organizationId: string
 ): Promise<StepResult> {
   const phone = stripPhone(input);
 
@@ -122,9 +124,9 @@ async function handleStep2(
     };
   }
 
-  // Fetch active packages
+  // Fetch active packages scoped by organization
   const packages = await db.package.findMany({
-    where: { active: true },
+    where: { active: true, organizationId },
   });
 
   if (!packages || packages.length === 0) {
@@ -150,12 +152,13 @@ async function handleStep2(
 // ─── Step 3: Select package ────────────────────────────────────
 async function handleStep3(
   input: string,
-  data: Record<string, any>
+  data: Record<string, any>,
+  organizationId: string
 ): Promise<StepResult> {
   const query = input.trim().toLowerCase();
 
   const packages = await db.package.findMany({
-    where: { active: true },
+    where: { active: true, organizationId },
   });
 
   // Try to find a matching package (case-insensitive partial match)
@@ -337,7 +340,8 @@ function handleStep5(input: string, data: Record<string, any>): StepResult {
 
 // ─── Step 6: Complete — Create entities ────────────────────────
 async function handleStep6(
-  data: Record<string, any>
+  data: Record<string, any>,
+  organizationId: string
 ): Promise<StepResult> {
   try {
     // 1. Create client

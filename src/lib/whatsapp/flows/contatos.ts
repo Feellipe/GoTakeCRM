@@ -16,7 +16,8 @@ export const contatosHandler: FlowHandler = {
   async handle(
     input: string,
     data: Record<string, any>,
-    step: number
+    step: number,
+    organizationId: string
   ): Promise<StepResult> {
     try {
       switch (step) {
@@ -25,7 +26,7 @@ export const contatosHandler: FlowHandler = {
         case 1:
           return await handleStep1(input, data);
         case 2:
-          return await handleStep2(data);
+          return await handleStep2(data, organizationId);
         default:
           return {
             message: 'Erro: passo inválido.',
@@ -78,7 +79,8 @@ async function handleStep1(
 
 // ─── Step 2: Search DB and display results ───────────────────────
 async function handleStep2(
-  data: Record<string, any>
+  data: Record<string, any>,
+  organizationId: string
 ): Promise<StepResult> {
   const term = data.searchTerm as string;
 
@@ -88,6 +90,7 @@ async function handleStep2(
         { name: { contains: term } },
         { phone: { contains: term } },
       ],
+      organizationId,
     },
   });
 

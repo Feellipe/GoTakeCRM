@@ -23,14 +23,15 @@ export const statusHandler: FlowHandler = {
   async handle(
     input: string,
     data: Record<string, any>,
-    step: number
+    step: number,
+    organizationId: string
   ): Promise<StepResult> {
     try {
       switch (step) {
         case 0:
           return handleStep0();
         case 1:
-          return await handleStep1(input, data);
+          return await handleStep1(input, data, organizationId);
         default:
           return {
             message: 'Erro: passo inválido.',
@@ -62,7 +63,8 @@ function handleStep0(): StepResult {
 // ─── Step 1: Fetch and display status summary ────────────────────
 async function handleStep1(
   input: string,
-  data: Record<string, any>
+  data: Record<string, any>,
+  organizationId: string
 ): Promise<StepResult> {
   const trimmed = input.trim();
 
@@ -77,7 +79,7 @@ async function handleStep1(
   const projectId = trimmed.startsWith('#') ? trimmed.slice(1) : trimmed;
 
   const deal = await db.deal.findUnique({
-    where: { id: projectId },
+    where: { id: projectId, organizationId },
     include: {
       client: true,
       briefings: true,

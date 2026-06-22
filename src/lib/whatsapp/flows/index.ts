@@ -8,7 +8,7 @@ export interface StepResult {
 export interface FlowHandler {
   readonly command: string;
   readonly totalSteps: number;
-  handle(input: string, data: Record<string, any>, step: number): Promise<StepResult>;
+  handle(input: string, data: Record<string, any>, step: number, organizationId: string): Promise<StepResult>;
 }
 
 import { novoDealHandler } from './novoDeal';

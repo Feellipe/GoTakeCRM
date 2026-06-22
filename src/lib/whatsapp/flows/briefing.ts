@@ -16,7 +16,8 @@ export const briefingHandler: FlowHandler = {
   async handle(
     input: string,
     data: Record<string, any>,
-    step: number
+    step: number,
+    _organizationId: string
   ): Promise<StepResult> {
     try {
       switch (step) {

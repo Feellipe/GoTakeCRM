@@ -150,7 +150,7 @@ describe('POST /api/whatsapp — Incoming messages', () => {
     const res = await POST(req);
     expect(res.status).toBe(200);
     expect(vi.mocked(getOrgByPhoneNumberId)).toHaveBeenCalledWith(FAKE_PHONE_NUMBER_ID);
-    expect(vi.mocked(handleMessage)).toHaveBeenCalledWith(FAKE_PHONE, '/novodeal');
+    expect(vi.mocked(handleMessage)).toHaveBeenCalledWith(FAKE_PHONE, '/novodeal', FAKE_ORG_CONFIG.id);
     expect(vi.mocked(sendMessage)).toHaveBeenCalledWith(FAKE_PHONE, 'Qual o nome do cliente?', FAKE_ORG_CONFIG.token, FAKE_ORG_CONFIG.phoneId);
   });
 

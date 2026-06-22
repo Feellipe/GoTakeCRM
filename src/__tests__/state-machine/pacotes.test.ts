@@ -31,7 +31,7 @@ describe('/pacotes — FlowHandler interface', () => {
 // ─── Step 0: Ask "Ativos ou todos?" ─────────────────────────────
 describe('/pacotes — Step 0: Ask filter', () => {
   it('asks "Ativos ou todos?" on first call', async () => {
-    const result = await pacotesHandler.handle('', {}, 0);
+    const result = await pacotesHandler.handle('', {}, 0, 'org-1');
 
     expect(result.message).toContain('ativos');
     expect(result.message).toContain('todos');
@@ -40,7 +40,7 @@ describe('/pacotes — Step 0: Ask filter', () => {
   });
 
   it('ignores any input text at step 0', async () => {
-    const result = await pacotesHandler.handle('qualquer coisa', {}, 0);
+    const result = await pacotesHandler.handle('qualquer coisa', {}, 0, 'org-1');
 
     expect(result.nextStep).toBe(1);
   });
@@ -55,10 +55,10 @@ describe('/pacotes — Step 1: List packages', () => {
     ];
     vi.mocked(db.package.findMany).mockResolvedValue(packages);
 
-    const result = await pacotesHandler.handle('ativos', {}, 1);
+    const result = await pacotesHandler.handle('ativos', {}, 1, 'org-1');
 
     expect(db.package.findMany).toHaveBeenCalledWith({
-      where: { active: true },
+      where: { active: true, organizationId: 'org-1' },
     });
     expect(result.message).toContain('Casamento Premium');
     expect(result.message).toContain('Casamento Básico');
@@ -74,10 +74,10 @@ describe('/pacotes — Step 1: List packages', () => {
     ];
     vi.mocked(db.package.findMany).mockResolvedValue(packages);
 
-    const result = await pacotesHandler.handle('todos', {}, 1);
+    const result = await pacotesHandler.handle('todos', {}, 1, 'org-1');
 
     expect(db.package.findMany).toHaveBeenCalledWith({
-      where: {},
+      where: { organizationId: 'org-1' },
     });
     expect(result.message).toContain('Casamento Premium');
     expect(result.message).toContain('Pacote Antigo');
@@ -87,7 +87,7 @@ describe('/pacotes — Step 1: List packages', () => {
   it('accepts "Ativos" with mixed case', async () => {
     vi.mocked(db.package.findMany).mockResolvedValue([]);
 
-    const result = await pacotesHandler.handle('Ativos', {}, 1);
+    const result = await pacotesHandler.handle('Ativos', {}, 1, 'org-1');
 
     expect(db.package.findMany).toHaveBeenCalled();
     expect(result.nextStep).toBeNull();
@@ -96,7 +96,7 @@ describe('/pacotes — Step 1: List packages', () => {
   it('shows "Nenhum pacote cadastrado" when no results', async () => {
     vi.mocked(db.package.findMany).mockResolvedValue([]);
 
-    const result = await pacotesHandler.handle('ativos', {}, 1);
+    const result = await pacotesHandler.handle('ativos', {}, 1, 'org-1');
 
     expect(result.message).toBe('Nenhum pacote cadastrado.');
     expect(result.nextStep).toBeNull();
@@ -104,7 +104,7 @@ describe('/pacotes — Step 1: List packages', () => {
   });
 
   it('rejects invalid filter input', async () => {
-    const result = await pacotesHandler.handle('invalido', {}, 1);
+    const result = await pacotesHandler.handle('invalido', {}, 1, 'org-1');
 
     expect(result.message).toBe('Por favor, responda "ativos" ou "todos".');
     expect(result.nextStep).toBe(1);
@@ -113,7 +113,7 @@ describe('/pacotes — Step 1: List packages', () => {
   it('handles DB error gracefully', async () => {
     vi.mocked(db.package.findMany).mockRejectedValue(new Error('DB error'));
 
-    const result = await pacotesHandler.handle('ativos', {}, 1);
+    const result = await pacotesHandler.handle('ativos', {}, 1, 'org-1');
 
     expect(result.message).toContain('Erro ao processar');
     expect(result.nextStep).toBeNull();
@@ -123,7 +123,7 @@ describe('/pacotes — Step 1: List packages', () => {
 // ─── Edge cases ─────────────────────────────────────────────────
 describe('/pacotes — Edge cases', () => {
   it('handles invalid step number gracefully', async () => {
-    const result = await pacotesHandler.handle('test', {}, 99);
+    const result = await pacotesHandler.handle('test', {}, 99, 'org-1');
 
     expect(result.message).toContain('Erro');
     expect(result.nextStep).toBeNull();

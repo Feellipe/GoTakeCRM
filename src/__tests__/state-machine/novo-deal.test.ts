@@ -21,7 +21,7 @@ beforeEach(() => {
 // ─── Step 0: Ask name ──────────────────────────────────────────────
 describe('novoDeal — Step 0: Ask client name', () => {
   it('asks for client name on first call (input ignored)', async () => {
-    const result = await novoDealHandler.handle('', {}, 0);
+    const result = await novoDealHandler.handle('', {}, 0, 'org-1');
 
     expect(result.message).toBe('Qual o nome do cliente?');
     expect(result.nextStep).toBe(1);
@@ -29,7 +29,7 @@ describe('novoDeal — Step 0: Ask client name', () => {
   });
 
   it('ignores any input text at step 0', async () => {
-    const result = await novoDealHandler.handle('João', {}, 0);
+    const result = await novoDealHandler.handle('João', {}, 0, 'org-1');
 
     expect(result.message).toBe('Qual o nome do cliente?');
     expect(result.nextStep).toBe(1);
@@ -39,7 +39,7 @@ describe('novoDeal — Step 0: Ask client name', () => {
 // ─── Step 1: Receive name, ask phone ──────────────────────────────
 describe('novoDeal — Step 1: Receive client name', () => {
   it('accepts a valid client name and asks for phone', async () => {
-    const result = await novoDealHandler.handle('João Silva', {}, 1);
+    const result = await novoDealHandler.handle('João Silva', {}, 1, 'org-1');
 
     expect(result.message).toBe('Qual o telefone do(a) João Silva?');
     expect(result.nextStep).toBe(2);
@@ -47,7 +47,7 @@ describe('novoDeal — Step 1: Receive client name', () => {
   });
 
   it('rejects empty name', async () => {
-    const result = await novoDealHandler.handle('', {}, 1);
+    const result = await novoDealHandler.handle('', {}, 1, 'org-1');
 
     expect(result.message).toBe('Por favor, informe um nome válido.');
     expect(result.nextStep).toBe(1);
@@ -55,14 +55,14 @@ describe('novoDeal — Step 1: Receive client name', () => {
   });
 
   it('rejects whitespace-only name', async () => {
-    const result = await novoDealHandler.handle('   ', {}, 1);
+    const result = await novoDealHandler.handle('   ', {}, 1, 'org-1');
 
     expect(result.message).toBe('Por favor, informe um nome válido.');
     expect(result.nextStep).toBe(1);
   });
 
   it('accepts name with exactly 1 character (boundary)', async () => {
-    const result = await novoDealHandler.handle('A', {}, 1);
+    const result = await novoDealHandler.handle('A', {}, 1, 'org-1');
 
     expect(result.message).toBe('Qual o telefone do(a) A?');
     expect(result.nextStep).toBe(2);
@@ -71,7 +71,7 @@ describe('novoDeal — Step 1: Receive client name', () => {
 
   it('accepts name with exactly 200 characters (boundary)', async () => {
     const name = 'A'.repeat(200);
-    const result = await novoDealHandler.handle(name, {}, 1);
+    const result = await novoDealHandler.handle(name, {}, 1, 'org-1');
 
     expect(result.nextStep).toBe(2);
     expect(result.updatedData).toEqual({ clientName: name });
@@ -79,7 +79,7 @@ describe('novoDeal — Step 1: Receive client name', () => {
 
   it('rejects name longer than 200 characters (boundary)', async () => {
     const name = 'A'.repeat(201);
-    const result = await novoDealHandler.handle(name, {}, 1);
+    const result = await novoDealHandler.handle(name, {}, 1, 'org-1');
 
     expect(result.message).toBe('Por favor, informe um nome válido.');
     expect(result.nextStep).toBe(1);
@@ -259,7 +259,7 @@ describe('novoDeal — Step 3: Select package', () => {
     const packages = [mockPackage({ id: 'pkg-1', name: 'Casamento Premium' })];
     vi.mocked(db.package.findMany).mockResolvedValue(packages);
 
-    const result = await novoDealHandler.handle('casamento', dataWithPhone, 3);
+    const result = await novoDealHandler.handle('casamento', dataWithPhone, 3, 'org-1');
 
     expect(result.updatedData).toMatchObject({
       packageName: 'Casamento Premium',
@@ -272,7 +272,7 @@ describe('novoDeal — Step 3: Select package', () => {
     const packages = [mockPackage({ id: 'pkg-1', name: 'Casamento Premium' })];
     vi.mocked(db.package.findMany).mockResolvedValue(packages);
 
-    const result = await novoDealHandler.handle('PREMIUM', dataWithPhone, 3);
+    const result = await novoDealHandler.handle('PREMIUM', dataWithPhone, 3, 'org-1');
 
     expect(result.updatedData).toMatchObject({
       packageName: 'Casamento Premium',
@@ -285,7 +285,7 @@ describe('novoDeal — Step 3: Select package', () => {
     const packages = [mockPackage({ id: 'pkg-1', name: 'Casamento Premium' })];
     vi.mocked(db.package.findMany).mockResolvedValue(packages);
 
-    const result = await novoDealHandler.handle('Festa Infantil', dataWithPhone, 3);
+    const result = await novoDealHandler.handle('Festa Infantil', dataWithPhone, 3, 'org-1');
 
     expect(result.message).toBe(
       'Pacote não encontrado. Os pacotes disponíveis são:\nCasamento Premium'
@@ -301,7 +301,7 @@ describe('novoDeal — Step 3: Select package', () => {
     ];
     vi.mocked(db.package.findMany).mockResolvedValue(packages);
 
-    const result = await novoDealHandler.handle('Festa', dataWithPhone, 3);
+    const result = await novoDealHandler.handle('Festa', dataWithPhone, 3, 'org-1');
 
     expect(result.message).toContain('Casamento Premium');
     expect(result.message).toContain('Casamento Básico');
@@ -315,7 +315,7 @@ describe('novoDeal — Step 3: Select package', () => {
     ];
     vi.mocked(db.package.findMany).mockResolvedValue(packages);
 
-    const result = await novoDealHandler.handle('Básico', dataWithPhone, 3);
+    const result = await novoDealHandler.handle('Básico', dataWithPhone, 3, 'org-1');
 
     expect(result.updatedData).toMatchObject({
       packageName: 'Casamento Básico',
@@ -335,7 +335,7 @@ describe('novoDeal — Step 4: Edit package (Decision Table)', () => {
   };
 
   it('enters no edit → proceeds to step 5 (proposal question)', async () => {
-    const result = await novoDealHandler.handle('não', dataWithPackage, 4);
+    const result = await novoDealHandler.handle('não', dataWithPackage, 4, 'org-1');
 
     expect(result.message).toBe('Deseja criar uma proposta? (sim/não)');
     expect(result.nextStep).toBe(5);
@@ -343,13 +343,13 @@ describe('novoDeal — Step 4: Edit package (Decision Table)', () => {
   });
 
   it('enters não with capital N → proceeds to step 5', async () => {
-    const result = await novoDealHandler.handle('Não', dataWithPackage, 4);
+    const result = await novoDealHandler.handle('Não', dataWithPackage, 4, 'org-1');
 
     expect(result.nextStep).toBe(5);
   });
 
   it('enters "sim" → asks what to edit (valor/descrição)', async () => {
-    const result = await novoDealHandler.handle('sim', dataWithPackage, 4);
+    const result = await novoDealHandler.handle('sim', dataWithPackage, 4, 'org-1');
 
     expect(result.message).toBe('O que quer editar? (valor/descrição)');
     expect(result.nextStep).toBe(4);
@@ -435,7 +435,7 @@ describe('novoDeal — Step 4: Edit package (Decision Table)', () => {
   });
 
   it('invalid response to edit question (not sim/não) stays at step 4', async () => {
-    const result = await novoDealHandler.handle('talvez', dataWithPackage, 4);
+    const result = await novoDealHandler.handle('talvez', dataWithPackage, 4, 'org-1');
 
     expect(result.message).toBe('Por favor, responda "sim" ou "não".');
     expect(result.nextStep).toBe(4);
@@ -452,7 +452,7 @@ describe('novoDeal — Step 5: Ask about creating a proposal', () => {
   };
 
   it('"sim" → sets createProposal=true and advances to step 6', async () => {
-    const result = await novoDealHandler.handle('sim', dataReady, 5);
+    const result = await novoDealHandler.handle('sim', dataReady, 5, 'org-1');
 
     expect(result.message).toBe('Criando deal e registrando tudo...');
     expect(result.nextStep).toBe(6);
@@ -463,7 +463,7 @@ describe('novoDeal — Step 5: Ask about creating a proposal', () => {
   });
 
   it('"não" → sets createProposal=false and advances to step 6', async () => {
-    const result = await novoDealHandler.handle('não', dataReady, 5);
+    const result = await novoDealHandler.handle('não', dataReady, 5, 'org-1');
 
     expect(result.message).toBe('Criando deal e registrando tudo...');
     expect(result.nextStep).toBe(6);
@@ -474,7 +474,7 @@ describe('novoDeal — Step 5: Ask about creating a proposal', () => {
   });
 
   it('anything else → stays at step 5 with error message', async () => {
-    const result = await novoDealHandler.handle('talvez', dataReady, 5);
+    const result = await novoDealHandler.handle('talvez', dataReady, 5, 'org-1');
 
     expect(result.message).toBe('Por favor, responda "sim" ou "não".');
     expect(result.nextStep).toBe(5);
@@ -501,7 +501,7 @@ describe('novoDeal — Step 6: Create entities', () => {
     vi.mocked(db.proposal.create).mockResolvedValue(mockProposal);
     vi.mocked(db.commandSession.deleteMany).mockResolvedValue({ count: 1 });
 
-    const result = await novoDealHandler.handle('', dataForCreation, 6);
+    const result = await novoDealHandler.handle('', dataForCreation, 6, 'org-1');
 
     expect(db.client.create).toHaveBeenCalledWith({
       data: { name: 'João Silva', phone: '21999999999' },
@@ -544,7 +544,7 @@ describe('novoDeal — Step 6: Create entities', () => {
     vi.mocked(db.deal.create).mockResolvedValue(mockDeal);
     vi.mocked(db.commandSession.deleteMany).mockResolvedValue({ count: 1 });
 
-    const result = await novoDealHandler.handle('', dataNoProposal, 6);
+    const result = await novoDealHandler.handle('', dataNoProposal, 6, 'org-1');
 
     expect(db.client.create).toHaveBeenCalledOnce();
     expect(db.deal.create).toHaveBeenCalledOnce();
@@ -569,7 +569,7 @@ describe('novoDeal — Step 6: Create entities', () => {
     vi.mocked(db.proposal.create).mockResolvedValue(mockProposal);
     vi.mocked(db.commandSession.deleteMany).mockResolvedValue({ count: 1 });
 
-    await novoDealHandler.handle('', dataWithEdits, 6);
+    await novoDealHandler.handle('', dataWithEdits, 6, 'org-1');
 
     expect(db.deal.create).toHaveBeenCalledWith({
       data: {
@@ -584,7 +584,7 @@ describe('novoDeal — Step 6: Create entities', () => {
   it('handles DB error on client creation gracefully', async () => {
     vi.mocked(db.client.create).mockRejectedValue(new Error('Database connection error'));
 
-    const result = await novoDealHandler.handle('', dataForCreation, 6);
+    const result = await novoDealHandler.handle('', dataForCreation, 6, 'org-1');
 
     expect(result.message).toContain('Erro ao criar');
     expect(result.nextStep).toBeNull();
@@ -593,7 +593,7 @@ describe('novoDeal — Step 6: Create entities', () => {
   it('does not delete session when entity creation fails', async () => {
     vi.mocked(db.client.create).mockRejectedValue(new Error('DB error'));
 
-    await novoDealHandler.handle('', dataForCreation, 6);
+    await novoDealHandler.handle('', dataForCreation, 6, 'org-1');
 
     expect(db.commandSession.deleteMany).not.toHaveBeenCalled();
   });
@@ -602,7 +602,7 @@ describe('novoDeal — Step 6: Create entities', () => {
 // ─── Edge cases ─────────────────────────────────────────────────
 describe('novoDeal — Edge cases', () => {
   it('handles invalid step number gracefully', async () => {
-    const result = await novoDealHandler.handle('test', {}, 99);
+    const result = await novoDealHandler.handle('test', {}, 99, 'org-1');
 
     expect(result.message).toContain('Erro');
     expect(result.nextStep).toBeNull();

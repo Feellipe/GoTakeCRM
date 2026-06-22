@@ -15,14 +15,15 @@ export const pacotesHandler: FlowHandler = {
   async handle(
     input: string,
     data: Record<string, any>,
-    step: number
+    step: number,
+    organizationId: string
   ): Promise<StepResult> {
     try {
       switch (step) {
         case 0:
           return handleStep0();
         case 1:
-          return await handleStep1(input, data);
+          return await handleStep1(input, data, organizationId);
         default:
           return {
             message: 'Erro: passo inválido.',
@@ -54,16 +55,17 @@ function handleStep0(): StepResult {
 // ─── Step 1: Filter and display packages ────────────────────────
 async function handleStep1(
   input: string,
-  _data: Record<string, any>
+  _data: Record<string, any>,
+  organizationId: string
 ): Promise<StepResult> {
   const trimmed = input.trim().toLowerCase();
 
-  let where: Record<string, any> = {};
+  let where: Record<string, any> = { organizationId };
 
   if (trimmed === 'ativos' || trimmed === 'ativo') {
-    where = { active: true };
+    where = { active: true, organizationId };
   } else if (trimmed === 'todos' || trimmed === 'todas' || trimmed === 'all') {
-    where = {};
+    where = { organizationId };
   } else {
     return {
       message: 'Por favor, responda "ativos" ou "todos".',

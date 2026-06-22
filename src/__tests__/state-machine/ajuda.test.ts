@@ -19,7 +19,7 @@ describe('/ajuda — FlowHandler interface', () => {
 // ─── Single response — no steps needed ──────────────────────────
 describe('/ajuda — Response content', () => {
   it('returns help text with all available commands', async () => {
-    const result = await ajudaHandler.handle('', {}, 0);
+    const result = await ajudaHandler.handle('', {}, 0, 'org-1');
 
     expect(result.nextStep).toBeNull();
     expect(result.updatedData).toEqual({});
@@ -38,8 +38,8 @@ describe('/ajuda — Response content', () => {
   });
 
   it('returns help text regardless of step number', async () => {
-    const resultStep0 = await ajudaHandler.handle('', {}, 0);
-    const resultStep99 = await ajudaHandler.handle('', {}, 99);
+    const resultStep0 = await ajudaHandler.handle('', {}, 0, 'org-1');
+    const resultStep99 = await ajudaHandler.handle('', {}, 99, 'org-1');
 
     expect(resultStep0.message).toBe(resultStep99.message);
     expect(resultStep0.nextStep).toBeNull();
@@ -47,7 +47,7 @@ describe('/ajuda — Response content', () => {
   });
 
   it('ignores any input text', async () => {
-    const result = await ajudaHandler.handle('qualquer texto aqui', {}, 0);
+    const result = await ajudaHandler.handle('qualquer texto aqui', {}, 0, 'org-1');
 
     expect(result.nextStep).toBeNull();
     expect(result.updatedData).toEqual({});

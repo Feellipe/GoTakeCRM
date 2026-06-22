@@ -30,7 +30,7 @@ describe('/contatos — FlowHandler interface', () => {
 // ─── Step 0: Ask search term ────────────────────────────────────
 describe('/contatos — Step 0: Ask search term', () => {
   it('asks for search term on first call (input ignored)', async () => {
-    const result = await contatosHandler.handle('', {}, 0);
+    const result = await contatosHandler.handle('', {}, 0, 'org-1');
 
     expect(result.message).toContain('termo de busca');
     expect(result.nextStep).toBe(1);
@@ -38,7 +38,7 @@ describe('/contatos — Step 0: Ask search term', () => {
   });
 
   it('ignores any input text at step 0', async () => {
-    const result = await contatosHandler.handle('qualquer coisa', {}, 0);
+    const result = await contatosHandler.handle('qualquer coisa', {}, 0, 'org-1');
 
     expect(result.nextStep).toBe(1);
   });
@@ -47,7 +47,7 @@ describe('/contatos — Step 0: Ask search term', () => {
 // ─── Step 1: Validate search term ────────────────────────────────
 describe('/contatos — Step 1: Validate search term', () => {
   it('rejects empty search term', async () => {
-    const result = await contatosHandler.handle('', {}, 1);
+    const result = await contatosHandler.handle('', {}, 1, 'org-1');
 
     expect(result.message).toBe('Por favor, informe um termo de busca com pelo menos 3 caracteres.');
     expect(result.nextStep).toBe(1);
@@ -55,21 +55,21 @@ describe('/contatos — Step 1: Validate search term', () => {
   });
 
   it('rejects whitespace-only search term', async () => {
-    const result = await contatosHandler.handle('   ', {}, 1);
+    const result = await contatosHandler.handle('   ', {}, 1, 'org-1');
 
     expect(result.message).toBe('Por favor, informe um termo de busca com pelo menos 3 caracteres.');
     expect(result.nextStep).toBe(1);
   });
 
   it('rejects search term shorter than 3 characters', async () => {
-    const result = await contatosHandler.handle('ab', {}, 1);
+    const result = await contatosHandler.handle('ab', {}, 1, 'org-1');
 
     expect(result.message).toBe('Por favor, informe um termo de busca com pelo menos 3 caracteres.');
     expect(result.nextStep).toBe(1);
   });
 
   it('accepts search term with exactly 3 characters and advances to step 2', async () => {
-    const result = await contatosHandler.handle('abc', {}, 1);
+    const result = await contatosHandler.handle('abc', {}, 1, 'org-1');
 
     expect(result.nextStep).toBe(2);
     expect(result.updatedData).toEqual({ searchTerm: 'abc' });
@@ -78,14 +78,14 @@ describe('/contatos — Step 1: Validate search term', () => {
   it('accepts search term with 50 characters (upper boundary)', async () => {
     const term = 'A'.repeat(50);
 
-    const result = await contatosHandler.handle(term, {}, 1);
+    const result = await contatosHandler.handle(term, {}, 1, 'org-1');
 
     expect(result.nextStep).toBe(2);
     expect(result.updatedData).toEqual({ searchTerm: term });
   });
 
   it('rejects search term longer than 50 characters', async () => {
-    const result = await contatosHandler.handle('A'.repeat(51), {}, 1);
+    const result = await contatosHandler.handle('A'.repeat(51), {}, 1, 'org-1');
 
     expect(result.message).toBe('Por favor, informe um termo de busca com pelo menos 3 caracteres.');
     expect(result.nextStep).toBe(1);
@@ -98,7 +98,7 @@ describe('/contatos — Step 2: Search and display results', () => {
     const clients = [mockClient()];
     vi.mocked(db.client.findMany).mockResolvedValue(clients);
 
-    const result = await contatosHandler.handle('João', { searchTerm: 'João' }, 2);
+    const result = await contatosHandler.handle('João', { searchTerm: 'João' }, 2, 'org-1');
 
     expect(db.client.findMany).toHaveBeenCalledWith({
       where: {
@@ -106,6 +106,7 @@ describe('/contatos — Step 2: Search and display results', () => {
           { name: { contains: 'João' } },
           { phone: { contains: 'João' } },
         ],
+        organizationId: 'org-1',
       },
     });
     expect(result.message).toContain('João Silva');
@@ -117,7 +118,7 @@ describe('/contatos — Step 2: Search and display results', () => {
     const clients = [mockClient()];
     vi.mocked(db.client.findMany).mockResolvedValue(clients);
 
-    const result = await contatosHandler.handle('João', { searchTerm: 'João' }, 2);
+    const result = await contatosHandler.handle('João', { searchTerm: 'João' }, 2, 'org-1');
 
     expect(result.message).toContain('#C1');
     expect(result.message).toContain('✅ Ativo');
@@ -127,7 +128,7 @@ describe('/contatos — Step 2: Search and display results', () => {
     const clients = [mockClient({ active: false })];
     vi.mocked(db.client.findMany).mockResolvedValue(clients);
 
-    const result = await contatosHandler.handle('João', { searchTerm: 'João' }, 2);
+    const result = await contatosHandler.handle('João', { searchTerm: 'João' }, 2, 'org-1');
 
     expect(result.message).toContain('❌ Inativo');
   });
@@ -135,7 +136,7 @@ describe('/contatos — Step 2: Search and display results', () => {
   it('shows "Nenhum contato encontrado" when no results', async () => {
     vi.mocked(db.client.findMany).mockResolvedValue([]);
 
-    const result = await contatosHandler.handle('zzzzz', { searchTerm: 'zzzzz' }, 2);
+    const result = await contatosHandler.handle('zzzzz', { searchTerm: 'zzzzz' }, 2, 'org-1');
 
     expect(result.message).toBe('Nenhum contato encontrado.');
     expect(result.nextStep).toBeNull();
@@ -148,7 +149,7 @@ describe('/contatos — Step 2: Search and display results', () => {
     );
     vi.mocked(db.client.findMany).mockResolvedValue(clients);
 
-    const result = await contatosHandler.handle('Cliente', { searchTerm: 'Cliente' }, 2);
+    const result = await contatosHandler.handle('Cliente', { searchTerm: 'Cliente' }, 2, 'org-1');
 
     // Should list 5 and say "e mais 3"
     expect(result.message).toContain('e mais 3');
@@ -163,7 +164,7 @@ describe('/contatos — Step 2: Search and display results', () => {
     );
     vi.mocked(db.client.findMany).mockResolvedValue(clients);
 
-    const result = await contatosHandler.handle('Cliente', { searchTerm: 'Cliente' }, 2);
+    const result = await contatosHandler.handle('Cliente', { searchTerm: 'Cliente' }, 2, 'org-1');
 
     expect(result.message).toContain('#C5');
     expect(result.message).not.toContain('e mais');
@@ -173,7 +174,7 @@ describe('/contatos — Step 2: Search and display results', () => {
   it('handles DB error gracefully', async () => {
     vi.mocked(db.client.findMany).mockRejectedValue(new Error('DB error'));
 
-    const result = await contatosHandler.handle('João', { searchTerm: 'João' }, 2);
+    const result = await contatosHandler.handle('João', { searchTerm: 'João' }, 2, 'org-1');
 
     expect(result.message).toContain('Erro ao processar');
     expect(result.nextStep).toBeNull();
@@ -183,7 +184,7 @@ describe('/contatos — Step 2: Search and display results', () => {
 // ─── Edge cases ─────────────────────────────────────────────────
 describe('/contatos — Edge cases', () => {
   it('handles invalid step number gracefully', async () => {
-    const result = await contatosHandler.handle('test', {}, 99);
+    const result = await contatosHandler.handle('test', {}, 99, 'org-1');
 
     expect(result.message).toContain('Erro');
     expect(result.nextStep).toBeNull();

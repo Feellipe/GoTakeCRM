@@ -33,7 +33,7 @@ beforeEach(() => {
 // ─── Step 0: Ask project ID ─────────────────────────────────────
 describe('/briefing — Step 0: Ask project ID', () => {
   it('asks for project ID on first call (input ignored)', async () => {
-    const result = await briefingHandler.handle('', {}, 0);
+    const result = await briefingHandler.handle('', {}, 0, 'org-1');
 
     expect(result.message).toBe('Qual o ID do projeto?');
     expect(result.nextStep).toBe(1);
@@ -41,7 +41,7 @@ describe('/briefing — Step 0: Ask project ID', () => {
   });
 
   it('ignores any input text at step 0', async () => {
-    const result = await briefingHandler.handle('qualquer coisa', {}, 0);
+    const result = await briefingHandler.handle('qualquer coisa', {}, 0, 'org-1');
 
     expect(result.message).toBe('Qual o ID do projeto?');
     expect(result.nextStep).toBe(1);
@@ -69,7 +69,7 @@ describe('/briefing — Step 1: Receive briefing text', () => {
   });
 
   it('accepts 1-character briefing (lower boundary)', async () => {
-    const result = await briefingHandler.handle('A', dataWithProject, 1);
+    const result = await briefingHandler.handle('A', dataWithProject, 1, 'org-1');
 
     expect(result.nextStep).toBe(2);
     expect(result.updatedData.content).toBe('A');
@@ -77,14 +77,14 @@ describe('/briefing — Step 1: Receive briefing text', () => {
 
   it('accepts 10000-character briefing (upper boundary)', async () => {
     const content = 'A'.repeat(10000);
-    const result = await briefingHandler.handle(content, dataWithProject, 1);
+    const result = await briefingHandler.handle(content, dataWithProject, 1, 'org-1');
 
     expect(result.nextStep).toBe(2);
     expect(result.updatedData.content.length).toBe(10000);
   });
 
   it('rejects empty briefing', async () => {
-    const result = await briefingHandler.handle('', dataWithProject, 1);
+    const result = await briefingHandler.handle('', dataWithProject, 1, 'org-1');
 
     expect(result.message).toBe(
       'Por favor, informe o briefing (1 a 10000 caracteres).'
@@ -93,7 +93,7 @@ describe('/briefing — Step 1: Receive briefing text', () => {
   });
 
   it('rejects whitespace-only briefing', async () => {
-    const result = await briefingHandler.handle('   ', dataWithProject, 1);
+    const result = await briefingHandler.handle('   ', dataWithProject, 1, 'org-1');
 
     expect(result.message).toBe(
       'Por favor, informe o briefing (1 a 10000 caracteres).'
@@ -103,7 +103,7 @@ describe('/briefing — Step 1: Receive briefing text', () => {
 
   it('rejects briefing longer than 10000 characters', async () => {
     const content = 'A'.repeat(10001);
-    const result = await briefingHandler.handle(content, dataWithProject, 1);
+    const result = await briefingHandler.handle(content, dataWithProject, 1, 'org-1');
 
     expect(result.message).toBe(
       'Por favor, informe o briefing (1 a 10000 caracteres).'
@@ -122,7 +122,7 @@ describe('/briefing — Step 2: Confirm or cancel', () => {
   it('"confirmar" creates briefing and completes flow', async () => {
     vi.mocked(db.briefing.create).mockResolvedValue(mockBriefing());
 
-    const result = await briefingHandler.handle('confirmar', dataReady, 2);
+    const result = await briefingHandler.handle('confirmar', dataReady, 2, 'org-1');
 
     expect(db.briefing.create).toHaveBeenCalledWith({
       data: {
@@ -142,14 +142,14 @@ describe('/briefing — Step 2: Confirm or cancel', () => {
   it('"CONFIRMAR" (uppercase) creates briefing', async () => {
     vi.mocked(db.briefing.create).mockResolvedValue(mockBriefing());
 
-    const result = await briefingHandler.handle('CONFIRMAR', dataReady, 2);
+    const result = await briefingHandler.handle('CONFIRMAR', dataReady, 2, 'org-1');
 
     expect(db.briefing.create).toHaveBeenCalled();
     expect(result.nextStep).toBeNull();
   });
 
   it('"cancelar" goes back to step 0 to ask project ID again', async () => {
-    const result = await briefingHandler.handle('cancelar', dataReady, 2);
+    const result = await briefingHandler.handle('cancelar', dataReady, 2, 'org-1');
 
     expect(result.message).toBe('Briefing cancelado. Vamos começar de novo.\n\nQual o ID do projeto?');
     expect(result.nextStep).toBe(0);
@@ -158,14 +158,14 @@ describe('/briefing — Step 2: Confirm or cancel', () => {
   });
 
   it('"CANCELAR" (uppercase) goes back to step 0', async () => {
-    const result = await briefingHandler.handle('CANCELAR', dataReady, 2);
+    const result = await briefingHandler.handle('CANCELAR', dataReady, 2, 'org-1');
 
     expect(result.nextStep).toBe(0);
     expect(db.briefing.create).not.toHaveBeenCalled();
   });
 
   it('invalid input stays at step 2 with error', async () => {
-    const result = await briefingHandler.handle('talvez', dataReady, 2);
+    const result = await briefingHandler.handle('talvez', dataReady, 2, 'org-1');
 
     expect(result.message).toBe(
       'Por favor, responda "confirmar" para salvar ou "cancelar" para recomeçar.'
@@ -177,7 +177,7 @@ describe('/briefing — Step 2: Confirm or cancel', () => {
   it('handles DB error on briefing creation', async () => {
     vi.mocked(db.briefing.create).mockRejectedValue(new Error('DB error'));
 
-    const result = await briefingHandler.handle('confirmar', dataReady, 2);
+    const result = await briefingHandler.handle('confirmar', dataReady, 2, 'org-1');
 
     expect(result.message).toContain('Erro ao criar');
     expect(result.nextStep).toBeNull();
@@ -187,7 +187,7 @@ describe('/briefing — Step 2: Confirm or cancel', () => {
 // ─── Edge cases ─────────────────────────────────────────────────
 describe('/briefing — Edge cases', () => {
   it('handles invalid step number gracefully', async () => {
-    const result = await briefingHandler.handle('test', {}, 99);
+    const result = await briefingHandler.handle('test', {}, 99, 'org-1');
 
     expect(result.message).toContain('Erro');
     expect(result.nextStep).toBeNull();

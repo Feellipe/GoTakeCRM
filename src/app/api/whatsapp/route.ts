@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Process the message through the flow orchestrator
-  const responseText = await handleMessage(phone, text);
+  const responseText = await handleMessage(phone, text, org.id);
 
   // Send response back via WhatsApp API (if there's something to say)
   if (responseText) {
