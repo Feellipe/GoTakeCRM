@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GoTakeCRM — Comandos WhatsApp</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f172a;
+    --bg2: #1e293b;
+    --bg3: #334155;
+    --surface: #1e293b;
+    --surface-hover: #334155;
+    --border: #334155;
+    --text: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --primary: #38bdf8;
+    --primary-bg: rgba(56, 189, 248, 0.1);
+    --green: #10b981;
+    --green-bg: rgba(16, 185, 129, 0.1);
+    --red: #ef4444;
+    --red-bg: rgba(239, 68, 68, 0.1);
+    --amber: #f59e0b;
+    --amber-bg: rgba(245, 158, 11, 0.1);
+    --violet: #8b5cf6;
+    --violet-bg: rgba(139, 92, 246, 0.1);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --whatsapp-green: #25D366;
+    --whatsapp-bg: #075e54;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .hero {
+    background: linear-gradient(135deg, #075e54 0%, #0f172a 50%, #1e293b 100%);
+    padding: 80px 24px 60px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(circle at 30% 40%, rgba(37, 211, 102, 0.05) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .hero-badge {
+    display: inline-block;
+    background: var(--green-bg);
+    color: var(--whatsapp-green);
+    padding: 4px 14px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-bottom: 16px;
+    border: 1px solid rgba(37, 211, 102, 0.2);
+  }
+  .hero h1 {
+    font-size: 42px;
+    font-weight: 800;
+    color: #f8fafc;
+    letter-spacing: -1px;
+    margin-bottom: 10px;
+    position: relative;
+  }
+  .hero h1 span { color: var(--whatsapp-green); }
+  .hero p {
+    color: var(--text-secondary);
+    font-size: 18px;
+    max-width: 620px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .hero-version {
+    margin-top: 16px;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  .toc {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 48px 24px 32px;
+  }
+  .toc h2 {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+  .toc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px;
+  }
+  .toc-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    text-decoration: none;
+    color: var(--text);
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  .toc-card:hover {
+    border-color: var(--whatsapp-green);
+    background: var(--surface-hover);
+    transform: translateY(-2px);
+  }
+  .toc-card .cmd {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--whatsapp-green);
+    margin-bottom: 4px;
+  }
+  .toc-card .desc {
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .content {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+  .section {
+    margin-bottom: 72px;
+    scroll-margin-top: 24px;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-header .num {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: var(--green-bg);
+    color: var(--whatsapp-green);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .section-header h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #f8fafc;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .section-header .tag {
+    font-size: 11px;
+    background: var(--green-bg);
+    color: var(--whatsapp-green);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .command-block {
+    margin-bottom: 40px;
+  }
+  .command-block h3 {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--whatsapp-green);
+  }
+  .command-block > p {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+  .command-block h4 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary);
+    margin-top: 20px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* WhatsApp Chat Mock */
+  .chat-mock {
+    background: #0b141a;
+    border: 1px solid #1f2c33;
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin: 16px 0;
+    max-width: 480px;
+  }
+  .chat-header {
+    background: #1f2c33;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid #2a3942;
+  }
+  .chat-header .avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--whatsapp-green);
+    display: flex; align-items: center; justify-content: center;
+    color: #0b141a;
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .chat-header .name {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .chat-header .status {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .chat-body {
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .msg {
+    max-width: 85%;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    position: relative;
+    word-wrap: break-word;
+  }
+  .msg .time {
+    font-size: 10px;
+    color: rgba(255,255,255,0.45);
+    text-align: right;
+    margin-top: 4px;
+  }
+  .msg.user {
+    align-self: flex-end;
+    background: #005c4b;
+    color: #e9edef;
+    border-bottom-right-radius: 2px;
+  }
+  .msg.bot {
+    align-self: flex-start;
+    background: #1f2c33;
+    color: #e9edef;
+    border-bottom-left-radius: 2px;
+  }
+  .msg.bot strong { color: var(--whatsapp-green); }
+  .msg .cmd-highlight {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--whatsapp-green);
+    background: rgba(37,211,102,0.1);
+    padding: 0 4px;
+    border-radius: 3px;
+  }
+
+  /* Info boxes */
+  .info-box {
+    background: var(--primary-bg);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    font-size: 13.5px;
+    color: var(--text-secondary);
+    margin: 16px 0;
+  }
+  .info-box strong { color: var(--primary); }
+
+  .warn-box {
+    background: var(--amber-bg);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    font-size: 13.5px;
+    color: var(--text-secondary);
+    margin: 16px 0;
+  }
+  .warn-box strong { color: var(--amber); }
+
+  .success-box {
+    background: var(--green-bg);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    font-size: 13.5px;
+    color: var(--text-secondary);
+    margin: 16px 0;
+  }
+  .success-box strong { color: var(--green); }
+
+  /* Table */
+  .doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+  .doc-table th {
+    text-align: left;
+    padding: 10px 12px;
+    background: var(--bg3);
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+  }
+  .doc-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+  .doc-table tr:last-child td { border-bottom: none; }
+  .doc-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .doc-table td code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: var(--bg);
+    padding: 1px 6px;
+    border-radius: 4px;
+    color: var(--whatsapp-green);
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+  }
+  .feature-card h5 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .feature-card p {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+  .feature-card .badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    margin-top: 8px;
+  }
+  .badge-green { background: var(--green-bg); color: var(--green); }
+  .badge-amber { background: var(--amber-bg); color: var(--amber); }
+
+  @media (max-width: 768px) {
+    .hero h1 { font-size: 28px; }
+    .chat-mock { max-width: 100%; }
+    .toc-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-badge">💬 GO TAKECRM NO WHATSAPP</div>
+  <h1>Comandos <span>WhatsApp</span></h1>
+  <p>Gerencie seus clientes, projetos e finanças diretamente pelo WhatsApp — sem precisar abrir o dashboard. Basta digitar comandos e o bot guia você passo a passo.</p>
+  <div class="hero-version">Versão 1.0 • Última atualização: Junho 2026</div>
+</div>
+
+<!-- TOC -->
+<div class="toc">
+  <h2>Comandos disponíveis</h2>
+  <div class="toc-grid">
+    <a class="toc-card" href="#novodeal">
+      <div class="cmd">/novoDeal</div>
+      <div class="desc">Criar novo cliente e projeto com pacote</div>
+    </a>
+    <a class="toc-card" href="#despesa">
+      <div class="cmd">/despesa</div>
+      <div class="desc">Registrar despesa de um projeto</div>
+    </a>
+    <a class="toc-card" href="#receita">
+      <div class="cmd">/receita</div>
+      <div class="desc">Registrar receita de um projeto</div>
+    </a>
+    <a class="toc-card" href="#briefing">
+      <div class="cmd">/briefing</div>
+      <div class="desc">Adicionar briefing a um projeto</div>
+    </a>
+    <a class="toc-card" href="#status">
+      <div class="cmd">/status</div>
+      <div class="desc">Ver resumo completo do projeto</div>
+    </a>
+    <a class="toc-card" href="#contatos">
+      <div class="cmd">/contatos</div>
+      <div class="desc">Buscar contatos cadastrados</div>
+    </a>
+    <a class="toc-card" href="#calendario">
+      <div class="cmd">/calendario</div>
+      <div class="desc">Ver agendamentos e bookings</div>
+    </a>
+    <a class="toc-card" href="#projeto">
+      <div class="cmd">/projeto</div>
+      <div class="desc">Detalhes completos de um projeto</div>
+    </a>
+    <a class="toc-card" href="#pacotes">
+      <div class="cmd">/pacotes</div>
+      <div class="desc">Listar pacotes de serviço</div>
+    </a>
+    <a class="toc-card" href="#ajuda">
+      <div class="cmd">/ajuda</div>
+      <div class="desc">Ver lista de comandos</div>
+    </a>
+  </div>
+</div>
+
+<!-- Content -->
+<div class="content">
+
+<div class="section" id="como-funciona">
+  <div class="section-header">
+    <div class="num">0</div>
+    <h2>Como funciona</div>
+  </div>
+
+  <p>O bot do GoTakeCRM no WhatsApp funciona como um assistente conversacional. Você digita um comando com <code>/</code> e o bot te guia pergunta por pergunta — como se estivesse conversando com um atendente.</p>
+
+  <div class="card-grid">
+    <div class="feature-card">
+      <h5>Conversa guiada</h5>
+      <p>Você não precisa saber todos os parâmetros. O bot pergunta um passo de cada vez.</p>
+    </div>
+    <div class="feature-card">
+      <h5>Cancelar a qualquer momento</h5>
+      <p>Digite <code>/cancelar</code> para interromper qualquer operação em andamento.</p>
+    </div>
+    <div class="feature-card">
+      <h5>Timeout de segurança</h5>
+      <p>Se você não responder em 5 minutos, a conversa é cancelada automaticamente.</p>
+    </div>
+    <div class="feature-card">
+      <h5>Trocar de comando</h5>
+      <p>Digite outro <code>/comando</code> no meio de um fluxo — o anterior é cancelado e o novo começa.</p>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <strong>Importante:</strong> O bot só atende você (o dono do número do estúdio). Mensagens de clientes não ativam comandos — elas ficam registradas na conversa para você ver no dashboard.
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- /novoDeal -->
+<!-- ============================================================ -->
+<div class="section" id="novodeal">
+  <div class="section-header">
+    <div class="num">1</div>
+    <h2>/novoDeal</h2>
+    <span class="tag">Projetos</span>
+  </div>
+
+  <div class="command-block">
+    <p>Cria um novo cliente e um novo projeto (deal) no CRM, com opção de vincular um pacote de serviço e gerar uma proposta.</p>
+
+    <h4>Fluxo completo</h4>
+    <div class="chat-mock">
+      <div class="chat-header">
+        <div class="avatar">G</div>
+        <div>
+          <div class="name">GoTakeCRM Bot</div>
+          <div class="status">online</div>
+        </div>
+      </div>
+      <div class="chat-body">
+        <div class="msg user">
+          /novoDeal
+          <div class="time">14:30</div>
+        </div>
+        <div class="msg bot">
+          Qual o nome do <strong>cliente</strong>?
+          <div class="time">14:30</div>
+        </div>
+        <div class="msg user">
+          Maria Silva
+          <div class="time">14:31</div>
+        </div>
+        <div class="msg bot">
+          Qual o <strong>telefone</strong> da Maria?
+          <div class="time">14:31</div>
+        </div>
+        <div class="msg user">
+          21999999999
+          <div class="time">14:31</div>
+        </div>
+        <div class="msg bot">
+          Qual <strong>pacote</strong> quer usar?
+          <br><br>
+          • Casamento Full — R$ 5.000<br>
+          • Casamento Light — R$ 2.500<br>
+          • Ensaio Premium — R$ 1.200<br>
+          • Book Profissional — R$ 800
+          <div class="time">14:31</div>
+        </div>
+        <div class="msg user">
+          Casamento Full
+          <div class="time">14:32</div>
+        </div>
+        <div class="msg bot">
+          Quer <strong>editar</strong> o pacote? (valor ou descrição)
+          <div class="time">14:32</div>
+        </div>
+        <div class="msg user">
+          Sim
+          <div class="time">14:32</div>
+        </div>
+        <div class="msg bot">
+          O que quer editar? <strong>Valor</strong> ou <strong>Descrição</strong>?
+          <div class="time">14:32</div>
+        </div>
+        <div class="msg user">
+          Valor
+          <div class="time">14:33</div>
+        </div>
+        <div class="msg bot">
+          Qual o novo valor?
+          <div class="time">14:33</div>
+        </div>
+        <div class="msg user">
+          4.500
+          <div class="time">14:33</div>
+        </div>
+        <div class="msg bot">
+          Quer criar uma <strong>proposta</strong> com esse pacote?
+          <div class="time">14:33</div>
+        </div>
+        <div class="msg user">
+          Sim
+          <div class="time">14:34</div>
+        </div>
+        <div class="msg bot" style="background:#005c4b;">
+          Cliente: Maria Silva (#C1)<br>
+          Projeto: Casamento Full (#D42)<br>
+          Proposta: Criada ✅
+          <div class="time">14:34</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="success-box">
+      <strong>Resultado:</strong> Cliente, Projeto e Proposta criados no CRM. Tudo aparece no dashboard automaticamente.
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- /despesa -->
+<!-- ============================================================ -->
+<div class="section" id="despesa">
+  <div class="section-header">
+    <div class="num">2</div>
+    <h2>/despesa</h2>
+    <span class="tag">Financeiro</span>
+  </div>
+
+  <div class="command-block">
+    <p>Registra uma despesa vinculada a um projeto — ideal para registrar gastos na hora, sem precisar abrir o CRM.</p>
+
+    <div class="chat-mock">
+      <div class="chat-header">
+        <div class="avatar">G</div>
+        <div>
+          <div class="name">GoTakeCRM Bot</div>
+          <div class="status">online</div>
+        </div>
+      </div>
+      <div class="chat-body">
+        <div class="msg user">/despesa<div class="time">15:00</div></div>
+        <div class="msg bot">Qual o <strong>ID do projeto</strong>?<div class="time">15:00</div></div>
+        <div class="msg user">#42<div class="time">15:01</div></div>
+        <div class="msg bot">Qual o <strong>valor</strong>?<div class="time">15:01</div></div>
+        <div class="msg user">500<div class="time">15:01</div></div>
+        <div class="msg bot">Qual a <strong>descrição</strong>?<div class="time">15:01</div></div>
+        <div class="msg user">Aluguel de câmera<div class="time">15:02</div></div>
+        <div class="msg bot">Qual a <strong>categoria</strong>?<br><br>• Equipamento<br>• Locação<br>• Equipe<br>• Transporte<br>• Outro<div class="time">15:02</div></div>
+        <div class="msg user">Equipamento<div class="time">15:02</div></div>
+        <div class="msg bot" style="background:#005c4b;">
+          Despesa de R$ 500 registrada no projeto #42 (Casamento Full) — Equipamento ✅
+          <div class="time">15:02</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- /receita -->
+<!-- ============================================================ -->
+<div class="section" id="receita">
+  <div class="section-header">
+    <div class="num">3</div>
+    <h2>/receita</h2>
+    <span class="tag">Financeiro</span>
+  </div>
+
+  <div class="command-block">
+    <p>Registra uma receita (pagamento recebido) vinculada a um projeto. Você pode marcar como recebido ou pendente.</p>
+
+    <div class="chat-mock">
+      <div class="chat-header">
+        <div class="avatar">G</div>
+        <div>
+          <div class="name">GoTakeCRM Bot</div>
+          <div class="status">online</div>
+        </div>
+      </div>
+      <div class="chat-body">
+        <div class="msg user">/receita<div class="time">16:00</div></div>
+        <div class="msg bot">Qual o <strong>ID do projeto</strong>?<div class="time">16:00</div></div>
+        <div class="msg user">#42<div class="time">16:01</div></div>
+        <div class="msg bot">Qual o <strong>valor</strong>?<div class="time">16:01</div></div>
+        <div class="msg user">4.500<div class="time">16:02</div></div>
+        <div class="msg bot">Qual a <strong>descrição</strong>?<div class="time">16:02</div></div>
+        <div class="msg user">Pagamento inicial casamento<div class="time">16:02</div></div>
+        <div class="msg bot">Está <strong>recebido</strong> ou <strong>pendente</strong>?<div class="time">16:02</div></div>
+        <div class="msg user">Recebido<div class="time">16:03</div></div>
+        <div class="msg bot" style="background:#005c4b;">
+          Receita de R$ 4.500 registrada no projeto #42 — Recebido ✅
+          <div class="time">16:03</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- /briefing -->
+<!-- ============================================================ -->
+<div class="section" id="briefing">
+  <div class="section-header">
+    <div class="num">4</div>
+    <h2>/briefing</h2>
+    <span class="tag">Projetos</span>
+  </div>
+
+  <div class="command-block">
+    <p>Adiciona um briefing criativo a um projeto — ideal para capturar informações de reuniões ou calls assim que terminar, sem depender de memória.</p>
+
+    <div class="chat-mock">
+      <div class="chat-header">
+        <div class="avatar">G</div>
+        <div>
+          <div class="name">GoTakeCRM Bot</div>
+          <div class="status">online</div>
+        </div>
+      </div>
+      <div class="chat-body">
+        <div class="msg user">/briefing<div class="time">17:00</div></div>
+        <div class="msg bot">Qual o <strong>ID do projeto</strong>?<div class="time">17:00</div></div>
+        <div class="msg user">#42<div class="time">17:01</div></div>
+        <div class="msg bot">Qual o <strong>briefing</strong>?<div class="time">17:01</div></div>
+        <div class="msg user">Cliente quer vídeo de 1 minuto focado em vendas para Instagram. Tom emocionante, luz natural, música suave. Referência: @casalfulano<div class="time">17:02</div></div>
+        <div class="msg bot" style="background:#005c4b;">
+          Deseja <strong>confirmar</strong> ou <strong>cancelar</strong>?
+          <div class="time">17:02</div>
+        </div>
+        <div class="msg user">Confirmar<div class="time">17:03</div></div>
+        <div class="msg bot" style="background:#005c4b;">
+          Briefing salvo no projeto #42 (Casamento Full) ✅
+          <div class="time">17:03</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- /status -->
+<!-- ============================================================ -->
+<div class="section" id="status">
+  <div class="section-header">
+    <div class="num">5</div>
+    <h2>/status</h2>
+    <span class="tag">Consultas</span>
+  </div>
+
+  <div class="command-block">
+    <p>Mostra um resumo completo de qualquer projeto — ideal para consultar rapidamente antes de uma reunião ou call.</p>
+
+    <div class="chat-mock">
+      <div class="chat-header">
+        <div class="avatar">G</div>
+        <div>
+          <div class="name">GoTakeCRM Bot</div>
+          <div class="status">online</div>
+        </div>
+      </div>
+      <div class="chat-body">
+        <div class="msg user">/status<div class="time">18:00</div></div>
+        <div class="msg bot">Qual o <strong>ID do projeto</strong>?<div class="time">18:00</div></div>
+        <div class="msg user">#42<div class="time">18:01</div></div>
+        <div class="msg bot" style="background:#005c4b;">
+          Projeto #42: Maria Silva — Casamento Full<br>
+          <br>
+          Status: Produção 🟢<br>
+          Briefing: ✅ OK<br>
+          Proposta: ✅ Enviada<br>
+          Despesas: R$ 500,00<br>
+          Receitas: R$ 4.500,00<br>
+          Próximo booking: 12/07 às 14:00 — Igreja Matriz
+          <div class="time">18:01</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- /contatos -->
+<!-- ============================================================ -->
+<div class="section" id="contatos">
+  <div class="section-header">
+    <div class="num">6</div>
+    <h2>/contatos</h2>
+    <span class="tag">Consultas</span>
+  </div>
+
+  <div class="command-block">
+    <p>Busca contatos cadastrados no CRM por nome ou telefone. Mínimo de 3 letras para a busca.</p>
+
+    <div class="chat-mock">
+      <div class="chat-header">
+        <div class="avatar">G</div>
+        <div>
+          <div class="name">GoTakeCRM Bot</div>
+          <div class="status">online</div>
+        </div>
+      </div>
+      <div class="chat-body">
+        <div class="msg user">/contatos<div class="time">18:30</div></div>
+        <div class="msg bot">Digite o nome ou telefone para buscar (mínimo 3 letras).<div class="time">18:30</div></div>
+        <div class="msg user">mar<div class="time">18:31</div></div>
+        <div class="msg bot" style="background:#005c4b;">
+          Contatos encontrados para "mar":<br>
+          <br>
+          #C1 — Maria Silva — (21) 99999-9999 ✅ Ativo<br>
+          #C3 — Marta Souza — (21) 97777-7777 ⏸️ Lead<br>
+          #C7 — Marcos Oliveira — (21) 98888-8888 ✅ Ativo
+          <div class="time">18:31</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- /calendario -->
+<!-- ============================================================ -->
+<div class="section" id="calendario">
+  <div class="section-header">
+    <div class="num">7</div>
+    <h2>/calendario</h2>
+    <span class="tag">Consultas</span>
+  </div>
+
+  <div class="command-block">
+    <p>Mostra os agendamentos (bookings) do período que você escolher — hoje, essa semana ou esse mês.</p>
+
+    <div class="chat-mock">
+      <div class="chat-header">
+        <div class="avatar">G</div>
+        <div>
+          <div class="name">GoTakeCRM Bot</div>
+          <div class="status">online</div>
+        </div>
+      </div>
+      <div class="chat-body">
+        <div class="msg user">/calendario<div class="time">19:00</div></div>
+        <div class="msg bot">Qual período?<br><br>• <strong>Hoje</strong><br>• <strong>Essa semana</strong><br>• <strong>Esse mês</strong><div class="time">19:00</div></div>
+        <div class="msg user">Hoje<div class="time">19:01</div></div>
+        <div class="msg bot" style="background:#005c4b;">
+          Agendamentos de hoje (17/06):<br>
+          <br>
+          🟢 14:00 — Casamento João & Maria (Confirmado)<br>
+          🟡 18:00 — Ensaio Família Santos (Pendente)<br>
+          📍 Ambos no Estúdio ABC
+          <div class="time">19:01</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <strong>Status dos bookings:</strong> 🟡 Pendente — aguardando confirmação. 🟢 Confirmado — tudo certo. ✅ Realizado — já aconteceu.
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- /projeto -->
+<!-- ============================================================ -->
+<div class="section" id="projeto">
+  <div class="section-header">
+    <div class="num">8</div>
+    <h2>/projeto</h2>
+    <span class="tag">Consultas</span>
+  </div>
+
+  <div class="command-block">
+    <p>Exibe todos os detalhes de um projeto específico — mais completo que o <code>/status</code>, incluindo bookings e documentos.</p>
+
+    <div class="chat-mock">
+      <div class="chat-header">
+        <div class="avatar">G</div>
+        <div>
+          <div class="name">GoTakeCRM Bot</div>
+          <div class="status">online</div>
+        </div>
+      </div>
+      <div class="chat-body">
+        <div class="msg user">/projeto<div class="time">19:30</div></div>
+        <div class="msg bot">Qual o <strong>ID do projeto</strong>?<div class="time">19:30</div></div>
+        <div class="msg user">#42<div class="time">19:31</div></div>
+        <div class="msg bot" style="background:#005c4b;">
+          Projeto #42 — Casamento Full<br>
+          <br>
+          Cliente: Maria Silva (#C1)<br>
+          Status: Produção<br>
+          Valor: R$ 4.500,00<br>
+          <br>
+          Briefing: ✅ 1 registro<br>
+          Proposta: ✅ Enviada em 15/06<br>
+          Despesas: R$ 500,00 (1 registro)<br>
+          Receitas: R$ 4.500,00 (1 registro)<br>
+          <br>
+          Agendamentos:<br>
+          🟢 12/07 às 14:00 — Igreja Matriz<br>
+          📄 1 documento anexado
+          <div class="time">19:31</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- /pacotes -->
+<!-- ============================================================ -->
+<div class="section" id="pacotes">
+  <div class="section-header">
+    <div class="num">9</div>
+    <h2>/pacotes</h2>
+    <span class="tag">Consultas</span>
+  </div>
+
+  <div class="command-block">
+    <p>Lista os pacotes de serviço cadastrados no seu CRM.</p>
+
+    <div class="chat-mock">
+      <div class="chat-header">
+        <div class="avatar">G</div>
+        <div>
+          <div class="name">GoTakeCRM Bot</div>
+          <div class="status">online</div>
+        </div>
+      </div>
+      <div class="chat-body">
+        <div class="msg user">/pacotes<div class="time">20:00</div></div>
+        <div class="msg bot">Mostrar <strong>ativos</strong> ou <strong>todos</strong>?<div class="time">20:00</div></div>
+        <div class="msg user">Ativos<div class="time">20:01</div></div>
+        <div class="msg bot" style="background:#005c4b;">
+          Pacotes ativos:<br>
+          <br>
+          • Casamento Full — R$ 5.000 (8h)<br>
+          • Casamento Light — R$ 2.500 (4h)<br>
+          • Ensaio Premium — R$ 1.200 (2h)<br>
+          • Book Profissional — R$ 800 (1h)
+          <div class="time">20:01</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- /ajuda -->
+<!-- ============================================================ -->
+<div class="section" id="ajuda">
+  <div class="section-header">
+    <div class="num">10</div>
+    <h2>/ajuda</h2>
+    <span class="tag">Utilitário</span>
+  </div>
+
+  <div class="command-block">
+    <p>Mostra a lista completa de comandos disponíveis e o que cada um faz.</p>
+
+    <div class="chat-mock">
+      <div class="chat-header">
+        <div class="avatar">G</div>
+        <div>
+          <div class="name">GoTakeCRM Bot</div>
+          <div class="status">online</div>
+        </div>
+      </div>
+      <div class="chat-body">
+        <div class="msg user">/ajuda<div class="time">20:30</div></div>
+        <div class="msg bot" style="background:#005c4b;">
+          Comandos disponíveis:<br>
+          <br>
+          /novoDeal — Novo cliente + projeto<br>
+          /despesa — Registrar despesa<br>
+          /receita — Registrar receita<br>
+          /briefing — Adicionar briefing<br>
+          /status — Resumo do projeto<br>
+          /contatos — Buscar contatos<br>
+          /calendario — Ver agenda<br>
+          /projeto — Detalhes do projeto<br>
+          /pacotes — Listar pacotes<br>
+          /cancelar — Cancelar operação
+          <div class="time">20:30</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- Dicas Rápidas -->
+<!-- ============================================================ -->
+<div class="section" id="dicas">
+  <div class="section-header">
+    <div class="num">+</div>
+    <h2>Dicas rápidas</h2>
+  </div>
+
+  <div class="card-grid">
+    <div class="feature-card">
+      <h5>Formatos de valor</h5>
+      <p>O bot aceita vários formatos: <code>4500</code>, <code>4.500,00</code>, <code>R$ 4500</code>, <code>R$ 4.500,50</code>.</p>
+    </div>
+    <div class="feature-card">
+      <h5>Telefone</h5>
+      <p>Pode digitar com ou sem formatação: <code>21999999999</code>, <code>(21) 99999-9999</code>, <code>+55 21 99999-9999</code>.</p>
+    </div>
+    <div class="feature-card">
+      <h5>Busca de contatos</h5>
+      <p>O <code>/contatos</code> busca tanto por nome quanto por telefone. Mínimo de 3 letras.</p>
+    </div>
+    <div class="feature-card">
+      <h5>ID do projeto</h5>
+      <p>Use com ou sem <code>#</code>: <code>42</code> ou <code>#42</code> — os dois funcionam.</p>
+    </div>
+    <div class="feature-card">
+      <h5>Nomes com acentos</h5>
+      <p>Pode usar acentos e caracteres especiais normalmente: <code>João Silva & Cia</code>.</p>
+    </div>
+    <div class="feature-card">
+      <h5>Dashboard em tempo real</h5>
+      <p>Tudo que você cria pelo WhatsApp aparece automaticamente no dashboard do CRM.</p>
+    </div>
+  </div>
+
+  <div class="warn-box">
+    <strong>Lembrete:</strong> Se você não responder em 5 minutos, a conversa é cancelada automaticamente. É só começar de novo com o comando que quiser.
+  </div>
+</div>
+
+<!-- Footer -->
+<div style="text-align:center;padding:40px 0 60px;border-top:1px solid var(--border);">
+  <p style="color:var(--text-muted);font-size:13px;">
+    GoTakeCRM — Comandos WhatsApp<br>
+    Documentação para usuários<br>
+    <span style="font-family:'JetBrains Mono',monospace;">GoTakeJP</span>
+  </p>
+</div>
+
+</div><!-- /content -->
+
+<script>
+document.querySelectorAll('.toc-card').forEach(card => {
+  card.addEventListener('click', () => {
+    const href = card.getAttribute('href');
+    if (href) document.querySelector(href)?.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+</script>
+
+</body>
+</html>

@@ -415,3 +415,22 @@ model Message {
   @@index([conversationId])
   @@map("messages")
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// WhatsApp Slash Commands
+// ═══════════════════════════════════════════════════════════════════
+
+// CommandSession — tracks multi-step WhatsApp command state
+model CommandSession {
+  id        String   @id @default(cuid())
+  phone     String
+  command   String
+  step      Int      @default(0)
+  data      Json     @default("{}")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([phone, expiresAt])
+  @@map("command_sessions")
+}

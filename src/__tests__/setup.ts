@@ -33,6 +33,7 @@ function createModelMock() {
     findFirst: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
+    updateMany: vi.fn(),
     delete: vi.fn(),
     deleteMany: vi.fn(),
     count: vi.fn(),
@@ -66,6 +67,8 @@ vi.mock('@/lib/db', () => ({
     expense: createModelMock(),
     revenue: createModelMock(),
     message: createModelMock(),
+    // WhatsApp slash commands
+    commandSession: createModelMock(),
     // Transaction
     $transaction: vi.fn(),
   },
