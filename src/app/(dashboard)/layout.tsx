@@ -13,6 +13,7 @@ import {
   Clock,
   FileText,
   Sparkles,
+  Settings,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -96,6 +97,7 @@ const viewMeta: Record<string, { icon: typeof LayoutDashboard; title: string; de
   proposals: { icon: FileText, title: 'Proposals', description: 'Create and send professional proposals to clients.' },
   financials: { icon: DollarSign, title: 'Financials', description: 'Revenue, expenses, and profitability insights.' },
   calendar: { icon: Calendar, title: 'Calendar', description: 'Your upcoming shoots and bookings.' },
+  settings: { icon: Settings, title: 'Settings', description: 'Customize your dashboard preferences.' },
 };
 
 // Notificacoes estaticas
@@ -138,6 +140,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (pathname.startsWith('/proposals')) return 'proposals';
     if (pathname.startsWith('/financials')) return 'financials';
     if (pathname.startsWith('/calendar')) return 'calendar';
+    if (pathname.startsWith('/settings')) return 'settings';
     return 'dashboard';
   };
   const currentView = getCurrentView();
@@ -297,7 +300,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <DashboardSidebar />
 
         {/* Main Content */}
-        <main className="flex-1 transition-all duration-500 flex flex-col ml-64">
+        <main className="flex-1 transition-all duration-500 flex flex-col">
           {/* Header */}
           <header className="sticky top-0 z-40 glass border-b border-glass-border">
             <div className="px-8 py-4 flex items-center justify-between">

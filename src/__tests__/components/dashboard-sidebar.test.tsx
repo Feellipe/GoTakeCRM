@@ -11,11 +11,6 @@ vi.mock('next/link', () => ({
   default: ({ children, href, ...props }: any) => <a href={href} {...props}>{children}</a>,
 }));
 
-// Mock settings panel
-vi.mock('@/components/settings-panel', () => ({
-  SettingsPanel: ({ trigger }: any) => <div>{trigger}</div>,
-}));
-
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
@@ -34,8 +29,8 @@ describe('DashboardSidebar', () => {
 
     const links = screen.getAllByRole('link');
 
-    // 6 itens de navegacao devem ser renderizados como links
-    expect(links.length).toBeGreaterThanOrEqual(6);
+    // 7 itens de navegacao devem ser renderizados como links
+    expect(links.length).toBeGreaterThanOrEqual(7);
 
     // Verifica cada href esperado
     const hrefs = links.map(link => link.getAttribute('href'));
@@ -45,6 +40,7 @@ describe('DashboardSidebar', () => {
     expect(hrefs).toContain('/proposals');
     expect(hrefs).toContain('/financials');
     expect(hrefs).toContain('/calendar');
+    expect(hrefs).toContain('/settings');
   });
 
   it('highlights the active nav item based on the current pathname', () => {
