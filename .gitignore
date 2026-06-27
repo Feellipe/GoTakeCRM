@@ -41,6 +41,10 @@ yarn-error.log*
 context.md
 
 
+# serwist
+public/sw*
+public/swe-worker*
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
