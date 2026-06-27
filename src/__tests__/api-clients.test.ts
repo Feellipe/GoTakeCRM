@@ -3,7 +3,7 @@ import { clientCreateSchema, clientUpdateSchema, validateOrThrow, ValidationErro
 
 describe('Client Validation', () => {
   it('validates a correct client create payload', () => {
-    const data = { phone: '+5511999999999', name: 'Test Client', eventType: 'wedding', source: 'whatsapp' };
+    const data = { organizationId: 'org_1', phone: '+5511999999999', name: 'Test Client', eventType: 'wedding', source: 'whatsapp' };
     const result = validateOrThrow(clientCreateSchema, data);
     expect(result.name).toBe('Test Client');
     expect(result.status).toBe('active'); // default
