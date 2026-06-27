@@ -45,4 +45,32 @@ describe('usePwaInstall', () => {
     if (installed) act(() => { window.dispatchEvent(new Event('appinstalled')); });
     expect(result.current.canInstall).toBe(expected);
   });
+
+  it('promptInstall sets isInstalled when user accepts', async () => {
+    const promptFn = vi.fn();
+    const { result } = renderHook(() => usePwaInstall());
+    const event = new Event('beforeinstallprompt');
+    Object.defineProperty(event, 'prompt', { value: promptFn });
+    Object.defineProperty(event, 'userChoice', { value: Promise.resolve({ outcome: 'accepted' }) });
+    act(() => { window.dispatchEvent(event); });
+
+    await act(async () => { await result.current.promptInstall(); });
+
+    expect(promptFn).toHaveBeenCalledOnce();
+    expect(result.current.isInstalled).toBe(true);
+    expect(result.current.canInstall).toBe(false);
+  });
+
+  it('promptInstall does not set isInstalled when user dismisses', async () => {
+    const promptFn = vi.fn();
+    const { result } = renderHook(() => usePwaInstall());
+    const event = new Event('beforeinstallprompt');
+    Object.defineProperty(event, 'prompt', { value: promptFn });
+    Object.defineProperty(event, 'userChoice', { value: Promise.resolve({ outcome: 'dismissed' }) });
+    act(() => { window.dispatchEvent(event); });
+
+    await act(async () => { await result.current.promptInstall(); });
+
+    expect(result.current.isInstalled).toBe(false);
+  });
 });
