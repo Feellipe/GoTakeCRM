@@ -37,6 +37,7 @@ interface OrgData {
   whatsappPhone?: string | null;
   stripePublicKey?: string | null;
   stripeSecretKey?: string | null;
+  stripeWebhookSecret?: string | null;
 }
 
 export default function SettingsPage() {
@@ -63,6 +64,7 @@ export default function SettingsPage() {
   // Stripe form state
   const [stripePublicKey, setStripePublicKey] = React.useState('');
   const [stripeSecretKey, setStripeSecretKey] = React.useState('');
+  const [stripeWebhookSecret, setStripeWebhookSecret] = React.useState('');
   const [savingStripe, setSavingStripe] = React.useState(false);
 
   // Local settings state
@@ -120,6 +122,7 @@ export default function SettingsPage() {
     if (activeOrg) {
       setStripePublicKey(activeOrg.stripePublicKey || '');
       setStripeSecretKey(''); // never prefill secret key
+      setStripeWebhookSecret(''); // never prefill webhook secret
     }
   }, [activeOrg]);
 
@@ -193,6 +196,7 @@ export default function SettingsPage() {
       const body: Record<string, string> = {};
       if (stripePublicKey) body.stripePublicKey = stripePublicKey;
       if (stripeSecretKey) body.stripeSecretKey = stripeSecretKey;
+      if (stripeWebhookSecret) body.stripeWebhookSecret = stripeWebhookSecret;
 
       const res = await fetch(`/api/admin/organizations/${activeOrg.id}/stripe`, {
         method: 'PATCH',
@@ -391,6 +395,17 @@ export default function SettingsPage() {
                   value={stripeSecretKey}
                   onChange={(e) => setStripeSecretKey(e.target.value)}
                   placeholder="sk_live_..."
+                  className="bg-muted/50"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="stripe-webhook-secret">Webhook Secret</Label>
+                <Input
+                  id="stripe-webhook-secret"
+                  type="password"
+                  value={stripeWebhookSecret}
+                  onChange={(e) => setStripeWebhookSecret(e.target.value)}
+                  placeholder="whsec_..."
                   className="bg-muted/50"
                 />
               </div>
