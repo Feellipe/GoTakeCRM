@@ -46,10 +46,19 @@ export function DashboardSidebar() {
 
   return (
     <>
+      {/* Hamburger button — always visible on mobile, outside the sidebar */}
+      <button
+        onClick={() => setSidebarOpen(true)}
+        className="fixed top-4 left-4 z-[60] p-2.5 rounded-xl bg-gold text-warm-950 shadow-lg shadow-gold/30 lg:hidden hover:opacity-90 transition-all duration-200"
+        aria-label="Open sidebar"
+      >
+        <Menu className="w-5 h-5" />
+      </button>
+
       {/* Backdrop overlay — only on mobile when sidebar is open */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -57,37 +66,44 @@ export function DashboardSidebar() {
       <aside
         className={`fixed left-0 top-0 h-full z-50 transition-all duration-300 ease-in-out ${
           sidebarOpen
-            ? 'w-[66vw] max-w-sm lg:w-64'
-            : 'w-0 lg:w-20 overflow-hidden lg:overflow-visible'
+            ? 'translate-x-0 w-[66vw] max-w-sm'
+            : '-translate-x-full w-[66vw] max-w-sm lg:translate-x-0 lg:w-20'
         }`}
       >
         <div className="flex flex-col h-full bg-sidebar-glass overflow-hidden">
-          {/* Logo */}
+          {/* Logo + Close button */}
           <div className="p-6 flex items-center justify-between border-b border-white/10 min-h-[4.5rem]">
-            {sidebarOpen && (
-              <div className="flex items-center gap-3 animate-fade-in-up shrink-0">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gold to-gold-light flex items-center justify-center shadow-lg shadow-gold/30 relative overflow-hidden">
-                  <span className="text-white font-bold text-lg relative z-10">W</span>
-                  <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
-                </div>
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gold to-gold-light flex items-center justify-center shadow-lg shadow-gold/30 relative overflow-hidden">
+                <span className="text-white font-bold text-lg relative z-10">W</span>
+                <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+              </div>
+              {sidebarOpen && (
                 <div>
                   <span className="text-white font-semibold text-[clamp(0.875rem,2.5vw,1.125rem)] block">WhatsApp</span>
                   <span className="text-white/50 text-[clamp(0.625rem,1.8vw,0.75rem)]">CRM Dashboard</span>
                 </div>
-              </div>
+              )}
+            </div>
+            {sidebarOpen && (
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="p-2 rounded-lg hover:bg-white/10 transition-colors text-white/70 hover:text-white shrink-0"
+                aria-label="Close sidebar"
+              >
+                <X className="w-5 h-5" />
+              </button>
             )}
+            {/* Desktop toggle (mini-sidebar expand/collapse) */}
             {!sidebarOpen && (
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gold to-gold-light flex items-center justify-center shadow-lg shadow-gold/30 shrink-0 mx-auto">
-                <span className="text-white font-bold text-lg">W</span>
-              </div>
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="hidden lg:flex p-2 rounded-lg hover:bg-white/10 transition-colors text-white/70 hover:text-white shrink-0"
+                aria-label="Expand sidebar"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
             )}
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 rounded-lg hover:bg-white/10 transition-colors text-white/70 hover:text-white shrink-0"
-              aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
-            >
-              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
           </div>
 
           {/* Navigation */}
@@ -106,7 +122,7 @@ export function DashboardSidebar() {
               >
                 <item.icon className="w-5 h-5 flex-shrink-0" />
                 {sidebarOpen && (
-                  <span className="animate-fade-in-up whitespace-nowrap text-[clamp(0.8rem,2.2vw,0.95rem)]">{item.label}</span>
+                  <span className="whitespace-nowrap text-[clamp(0.8rem,2.2vw,0.95rem)]">{item.label}</span>
                 )}
                 {activeView === item.id && (
                   <div className="ml-auto w-2 h-2 rounded-full bg-white animate-pulse" />
@@ -123,7 +139,7 @@ export function DashboardSidebar() {
                 <AvatarFallback className="bg-gold text-warm-950">ST</AvatarFallback>
               </Avatar>
               {sidebarOpen && (
-                <div className="animate-fade-in-up flex-1 min-w-0">
+                <div className="flex-1 min-w-0">
                   <p className="text-white font-medium text-[clamp(0.8rem,2.2vw,0.95rem)] truncate">Studio Pro</p>
                   <p className="text-white/50 text-[clamp(0.625rem,1.8vw,0.75rem)]">Admin</p>
                 </div>
