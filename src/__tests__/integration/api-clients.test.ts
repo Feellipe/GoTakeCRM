@@ -35,7 +35,7 @@ describe('GET /api/clients', () => {
     {
       id: 'cl_1',
       organizationId: 'org_1',
-      phone: '+5511999999999',
+      phone: '+551****9999',
       name: 'Alice',
       email: 'alice@example.com',
       eventType: 'wedding',
@@ -52,7 +52,7 @@ describe('GET /api/clients', () => {
     {
       id: 'cl_2',
       organizationId: 'org_1',
-      phone: '+5511888888888',
+      phone: '+551****8888',
       name: 'Bob',
       email: null,
       eventType: 'corporate',
@@ -201,20 +201,15 @@ describe('POST /api/clients', () => {
       role: 'owner',
       createdAt: new Date('2026-01-01'),
     } as any);
-  });
-
-  const validBody = {
-    organizationId: 'org_1',
-    phone: '+5511999999999',
-    name: 'New Client',
-    eventType: 'wedding',
-  };
-
-  beforeEach(() => {
-    vi.clearAllMocks();
     // Allow origin validation to pass in test env (development)
     process.env.NODE_ENV = 'development';
   });
+
+  const validBody = {
+    phone: '+551****9999',
+    name: 'New Client',
+    eventType: 'wedding',
+  };
 
   it('creates a client and returns 201', async () => {
     const createdClient = {
@@ -241,11 +236,11 @@ describe('POST /api/clients', () => {
 
     expect(response.status).toBe(201);
     expect(data.name).toBe('New Client');
-    expect(data.phone).toBe('+5511999999999');
+    expect(data.phone).toBe('+551****9999');
     expect(mockClientCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          phone: '+5511999999999',
+          phone: '+551****9999',
           name: 'New Client',
           eventType: 'wedding',
           source: 'whatsapp',
@@ -259,7 +254,7 @@ describe('POST /api/clients', () => {
     const createdClient = {
       id: 'cl_new',
       organizationId: 'org_1',
-      phone: '+5511888888888',
+      phone: '+551****8888',
       name: 'Minimal',
       email: null,
       eventType: 'corporate',
@@ -275,7 +270,7 @@ describe('POST /api/clients', () => {
     const request = new NextRequest('http://localhost/api/clients', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ organizationId: 'org_1', phone: '+5511888888888', name: 'Minimal', eventType: 'corporate' }),
+      body: JSON.stringify({ phone: '+551****8888', name: 'Minimal', eventType: 'corporate' }),
     });
     const response = await POST(request);
 

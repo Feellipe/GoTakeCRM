@@ -11,6 +11,11 @@ vi.mock('next/link', () => ({
   default: ({ children, href, ...props }: any) => <a href={href} {...props}>{children}</a>,
 }));
 
+// Mock settings panel
+vi.mock('@/components/settings-panel', () => ({
+  SettingsPanel: ({ trigger }: any) => <div>{trigger}</div>,
+}));
+
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
