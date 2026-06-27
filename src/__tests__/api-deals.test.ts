@@ -3,7 +3,7 @@ import { dealCreateSchema, dealUpdateSchema, validateOrThrow, ValidationError } 
 
 describe('Deal Validation', () => {
   it('validates a correct deal create payload', () => {
-    const data = { clientId: 'cl_123', title: 'Test Deal', value: 5000 };
+    const data = { organizationId: 'org_1', clientId: 'cl_123', title: 'Test Deal', value: 5000 };
     const result = validateOrThrow(dealCreateSchema, data);
     expect(result.title).toBe('Test Deal');
     expect(result.status).toBe('new'); // default (English)

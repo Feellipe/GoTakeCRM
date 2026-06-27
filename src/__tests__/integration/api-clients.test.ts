@@ -10,17 +10,32 @@ import { GET, POST } from '@/app/api/clients/route';
 import { db } from '@/lib/db';
 import { NextRequest } from 'next/server';
 
+// Mock getServerSession
+vi.mock('next-auth', () => ({
+  getServerSession: vi.fn(),
+}));
+
+import { getServerSession } from 'next-auth';
+
+const mockGetServerSession = vi.mocked(getServerSession);
+
 // Access the mocked functions
 const mockClientFindMany = vi.mocked(db.client.findMany);
 const mockClientCount = vi.mocked(db.client.count);
 const mockClientCreate = vi.mocked(db.client.create);
+const mockUserOrgFindFirst = vi.mocked(db.userOrganization.findFirst);
+
+const makeSession = (userId: string) => ({
+  user: { id: userId, name: 'Test', email: 'test@email.com' },
+  expires: '2099-01-01T00:00:00.000Z',
+});
 
 describe('GET /api/clients', () => {
   const mockClients = [
     {
       id: 'cl_1',
       organizationId: 'org_1',
-      phone: '+5511999999999',
+      phone: '+551****9999',
       name: 'Alice',
       email: 'alice@example.com',
       eventType: 'wedding',
@@ -37,7 +52,7 @@ describe('GET /api/clients', () => {
     {
       id: 'cl_2',
       organizationId: 'org_1',
-      phone: '+5511888888888',
+      phone: '+551****8888',
       name: 'Bob',
       email: null,
       eventType: 'corporate',
@@ -176,18 +191,25 @@ describe('GET /api/clients', () => {
 });
 
 describe('POST /api/clients', () => {
-  const validBody = {
-    organizationId: 'org_1',
-    phone: '+5511999999999',
-    name: 'New Client',
-    eventType: 'wedding',
-  };
-
   beforeEach(() => {
     vi.clearAllMocks();
+    // Mock session and org membership
+    mockGetServerSession.mockResolvedValue(makeSession('user_1'));
+    mockUserOrgFindFirst.mockResolvedValue({
+      userId: 'user_1',
+      organizationId: 'org_1',
+      role: 'owner',
+      createdAt: new Date('2026-01-01'),
+    } as any);
     // Allow origin validation to pass in test env (development)
     process.env.NODE_ENV = 'development';
   });
+
+  const validBody = {
+    phone: '+551****9999',
+    name: 'New Client',
+    eventType: 'wedding',
+  };
 
   it('creates a client and returns 201', async () => {
     const createdClient = {
@@ -214,11 +236,11 @@ describe('POST /api/clients', () => {
 
     expect(response.status).toBe(201);
     expect(data.name).toBe('New Client');
-    expect(data.phone).toBe('+5511999999999');
+    expect(data.phone).toBe('+551****9999');
     expect(mockClientCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          phone: '+5511999999999',
+          phone: '+551****9999',
           name: 'New Client',
           eventType: 'wedding',
           source: 'whatsapp',
@@ -232,7 +254,7 @@ describe('POST /api/clients', () => {
     const createdClient = {
       id: 'cl_new',
       organizationId: 'org_1',
-      phone: '+5511888888888',
+      phone: '+551****8888',
       name: 'Minimal',
       email: null,
       eventType: 'corporate',
@@ -248,7 +270,7 @@ describe('POST /api/clients', () => {
     const request = new NextRequest('http://localhost/api/clients', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ organizationId: 'org_1', phone: '+5511888888888', name: 'Minimal', eventType: 'corporate' }),
+      body: JSON.stringify({ phone: '+551****8888', name: 'Minimal', eventType: 'corporate' }),
     });
     const response = await POST(request);
 

@@ -1,6 +1,8 @@
 import { db } from '@/lib/db';
 import { validateOrThrow, ValidationError, validationErrorResponse, clientCreateSchema, validateOrigin } from '@/lib/validations';
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth-options';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
@@ -93,11 +95,28 @@ export async function POST(request: NextRequest) {
     if (!validateOrigin(request)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
+
+    // Derive organizationId from the authenticated user's session
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const membership = await db.userOrganization.findFirst({
+      where: { userId: session.user.id },
+    });
+    if (!membership) {
+      return NextResponse.json({ error: 'No organization found for user' }, { status: 403 });
+    }
+
     const rawBody = await request.json();
+    // Add organizationId from session (not client-provided)
+    rawBody.organizationId = membership.organizationId;
     const body = validateOrThrow(clientCreateSchema, rawBody);
 
     const client = await db.client.create({
       data: {
+        organizationId: membership.organizationId,
         phone: body.phone,
         name: body.name,
         email: body.email ?? null,

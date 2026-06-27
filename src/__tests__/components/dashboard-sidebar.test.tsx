@@ -34,8 +34,9 @@ describe('DashboardSidebar', () => {
 
     const links = screen.getAllByRole('link');
 
-    // 6 itens de navegacao devem ser renderizados como links
-    expect(links.length).toBeGreaterThanOrEqual(6);
+    // 7 itens de navegacao (incluindo Settings) sao renderizados como links
+    // No estado inicial fechado, os icones ainda sao links clicaveis
+    expect(links.length).toBeGreaterThanOrEqual(7);
 
     // Verifica cada href esperado
     const hrefs = links.map(link => link.getAttribute('href'));
@@ -45,6 +46,7 @@ describe('DashboardSidebar', () => {
     expect(hrefs).toContain('/proposals');
     expect(hrefs).toContain('/financials');
     expect(hrefs).toContain('/calendar');
+    expect(hrefs).toContain('/settings');
   });
 
   it('highlights the active nav item based on the current pathname', () => {
@@ -53,11 +55,9 @@ describe('DashboardSidebar', () => {
 
     render(<DashboardSidebar />);
 
-    // A barra lateral continua renderizando e o hook foi chamado
     expect(mockedUsePathname).toHaveBeenCalled();
     expect(screen.getAllByRole('link').length).toBeGreaterThanOrEqual(6);
 
-    // O link de Clients deve existir e receber a classe ativa (bg-gold)
     const clientsLink = screen.getAllByRole('link').find(
       link => link.getAttribute('href') === '/clients'
     );
@@ -69,26 +69,36 @@ describe('DashboardSidebar', () => {
     const user = userEvent.setup();
     render(<DashboardSidebar />);
 
-    // Inicialmente aberta: o texto de marca "WhatsApp" deve estar visivel
-    expect(screen.getByText('WhatsApp')).toBeInTheDocument();
-
-    // O botao de colapsar fica no cabecalho (logo) e e sempre o primeiro
-    // botao renderizado. Ha tambem o botao de configuracoes no rodape.
-    const buttons = screen.getAllByRole('button');
-    const toggleButton = buttons[0];
-    await user.click(toggleButton);
-
-    // Apos o clique, a barra e colapsada e o texto de marca desaparece
+    // Inicialmente fechada (sidebarOpen = false): o texto "WhatsApp" nao deve estar visivel
     expect(screen.queryByText('WhatsApp')).not.toBeInTheDocument();
 
-    // Clicar novamente re-expande a barra
-    await user.click(screen.getAllByRole('button')[0]);
+    // Hamburger button abre a sidebar (aria-label="Open sidebar")
+    const openButton = screen.getByLabelText('Open sidebar');
+    await user.click(openButton);
+
+    // Apos o clique, a sidebar abre e o texto aparece
     expect(screen.getByText('WhatsApp')).toBeInTheDocument();
+
+    // Close button fecha a sidebar (aria-label="Close sidebar")
+    const closeButton = screen.getByLabelText('Close sidebar');
+    await user.click(closeButton);
+
+    // Apos fechar, o texto desaparece
+    expect(screen.queryByText('WhatsApp')).not.toBeInTheDocument();
   });
 
-  it('shows the "WhatsApp CRM Dashboard" branding text', () => {
+  it('shows the branding text when sidebar is opened', async () => {
+    const user = userEvent.setup();
     render(<DashboardSidebar />);
 
+    // Inicialmente fechada: texto nao renderizado
+    expect(screen.queryByText('WhatsApp')).not.toBeInTheDocument();
+    expect(screen.queryByText('CRM Dashboard')).not.toBeInTheDocument();
+
+    // Abrir sidebar pelo hamburger
+    await user.click(screen.getByLabelText('Open sidebar'));
+
+    // Agora o texto deve estar visivel
     expect(screen.getByText('WhatsApp')).toBeInTheDocument();
     expect(screen.getByText('CRM Dashboard')).toBeInTheDocument();
   });
