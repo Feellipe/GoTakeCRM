@@ -9,19 +9,32 @@ interface BeforeInstallPromptEvent extends Event {
 
 export function usePwaInstall() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsStandalone(true);
+    }
+
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
     };
     window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
+
+    const installedHandler = () => setIsInstalled(true);
+    window.addEventListener('appinstalled', installedHandler);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+      window.removeEventListener('appinstalled', installedHandler);
+    };
   }, []);
 
   return {
-    canInstall: !!deferredPrompt,
-    isInstalled: false,
+    canInstall: !!deferredPrompt && !isInstalled && !isStandalone,
+    isInstalled: isInstalled || isStandalone,
     promptInstall: async () => {},
   };
 }
