@@ -43,6 +43,9 @@ model Organization {
   whatsappPhone   String?  @map("whatsapp_phone")
   whatsappToken   String?  @map("whatsapp_token")
   whatsappPhoneId String?  @map("whatsapp_phone_id")
+  stripeSecretKey String?  @map("stripe_secret_key")
+  stripePublicKey String?  @map("stripe_public_key")
+  stripeWebhookSecret String? @map("stripe_webhook_secret")
   plan            String   @default("solo") // solo, pro, agency
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
@@ -310,6 +313,9 @@ model Proposal {
   sentAt          DateTime? @map("sent_at")
   viewedAt        DateTime? @map("viewed_at")
   respondedAt     DateTime? @map("responded_at")
+  paymentLink     String?   @map("payment_link")
+  paymentStatus   String    @default("none") @map("payment_status") // none, pending, paid, failed
+  stripeSessionId String?   @map("stripe_session_id")
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
