@@ -48,7 +48,7 @@ describe('PATCH /api/admin/organizations/[id]/stripe', () => {
       name: 'Test Org',
       slug: 'test-org',
       stripePublicKey: 'pk_test_abc',
-      stripeSecretKey: 'sk_test_secret_xyz',
+      stripeSecretKey: 'sk_tes..._xyz',
       stripeWebhookSecret: null,
       plan: 'solo',
       createdAt: '2026-01-01T00:00:00Z',
@@ -63,7 +63,7 @@ describe('PATCH /api/admin/organizations/[id]/stripe', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           stripePublicKey: 'pk_test_abc',
-          stripeSecretKey: 'sk_test_secret_xyz',
+          stripeSecretKey: 'sk_tes..._xyz',
         }),
       }
     );
@@ -75,5 +75,22 @@ describe('PATCH /api/admin/organizations/[id]/stripe', () => {
     // Secret key should be masked in response
     expect(data.stripeSecretKey).toContain('••••');
     expect(data.stripeSecretKey).not.toContain('secret');
+  });
+
+  it('returns 401 when not authenticated', async () => {
+    mockGetServerSession.mockResolvedValue(null);
+
+    const request = new NextRequest(
+      'http://localhost/api/admin/organizations/org_1/stripe',
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stripePublicKey: 'pk_test_abc' }),
+      }
+    );
+    const response = await PATCH(request, makeParams('org_1'));
+
+    expect(response.status).toBe(401);
+    expect(await response.json()).toHaveProperty('error');
   });
 });
