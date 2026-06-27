@@ -93,4 +93,23 @@ describe('PATCH /api/admin/organizations/[id]/stripe', () => {
     expect(response.status).toBe(401);
     expect(await response.json()).toHaveProperty('error');
   });
+
+  it('returns 403 when user has viewer role', async () => {
+    mockGetServerSession.mockResolvedValue(makeSession('user_1'));
+    // findFirst with role: ['owner', 'admin'] returns null for viewer
+    mockUserOrgFindFirst.mockResolvedValue(null);
+
+    const request = new NextRequest(
+      'http://localhost/api/admin/organizations/org_1/stripe',
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stripePublicKey: 'pk_test_abc' }),
+      }
+    );
+    const response = await PATCH(request, makeParams('org_1'));
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toHaveProperty('error');
+  });
 });
