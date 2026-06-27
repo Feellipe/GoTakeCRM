@@ -10,10 +10,25 @@ import { GET, POST } from '@/app/api/clients/route';
 import { db } from '@/lib/db';
 import { NextRequest } from 'next/server';
 
+// Mock getServerSession
+vi.mock('next-auth', () => ({
+  getServerSession: vi.fn(),
+}));
+
+import { getServerSession } from 'next-auth';
+
+const mockGetServerSession = vi.mocked(getServerSession);
+
 // Access the mocked functions
 const mockClientFindMany = vi.mocked(db.client.findMany);
 const mockClientCount = vi.mocked(db.client.count);
 const mockClientCreate = vi.mocked(db.client.create);
+const mockUserOrgFindFirst = vi.mocked(db.userOrganization.findFirst);
+
+const makeSession = (userId: string) => ({
+  user: { id: userId, name: 'Test', email: 'test@email.com' },
+  expires: '2099-01-01T00:00:00.000Z',
+});
 
 describe('GET /api/clients', () => {
   const mockClients = [
@@ -176,6 +191,18 @@ describe('GET /api/clients', () => {
 });
 
 describe('POST /api/clients', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Mock session and org membership
+    mockGetServerSession.mockResolvedValue(makeSession('user_1'));
+    mockUserOrgFindFirst.mockResolvedValue({
+      userId: 'user_1',
+      organizationId: 'org_1',
+      role: 'owner',
+      createdAt: new Date('2026-01-01'),
+    } as any);
+  });
+
   const validBody = {
     organizationId: 'org_1',
     phone: '+5511999999999',
