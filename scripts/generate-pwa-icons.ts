@@ -1,40 +1,40 @@
 import sharp from 'sharp';
-import fs from 'fs';
-import path from 'path';
+import { mkdirSync } from 'fs';
+import { join } from 'path';
 
-const sizes = [192, 512];
-const outDir = path.resolve(__dirname, '..', 'public', 'icons');
+const SIZES = [192, 512];
+const OUT_DIR = join(__dirname, '..', 'public', 'icons');
 
-if (!fs.existsSync(outDir)) {
-  fs.mkdirSync(outDir, { recursive: true });
-}
-
-const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="80" fill="#B8860B"/>
-  <text x="256" y="280" font-family="Arial, sans-serif" font-size="200" font-weight="bold" fill="white" text-anchor="middle">G</text>
-  <text x="256" y="400" font-family="Arial, sans-serif" font-size="60" fill="rgba(255,255,255,0.8)" text-anchor="middle">CRM</text>
+const SVG_MASTER = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="80" fill="url(#g)"/>
+  <circle cx="256" cy="256" r="120" fill="none" stroke="#1C1917" stroke-width="20"/>
+  <circle cx="256" cy="256" r="50" fill="#1C1917"/>
+  <text x="256" y="420" text-anchor="middle" font-family="system-ui" font-size="48" font-weight="bold" fill="#1C1917">GT</text>
 </svg>`;
 
 async function generate() {
-  const svgBuffer = Buffer.from(svgIcon);
+  mkdirSync(OUT_DIR, { recursive: true });
 
-  for (const size of sizes) {
-    await sharp(svgBuffer)
+  for (const size of SIZES) {
+    await sharp(Buffer.from(SVG_MASTER))
       .resize(size, size)
       .png()
-      .toFile(path.join(outDir, `icon-${size}x${size}.png`));
-
+      .toFile(join(OUT_DIR, `icon-${size}.png`));
     console.log(`Generated ${size}x${size} icon`);
   }
 
-  // Generate a favicon-sized icon too
-  await sharp(svgBuffer)
-    .resize(64, 64)
+  await sharp(Buffer.from(SVG_MASTER))
+    .resize(512, 512)
     .png()
-    .toFile(path.join(outDir, 'favicon.png'));
+    .toFile(join(OUT_DIR, 'icon-maskable-512.png'));
 
-  console.log('Generated 64x64 favicon');
-  console.log('All icons generated successfully!');
+  console.log('All icons generated!');
 }
 
 generate().catch(console.error);
