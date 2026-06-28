@@ -248,7 +248,13 @@ export function DashboardSidebar() {
 
           {/* Navigation */}
           <nav className="flex-1 p-4 space-y-2">
-            {navItems.map((item, index) => (
+            {navItems
+              .filter(item => {
+                // CRM role cannot see Financials
+                if (activeOrg?.role === 'crm' && item.id === 'financials') return false;
+                return true;
+              })
+              .map((item, index) => (
               <Link
                 key={item.id}
                 href={item.href}
