@@ -362,3 +362,120 @@ describe('PATCH /api/admin/organizations/[id]/members', () => {
     });
   });
 });
+
+describe('DELETE /api/admin/organizations/[id]/members', () => {
+  const mockUserOrgDelete = vi.mocked(db.userOrganization.delete);
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns 401 when unauthenticated', async () => {
+    mockGetServerSession.mockResolvedValue(null);
+
+    const { DELETE } = await import('@/app/api/admin/organizations/[id]/members/route');
+    const request = new NextRequest('http://localhost/api/admin/organizations/org_1/members', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ memberId: 'mem_2' }),
+    });
+    const response = await DELETE(request, makeParams('org_1'));
+    const data = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(data.error).toBe('Unauthorized');
+  });
+
+  it('returns 403 when user is not admin of org', async () => {
+    mockGetServerSession.mockResolvedValue(makeSession('user_1'));
+    mockUserOrgFindFirst.mockResolvedValue(null);
+
+    const { DELETE } = await import('@/app/api/admin/organizations/[id]/members/route');
+    const request = new NextRequest('http://localhost/api/admin/organizations/org_1/members', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ memberId: 'mem_2' }),
+    });
+    const response = await DELETE(request, makeParams('org_1'));
+    const data = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(data.error).toBe('Forbidden');
+  });
+
+  it('returns 422 when memberId is missing', async () => {
+    mockGetServerSession.mockResolvedValue(makeSession('admin_1'));
+    mockUserOrgFindFirst.mockResolvedValue(adminMembership as any);
+
+    const { DELETE } = await import('@/app/api/admin/organizations/[id]/members/route');
+    const request = new NextRequest('http://localhost/api/admin/organizations/org_1/members', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    const response = await DELETE(request, makeParams('org_1'));
+    const data = await response.json();
+
+    expect(response.status).toBe(422);
+    expect(data.error).toBe('memberId is required');
+  });
+
+  it('returns 422 when trying to remove self', async () => {
+    mockGetServerSession.mockResolvedValue(makeSession('admin_1'));
+    mockUserOrgFindFirst.mockResolvedValue(adminMembership as any); // admin check
+
+    const { DELETE } = await import('@/app/api/admin/organizations/[id]/members/route');
+    const request = new NextRequest('http://localhost/api/admin/organizations/org_1/members', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ memberId: 'mem_admin' }),
+    });
+    const response = await DELETE(request, makeParams('org_1'));
+    const data = await response.json();
+
+    expect(response.status).toBe(422);
+    expect(data.error).toBe('Cannot remove yourself from the organization');
+  });
+
+  it('returns 404 when member not found in this org', async () => {
+    mockGetServerSession.mockResolvedValue(makeSession('admin_1'));
+    mockUserOrgFindFirst
+      .mockResolvedValueOnce(adminMembership as any)  // admin check
+      .mockResolvedValueOnce(null);                     // member not found
+
+    const { DELETE } = await import('@/app/api/admin/organizations/[id]/members/route');
+    const request = new NextRequest('http://localhost/api/admin/organizations/org_1/members', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ memberId: 'nonexistent' }),
+    });
+    const response = await DELETE(request, makeParams('org_1'));
+    const data = await response.json();
+
+    expect(response.status).toBe(404);
+    expect(data.error).toBe('Member not found in this organization');
+  });
+
+  it('removes member successfully', async () => {
+    mockGetServerSession.mockResolvedValue(makeSession('admin_1'));
+    mockUserOrgFindFirst
+      .mockResolvedValueOnce(adminMembership as any)  // admin check
+      .mockResolvedValueOnce({ id: 'mem_2', userId: 'u2', organizationId: 'org_1', role: 'member' } as any); // target member found
+    mockUserOrgDelete.mockResolvedValue({ id: 'mem_2' } as any);
+
+    const { DELETE } = await import('@/app/api/admin/organizations/[id]/members/route');
+    const request = new NextRequest('http://localhost/api/admin/organizations/org_1/members', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ memberId: 'mem_2' }),
+    });
+    const response = await DELETE(request, makeParams('org_1'));
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
+    expect(mockUserOrgDelete).toHaveBeenCalledWith({
+      where: { id: 'mem_2' },
+    });
+  });
+});
