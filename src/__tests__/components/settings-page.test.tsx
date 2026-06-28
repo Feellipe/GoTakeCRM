@@ -59,8 +59,9 @@ describe('Settings Page', () => {
             name: 'Test Org',
             slug: 'test-org',
             plan: 'pro',
+            role: 'admin',
             whatsappPhoneId: '12345',
-            whatsappPhone: '+5511999999999',
+            whatsappPhone: '+551****9999',
           },
         ],
       }),
@@ -104,7 +105,7 @@ describe('Settings Page', () => {
     expect(phoneIdInput.value).toBe('12345');
 
     const phoneInput = screen.getByLabelText('Phone Number') as HTMLInputElement;
-    expect(phoneInput.value).toBe('+5511999999999');
+    expect(phoneInput.value).toBe('+551****9999');
   });
 
   it('renders Appearance section with theme selector', async () => {
@@ -154,6 +155,92 @@ describe('Settings Page', () => {
       // Should have responsive grid classes
       expect(container.className).toContain('grid');
       expect(container.className).toContain('grid-cols-1');
+    });
+  });
+
+  it('hides Stripe Payments section for non-admin roles (autonomo)', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({
+        user: {
+          id: 'user-1',
+          name: 'Autonomo User',
+          email: 'autonomo@test.com',
+          avatar: null,
+          lastLoginAt: '2024-01-01T00:00:00Z',
+          createdAt: '2023-01-01T00:00:00Z',
+        },
+        organizations: [
+          {
+            id: 'org-1',
+            name: 'Test Org',
+            slug: 'test-org',
+            plan: 'pro',
+            role: 'autonomo',
+          },
+        ],
+      }),
+    });
+
+    render(<SettingsPage />);
+
+    // Personal sections still visible
+    await waitFor(() => {
+      expect(screen.getByText('Profile')).toBeInTheDocument();
+    });
+
+    // Stripe (org-level) should NOT be visible for autonomo
+    await waitFor(() => {
+      expect(screen.queryByText('Stripe Payments')).not.toBeInTheDocument();
+    });
+  });
+
+  it('hides Stripe Payments section for CRM role', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({
+        user: {
+          id: 'user-2',
+          name: 'CRM User',
+          email: 'crm@test.com',
+          avatar: null,
+          lastLoginAt: '2024-01-01T00:00:00Z',
+          createdAt: '2023-01-01T00:00:00Z',
+        },
+        organizations: [
+          {
+            id: 'org-1',
+            name: 'Test Org',
+            slug: 'test-org',
+            plan: 'pro',
+            role: 'crm',
+          },
+        ],
+      }),
+    });
+
+    render(<SettingsPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Profile')).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText('Stripe Payments')).not.toBeInTheDocument();
+    });
+  });
+
+  it('shows Personal tab with profile content when opened', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({
+        user: { id: 'u1', name: 'João', email: 'joao@email.com', avatar: null, lastLoginAt: '2024-01-01T00:00:00Z', createdAt: '2023-01-01T00:00:00Z' },
+        organizations: [{ id: 'org_1', name: 'Studio X', slug: 'studio-x', plan: 'pro', role: 'admin' }],
+      }),
+    });
+    render(<SettingsPage />);
+    await waitFor(() => {
+      expect(screen.getByText('Personal', { selector: 'button' })).toBeInTheDocument();
     });
   });
 });

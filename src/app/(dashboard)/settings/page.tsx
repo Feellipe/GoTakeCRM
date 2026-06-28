@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
 
@@ -250,365 +251,377 @@ export default function SettingsPage() {
         </p>
       </div>
 
-      {/* Responsive Grid: sections in cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" data-testid="settings-grid">
-        {/* Profile Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <User className="w-5 h-5 text-primary" />
-              Profile
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-4 mb-4">
-              <Avatar className="w-16 h-16 border-2 border-primary/20">
-                <AvatarImage src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.id || 'default'}`} />
-                <AvatarFallback className="bg-primary text-primary-foreground">{initials}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium truncate">{user?.name || 'User'}</p>
-                <p className="text-sm text-muted-foreground truncate">{user?.email || ''}</p>
-              </div>
-            </div>
-            <div className="space-y-3">
-              <div className="space-y-2">
-                <Label htmlFor="name">Display Name</Label>
-                <Input
-                  id="name"
-                  value={profileName}
-                  onChange={(e) => setProfileName(e.target.value)}
-                  className="bg-muted/50"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={profileEmail}
-                  onChange={(e) => setProfileEmail(e.target.value)}
-                  className="bg-muted/50"
-                />
-              </div>
-              <Button
-                onClick={handleSaveProfile}
-                disabled={savingProfile}
-                className="w-full"
-              >
-                {savingProfile ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  'Save Profile'
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      <Tabs defaultValue="personal">
+        <TabsList>
+          <TabsTrigger value="personal">Personal</TabsTrigger>
+          <TabsTrigger value="org">Org</TabsTrigger>
+        </TabsList>
 
-        {/* WhatsApp Bot Section */}
-        {activeOrg && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <MessageSquare className="w-5 h-5 text-primary" />
-                WhatsApp Bot
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="space-y-2">
-                <Label htmlFor="whatsapp-phone-id">Phone ID</Label>
-                <Input
-                  id="whatsapp-phone-id"
-                  value={whatsappPhoneId}
-                  onChange={(e) => setWhatsappPhoneId(e.target.value)}
-                  placeholder="WhatsApp Phone ID"
-                  className="bg-muted/50"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="whatsapp-token">Token</Label>
-                <Input
-                  id="whatsapp-token"
-                  type="password"
-                  value={whatsappToken}
-                  onChange={(e) => setWhatsappToken(e.target.value)}
-                  placeholder="WhatsApp API Token"
-                  className="bg-muted/50"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="whatsapp-phone">Phone Number</Label>
-                <Input
-                  id="whatsapp-phone"
-                  value={whatsappPhone}
-                  onChange={(e) => setWhatsappPhone(e.target.value)}
-                  placeholder="+55 11 99999-9999"
-                  className="bg-muted/50"
-                />
-              </div>
-              <Button
-                onClick={handleSaveWhatsApp}
-                disabled={savingWhatsApp}
-                className="w-full"
-              >
-                {savingWhatsApp ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  'Save WhatsApp Config'
-                )}
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Stripe Payments Section */}
-        {activeOrg && activeOrg.role === 'admin' && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <CreditCard className="w-5 h-5 text-primary" />
-                Stripe Payments
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="space-y-2">
-                <Label htmlFor="stripe-public-key">Publishable Key</Label>
-                <Input
-                  id="stripe-public-key"
-                  value={stripePublicKey}
-                  onChange={(e) => setStripePublicKey(e.target.value)}
-                  placeholder="pk_live_..."
-                  className="bg-muted/50"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="stripe-secret-key">Secret Key</Label>
-                <Input
-                  id="stripe-secret-key"
-                  type="password"
-                  value={stripeSecretKey}
-                  onChange={(e) => setStripeSecretKey(e.target.value)}
-                  placeholder="sk_live_..."
-                  className="bg-muted/50"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="stripe-webhook-secret">Webhook Secret</Label>
-                <Input
-                  id="stripe-webhook-secret"
-                  type="password"
-                  value={stripeWebhookSecret}
-                  onChange={(e) => setStripeWebhookSecret(e.target.value)}
-                  placeholder="whsec_..."
-                  className="bg-muted/50"
-                />
-              </div>
-              <Button
-                onClick={handleSaveStripe}
-                disabled={savingStripe}
-                className="w-full"
-              >
-                {savingStripe ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  'Save Stripe Config'
-                )}
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Appearance Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Palette className="w-5 h-5 text-primary" />
-              Appearance
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Theme</Label>
-              <div className="grid grid-cols-3 gap-2">
-                {mounted && [
-                  { value: 'light', label: 'Light', icon: Sun },
-                  { value: 'dark', label: 'Dark', icon: Moon },
-                  { value: 'system', label: 'System', icon: Monitor },
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => setTheme(option.value)}
-                    className={`flex flex-col items-center gap-1 p-3 rounded-lg border transition-all ${
-                      theme === option.value
-                        ? 'border-primary bg-primary/10'
-                        : 'border-border hover:border-primary/50'
-                    }`}
+        <TabsContent value="personal">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" data-testid="settings-grid">
+            {/* Profile Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <User className="w-5 h-5 text-primary" />
+                  Profile
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-4 mb-4">
+                  <Avatar className="w-16 h-16 border-2 border-primary/20">
+                    <AvatarImage src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.id || 'default'}`} />
+                    <AvatarFallback className="bg-primary text-primary-foreground">{initials}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{user?.name || 'User'}</p>
+                    <p className="text-sm text-muted-foreground truncate">{user?.email || ''}</p>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Display Name</Label>
+                    <Input
+                      id="name"
+                      value={profileName}
+                      onChange={(e) => setProfileName(e.target.value)}
+                      className="bg-muted/50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={profileEmail}
+                      onChange={(e) => setProfileEmail(e.target.value)}
+                      className="bg-muted/50"
+                    />
+                  </div>
+                  <Button
+                    onClick={handleSaveProfile}
+                    disabled={savingProfile}
+                    className="w-full"
                   >
-                    <option.icon className="w-5 h-5" />
-                    <span className="text-xs">{option.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Language</Label>
-              <Select value={settings.language} onValueChange={(v) => updateSetting('language', v)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="en">English</SelectItem>
-                  <SelectItem value="pt">Português</SelectItem>
-                  <SelectItem value="es">Español</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label>Currency</Label>
-                <Select value={settings.currency} onValueChange={(v) => updateSetting('currency', v)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="BRL">BRL (R$)</SelectItem>
-                    <SelectItem value="USD">USD ($)</SelectItem>
-                    <SelectItem value="EUR">EUR (€)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Date Format</Label>
-                <Select value={settings.dateFormat} onValueChange={(v) => updateSetting('dateFormat', v)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="MMM d, yyyy">Jan 1, 2024</SelectItem>
-                    <SelectItem value="d MMM yyyy">1 Jan 2024</SelectItem>
-                    <SelectItem value="dd/MM/yyyy">01/01/2024</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                    {savingProfile ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      'Save Profile'
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
 
-        {/* Notifications Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Bell className="w-5 h-5 text-primary" />
-              Notifications
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">Push Notifications</p>
-                <p className="text-xs text-muted-foreground">Receive alerts in browser</p>
-              </div>
-              <Switch
-                checked={settings.notifications}
-                onCheckedChange={(checked) => updateSetting('notifications', checked)}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">Email Alerts</p>
-                <p className="text-xs text-muted-foreground">Get updates via email</p>
-              </div>
-              <Switch
-                checked={settings.emailAlerts}
-                onCheckedChange={(checked) => updateSetting('emailAlerts', checked)}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">Sound Effects</p>
-                <p className="text-xs text-muted-foreground">Play sounds for alerts</p>
-              </div>
-              <Switch
-                checked={settings.soundEffects}
-                onCheckedChange={(checked) => updateSetting('soundEffects', checked)}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Data & Sync Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Globe className="w-5 h-5 text-primary" />
-              Data & Sync
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">Auto Refresh</p>
-                <p className="text-xs text-muted-foreground">Automatically update data</p>
-              </div>
-              <Switch
-                checked={settings.autoRefresh}
-                onCheckedChange={(checked) => updateSetting('autoRefresh', checked)}
-              />
-            </div>
-            {settings.autoRefresh && (
-              <div className="space-y-2">
-                <Label>Refresh Interval</Label>
-                <Select value={settings.refreshInterval} onValueChange={(v) => updateSetting('refreshInterval', v)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="5">Every 5 minutes</SelectItem>
-                    <SelectItem value="15">Every 15 minutes</SelectItem>
-                    <SelectItem value="30">Every 30 minutes</SelectItem>
-                    <SelectItem value="60">Every hour</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* WhatsApp Bot Section */}
+            {activeOrg && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <MessageSquare className="w-5 h-5 text-primary" />
+                    WhatsApp Bot
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="whatsapp-phone-id">Phone ID</Label>
+                    <Input
+                      id="whatsapp-phone-id"
+                      value={whatsappPhoneId}
+                      onChange={(e) => setWhatsappPhoneId(e.target.value)}
+                      placeholder="WhatsApp Phone ID"
+                      className="bg-muted/50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="whatsapp-token">Token</Label>
+                    <Input
+                      id="whatsapp-token"
+                      type="password"
+                      value={whatsappToken}
+                      onChange={(e) => setWhatsappToken(e.target.value)}
+                      placeholder="WhatsApp API Token"
+                      className="bg-muted/50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="whatsapp-phone">Phone Number</Label>
+                    <Input
+                      id="whatsapp-phone"
+                      value={whatsappPhone}
+                      onChange={(e) => setWhatsappPhone(e.target.value)}
+                      placeholder="+55 11 99999-9999"
+                      className="bg-muted/50"
+                    />
+                  </div>
+                  <Button
+                    onClick={handleSaveWhatsApp}
+                    disabled={savingWhatsApp}
+                    className="w-full"
+                  >
+                    {savingWhatsApp ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      'Save WhatsApp Config'
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
             )}
-          </CardContent>
-        </Card>
 
-        {/* Security Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Shield className="w-5 h-5 text-primary" />
-              Security
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Button variant="outline" className="w-full justify-between">
-              Change Password
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-            <Button variant="outline" className="w-full justify-between">
-              Two-Factor Authentication
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-            <Separator className="my-4" />
-            <Button variant="destructive" className="w-full gap-2">
-              <LogOut className="w-4 h-4" />
-              Sign Out
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+            {/* Appearance Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Palette className="w-5 h-5 text-primary" />
+                  Appearance
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Theme</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {mounted && [
+                      { value: 'light', label: 'Light', icon: Sun },
+                      { value: 'dark', label: 'Dark', icon: Moon },
+                      { value: 'system', label: 'System', icon: Monitor },
+                    ].map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => setTheme(option.value)}
+                        className={`flex flex-col items-center gap-1 p-3 rounded-lg border transition-all ${
+                          theme === option.value
+                            ? 'border-primary bg-primary/10'
+                            : 'border-border hover:border-primary/50'
+                        }`}
+                      >
+                        <option.icon className="w-5 h-5" />
+                        <span className="text-xs">{option.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Language</Label>
+                  <Select value={settings.language} onValueChange={(v) => updateSetting('language', v)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="en">English</SelectItem>
+                      <SelectItem value="pt">Português</SelectItem>
+                      <SelectItem value="es">Español</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>Currency</Label>
+                    <Select value={settings.currency} onValueChange={(v) => updateSetting('currency', v)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="BRL">BRL (R$)</SelectItem>
+                        <SelectItem value="USD">USD ($)</SelectItem>
+                        <SelectItem value="EUR">EUR (€)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Date Format</Label>
+                    <Select value={settings.dateFormat} onValueChange={(v) => updateSetting('dateFormat', v)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="MMM d, yyyy">Jan 1, 2024</SelectItem>
+                        <SelectItem value="d MMM yyyy">1 Jan 2024</SelectItem>
+                        <SelectItem value="dd/MM/yyyy">01/01/2024</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Notifications Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Bell className="w-5 h-5 text-primary" />
+                  Notifications
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Push Notifications</p>
+                    <p className="text-xs text-muted-foreground">Receive alerts in browser</p>
+                  </div>
+                  <Switch
+                    checked={settings.notifications}
+                    onCheckedChange={(checked) => updateSetting('notifications', checked)}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Email Alerts</p>
+                    <p className="text-xs text-muted-foreground">Get updates via email</p>
+                  </div>
+                  <Switch
+                    checked={settings.emailAlerts}
+                    onCheckedChange={(checked) => updateSetting('emailAlerts', checked)}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Sound Effects</p>
+                    <p className="text-xs text-muted-foreground">Play sounds for alerts</p>
+                  </div>
+                  <Switch
+                    checked={settings.soundEffects}
+                    onCheckedChange={(checked) => updateSetting('soundEffects', checked)}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Data & Sync Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Globe className="w-5 h-5 text-primary" />
+                  Data & Sync
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Auto Refresh</p>
+                    <p className="text-xs text-muted-foreground">Automatically update data</p>
+                  </div>
+                  <Switch
+                    checked={settings.autoRefresh}
+                    onCheckedChange={(checked) => updateSetting('autoRefresh', checked)}
+                  />
+                </div>
+                {settings.autoRefresh && (
+                  <div className="space-y-2">
+                    <Label>Refresh Interval</Label>
+                    <Select value={settings.refreshInterval} onValueChange={(v) => updateSetting('refreshInterval', v)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="5">Every 5 minutes</SelectItem>
+                        <SelectItem value="15">Every 15 minutes</SelectItem>
+                        <SelectItem value="30">Every 30 minutes</SelectItem>
+                        <SelectItem value="60">Every hour</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Security Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Shield className="w-5 h-5 text-primary" />
+                  Security
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button variant="outline" className="w-full justify-between">
+                  Change Password
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+                <Button variant="outline" className="w-full justify-between">
+                  Two-Factor Authentication
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+                <Separator className="my-4" />
+                <Button variant="destructive" className="w-full gap-2">
+                  <LogOut className="w-4 h-4" />
+                  Sign Out
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="org">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Stripe Payments Section (org-level, admin only) */}
+            {activeOrg && activeOrg.role === 'admin' && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <CreditCard className="w-5 h-5 text-primary" />
+                    Stripe Payments
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="stripe-public-key">Publishable Key</Label>
+                    <Input
+                      id="stripe-public-key"
+                      value={stripePublicKey}
+                      onChange={(e) => setStripePublicKey(e.target.value)}
+                      placeholder="pk_live_..."
+                      className="bg-muted/50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="stripe-secret-key">Secret Key</Label>
+                    <Input
+                      id="stripe-secret-key"
+                      type="password"
+                      value={stripeSecretKey}
+                      onChange={(e) => setStripeSecretKey(e.target.value)}
+                      placeholder="sk_live_..."
+                      className="bg-muted/50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="stripe-webhook-secret">Webhook Secret</Label>
+                    <Input
+                      id="stripe-webhook-secret"
+                      type="password"
+                      value={stripeWebhookSecret}
+                      onChange={(e) => setStripeWebhookSecret(e.target.value)}
+                      placeholder="whsec_..."
+                      className="bg-muted/50"
+                    />
+                  </div>
+                  <Button
+                    onClick={handleSaveStripe}
+                    disabled={savingStripe}
+                    className="w-full"
+                  >
+                    {savingStripe ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      'Save Stripe Config'
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
