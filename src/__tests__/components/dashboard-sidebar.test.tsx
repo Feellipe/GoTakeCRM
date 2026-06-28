@@ -1,9 +1,15 @@
 // @vitest-environment jsdom
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
+// Hoisted mock fns so vi.mock can reference them
+const { mockRouterPush } = vi.hoisted(() => ({
+  mockRouterPush: vi.fn(),
+}));
+
 // Mock next/navigation
 vi.mock('next/navigation', () => ({
   usePathname: vi.fn(() => '/dashboard'),
+  useRouter: vi.fn(() => ({ push: mockRouterPush })),
 }));
 
 // Mock next/link as a regular anchor
@@ -16,7 +22,7 @@ vi.mock('@/components/settings-panel', () => ({
   SettingsPanel: ({ trigger }: any) => <div>{trigger}</div>,
 }));
 
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { DashboardSidebar } from '@/components/dashboard-sidebar';
@@ -194,5 +200,61 @@ describe('DashboardSidebar', () => {
     // Each org shows its role as a badge/label in the dropdown
     expect(await screen.findByText('autonomo')).toBeInTheDocument();
     expect(await screen.findByText('admin')).toBeInTheDocument();
+  });
+
+  it('shows real user name and email in sidebar footer', async () => {
+    const user = userEvent.setup();
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        user: { id: 'u1', name: 'João', email: 'joao@email.com', avatar: null },
+        organizations: [],
+      }),
+    });
+
+    render(<DashboardSidebar />);
+    await user.click(screen.getByLabelText('Open sidebar'));
+    expect(await screen.findByText('João')).toBeInTheDocument();
+    expect(await screen.findByText('joao@email.com')).toBeInTheDocument();
+  });
+
+  it('hides Financials nav item for CRM role when org context is active', async () => {
+    const user = userEvent.setup();
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        user: { id: 'u1', name: 'CRM User', email: 'crm@test.com', avatar: null },
+        organizations: [
+          { id: 'org_1', name: 'Studio X', slug: 'studio-x', role: 'crm' },
+        ],
+      }),
+    });
+
+    render(<DashboardSidebar />);
+    await user.click(screen.getByLabelText('Open sidebar'));
+    await user.click(screen.getByLabelText('Switch context'));
+    await user.click(screen.getByText('Studio X'));
+
+    // After switching to CRM org, Financials should be hidden
+    expect(screen.queryByText('Financials')).not.toBeInTheDocument();
+    // Other nav items still visible
+    expect(screen.getByText('Dashboard')).toBeInTheDocument();
+    expect(screen.getByText('Clients')).toBeInTheDocument();
+  });
+
+  it('redirects to /onboarding when user has no organizations', async () => {
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        user: { id: 'u1', name: 'João', email: 'joao@email.com', avatar: null },
+        organizations: [],
+      }),
+    });
+
+    render(<DashboardSidebar />);
+
+    await waitFor(() => {
+      expect(mockRouterPush).toHaveBeenCalledWith('/onboarding');
+    });
   });
 });

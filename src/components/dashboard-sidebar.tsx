@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   Users,
@@ -114,6 +114,7 @@ export function DashboardSidebar() {
   const [user, setUser] = useState<UserData | null>(null);
   const { activeOrg, setActiveOrg } = useActiveOrgStore();
   const pathname = usePathname();
+  const router = useRouter();
 
   // Close sidebar on route change (mobile)
   useEffect(() => {
@@ -136,6 +137,11 @@ export function DashboardSidebar() {
               role: o.role,
             }))
           );
+
+          // No orgs yet — redirect to onboarding
+          if (data.organizations && data.organizations.length === 0) {
+            router.push('/onboarding');
+          }
         }
       });
   }, []);
