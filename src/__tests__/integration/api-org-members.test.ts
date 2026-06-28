@@ -247,3 +247,118 @@ describe('POST /api/admin/organizations/[id]/members', () => {
     expect(data.error).toBe('User is already a member of this organization');
   });
 });
+
+describe('PATCH /api/admin/organizations/[id]/members', () => {
+  const mockUserOrgUpdate = vi.mocked(db.userOrganization.update);
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns 401 when unauthenticated', async () => {
+    mockGetServerSession.mockResolvedValue(null);
+
+    const { PATCH } = await import('@/app/api/admin/organizations/[id]/members/route');
+    const request = new NextRequest('http://localhost/api/admin/organizations/org_1/members', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ memberId: 'mem_1', role: 'admin' }),
+    });
+    const response = await PATCH(request, makeParams('org_1'));
+    const data = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(data.error).toBe('Unauthorized');
+  });
+
+  it('returns 403 when user is not admin of org', async () => {
+    mockGetServerSession.mockResolvedValue(makeSession('user_1'));
+    mockUserOrgFindFirst.mockResolvedValue(null);
+
+    const { PATCH } = await import('@/app/api/admin/organizations/[id]/members/route');
+    const request = new NextRequest('http://localhost/api/admin/organizations/org_1/members', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ memberId: 'mem_1', role: 'admin' }),
+    });
+    const response = await PATCH(request, makeParams('org_1'));
+    const data = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(data.error).toBe('Forbidden');
+  });
+
+  it('returns 422 when memberId or role is missing', async () => {
+    mockGetServerSession.mockResolvedValue(makeSession('admin_1'));
+    mockUserOrgFindFirst.mockResolvedValue(adminMembership as any);
+
+    const { PATCH } = await import('@/app/api/admin/organizations/[id]/members/route');
+    const request = new NextRequest('http://localhost/api/admin/organizations/org_1/members', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ memberId: 'mem_1' }), // missing role
+    });
+    const response = await PATCH(request, makeParams('org_1'));
+    const data = await response.json();
+
+    expect(response.status).toBe(422);
+    expect(data.error).toBe('memberId and role are required');
+  });
+
+  it('returns 404 when member not found in this org', async () => {
+    mockGetServerSession.mockResolvedValue(makeSession('admin_1'));
+    mockUserOrgFindFirst.mockResolvedValueOnce(adminMembership as any)  // admin check
+      .mockResolvedValueOnce(null); // member not found
+
+    const { PATCH } = await import('@/app/api/admin/organizations/[id]/members/route');
+    const request = new NextRequest('http://localhost/api/admin/organizations/org_1/members', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ memberId: 'nonexistent', role: 'admin' }),
+    });
+    const response = await PATCH(request, makeParams('org_1'));
+    const data = await response.json();
+
+    expect(response.status).toBe(404);
+    expect(data.error).toBe('Member not found in this organization');
+  });
+
+  it('updates member role successfully', async () => {
+    mockGetServerSession.mockResolvedValue(makeSession('admin_1'));
+    mockUserOrgFindFirst
+      .mockResolvedValueOnce(adminMembership as any)  // admin check
+      .mockResolvedValueOnce({ id: 'mem_2', userId: 'u2', organizationId: 'org_1', role: 'member' } as any); // target member found
+
+    const updatedMembership = {
+      id: 'mem_2',
+      userId: 'u2',
+      organizationId: 'org_1',
+      role: 'admin',
+      createdAt: '2026-01-02T00:00:00.000Z',
+      user: { id: 'u2', name: 'João', email: 'joao@org.com', avatar: null },
+    };
+    mockUserOrgUpdate.mockResolvedValue(updatedMembership as any);
+
+    const { PATCH } = await import('@/app/api/admin/organizations/[id]/members/route');
+    const request = new NextRequest('http://localhost/api/admin/organizations/org_1/members', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ memberId: 'mem_2', role: 'admin' }),
+    });
+    const response = await PATCH(request, makeParams('org_1'));
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.role).toBe('admin');
+    expect(data.user.email).toBe('joao@org.com');
+    expect(mockUserOrgUpdate).toHaveBeenCalledWith({
+      where: { id: 'mem_2' },
+      data: { role: 'admin' },
+      include: {
+        user: {
+          select: { id: true, name: true, email: true, avatar: true },
+        },
+      },
+    });
+  });
+});
