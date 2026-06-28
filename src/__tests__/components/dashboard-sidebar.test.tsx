@@ -20,6 +20,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { DashboardSidebar } from '@/components/dashboard-sidebar';
+import { useActiveOrgStore } from '@/lib/stores/active-org';
 import { usePathname } from 'next/navigation';
 
 const mockedUsePathname = vi.mocked(usePathname);
@@ -27,6 +28,10 @@ const mockedUsePathname = vi.mocked(usePathname);
 describe('DashboardSidebar', () => {
   beforeEach(() => {
     mockedUsePathname.mockReturnValue('/dashboard');
+    // Reset persisted org store between tests so switching an org in one
+    // test never leaks into siblings (zustand persist uses localStorage).
+    localStorage.clear();
+    useActiveOrgStore.setState({ activeOrg: null });
     // Default: return empty orgs for tests that don't care about org fetching
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
@@ -142,5 +147,29 @@ describe('DashboardSidebar', () => {
     // Org names from API are rendered
     expect(await screen.findByText('Studio X')).toBeInTheDocument();
     expect(await screen.findByText('Studio Y')).toBeInTheDocument();
+  });
+
+  it('switching to a specific org updates the active context display', async () => {
+    const user = userEvent.setup();
+    const mockOrgs = [
+      { id: 'org_1', name: 'Studio X', slug: 'studio-x', role: 'autonomo' },
+    ];
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        user: { id: 'u1', name: 'João', email: 'joao@email.com', avatar: null },
+        organizations: mockOrgs,
+      }),
+    });
+
+    render(<DashboardSidebar />);
+    await user.click(screen.getByLabelText('Open sidebar'));
+    await user.click(screen.getByLabelText('Switch context'));
+    await user.click(screen.getByText('Studio X'));
+
+    // After switching, the display should show Studio X
+    expect(screen.getByText('Studio X')).toBeInTheDocument();
+    // The subtitle should show the role
+    expect(screen.getByText('autonomo')).toBeInTheDocument();
   });
 });
