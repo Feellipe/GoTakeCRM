@@ -7,9 +7,18 @@
  * expensesByCategory, upcomingBookings, recentDeals, topClients e pipeline.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
+
+// Mock next-auth for session
+vi.mock('next-auth', () => ({
+  getServerSession: vi.fn(),
+}));
+
+import { getServerSession } from 'next-auth';
 import { GET } from '@/app/api/dashboard/route';
 import { db } from '@/lib/db';
-import { NextRequest } from 'next/server';
+
+const mockGetServerSession = vi.mocked(getServerSession);
 
 // Acesso as funcoes mockadas
 const mockDealFindMany = vi.mocked(db.deal.findMany);
@@ -24,6 +33,7 @@ const mockClientCount = vi.mocked(db.client.count);
 const mockDealCount = vi.mocked(db.deal.count);
 const mockDealGroupBy = vi.mocked(db.deal.groupBy);
 const mockExpenseGroupBy = vi.mocked(db.expense.groupBy);
+const mockUserOrgFindMany = vi.mocked(db.userOrganization.findMany);
 
 /**
  * Configura todos os mocks do Prisma com valores realistas minimos.
@@ -221,6 +231,13 @@ function buildBookings() {
 describe('GET /api/dashboard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetServerSession.mockResolvedValue({
+      user: { id: 'user_1', name: 'Test User', email: 'test@email.com' },
+      expires: '2099-01-01T00:00:00.000Z',
+    });
+    mockUserOrgFindMany.mockResolvedValue([
+      { id: 'mem_1', userId: 'user_1', organizationId: 'org_1', role: 'owner', createdAt: new Date() },
+    ]);
     setupMocks();
   });
 
@@ -375,6 +392,14 @@ describe('GET /api/dashboard', () => {
 
   it('returns 500 on database error', async () => {
     vi.clearAllMocks();
+    // Session and userOrg must be mocked before the failing DB call
+    mockGetServerSession.mockResolvedValue({
+      user: { id: 'user_1', name: 'Test User', email: 'test@email.com' },
+      expires: '2099-01-01T00:00:00.000Z',
+    });
+    mockUserOrgFindMany.mockResolvedValue([
+      { id: 'mem_1', userId: 'user_1', organizationId: 'org_1', role: 'owner', createdAt: new Date() },
+    ]);
     // O Promise.all falha assim que a primeira chamada rejeita
     mockDealFindMany.mockRejectedValue(new Error('DB connection lost'));
 

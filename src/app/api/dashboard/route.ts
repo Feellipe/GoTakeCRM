@@ -1,12 +1,49 @@
 import { db } from '@/lib/db';
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
 
 export async function GET(request: NextRequest) {
   const rl = rateLimit(request, { limit: 100, windowMs: 60_000 });
   if (!rl.success) return rateLimitResponse(rl.resetAt);
 
   try {
+    const session = await getServerSession();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const userId = session.user.id;
+    const searchParams = request.nextUrl.searchParams;
+    const orgId = searchParams.get('orgId') || '';
+
+    // Get user's org membership(s)
+    const userOrgs = await db.userOrganization.findMany({
+      where: { userId },
+      select: { organizationId: true },
+    });
+
+    if (userOrgs.length === 0) {
+      return NextResponse.json({ error: 'No organizations found' }, { status: 404 });
+    }
+
+    // If orgId specified, validate user belongs to it; otherwise aggregate across all
+    let orgIds: string[];
+    if (orgId) {
+      const belongs = userOrgs.some(uo => uo.organizationId === orgId);
+      if (!belongs) {
+        return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+      }
+      orgIds = [orgId];
+    } else {
+      orgIds = userOrgs.map(uo => uo.organizationId);
+    }
+
+    // Where clause for top-level models (have organizationId directly)
+    const orgWhere = { organizationId: { in: orgIds } };
+    // Where clause for child models (revenue, expense) accessed through deal relation
+    const dealRelationWhere = { deal: { organizationId: { in: orgIds } } };
+
     // Paraleliza todas as chamadas ao banco (async-parallel)
     const [
       deals,
@@ -25,6 +62,7 @@ export async function GET(request: NextRequest) {
     ] = await Promise.all([
       // Dados completos necessarios para upcomingBookings, recentDeals, topClients, pipeline
       db.deal.findMany({
+        where: orgWhere,
         include: {
           client: true,
           briefings: true,
@@ -32,35 +70,48 @@ export async function GET(request: NextRequest) {
           revenue: true,
         },
       }),
-      db.client.findMany(),
+      db.client.findMany({
+        where: orgWhere,
+      }),
       db.booking.findMany({
+        where: orgWhere,
         include: { client: true },
         orderBy: { eventDate: 'asc' },
       }),
-      db.expense.findMany(),
-      db.revenue.findMany(),
+      db.expense.findMany({
+        where: dealRelationWhere,
+      }),
+      db.revenue.findMany({
+        where: dealRelationWhere,
+      }),
 
       // Agregacoes Prisma (substituem filtros/reduces JS)
       db.revenue.aggregate({
         _sum: { amount: true },
-        where: { status: 'received' },
+        where: { status: 'received', ...dealRelationWhere },
       }),
       db.expense.aggregate({
         _sum: { amount: true },
+        where: dealRelationWhere,
       }),
       db.deal.aggregate({
         _sum: { value: true },
-        where: { status: { not: 'completed' } },
+        where: { ...orgWhere, status: { not: 'completed' } },
       }),
       db.client.count({
-        where: { status: 'active' },
+        where: { ...orgWhere, status: 'active' },
       }),
-      db.deal.count(),
-      db.client.count(),
+      db.deal.count({
+        where: orgWhere,
+      }),
+      db.client.count({
+        where: orgWhere,
+      }),
 
       // groupBy para deals por status
       db.deal.groupBy({
         by: ['status'],
+        where: orgWhere,
         _count: true,
       }),
 
@@ -68,7 +119,7 @@ export async function GET(request: NextRequest) {
       db.expense.groupBy({
         by: ['category'],
         _sum: { amount: true },
-        where: { amount: { gt: 0 } },
+        where: { amount: { gt: 0 }, ...dealRelationWhere },
       }),
     ]);
 
@@ -81,7 +132,7 @@ export async function GET(request: NextRequest) {
     const totalClients = totalClientsCount;
 
     // Constroi dealsByStatus a partir do groupBy
-    const dealsByStatus = {
+    const dealsByStatus: Record<string, number> = {
       new: 0,
       briefing: 0,
       quoting: 0,
