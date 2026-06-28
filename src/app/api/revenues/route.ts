@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { validateOrThrow, ValidationError, validationErrorResponse, revenueCreateSchema, validateOrigin } from '@/lib/validations';
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit';
+import { getServerSession } from 'next-auth';
 
 // GET all revenues
 export async function GET(request: NextRequest) {
@@ -9,10 +10,46 @@ export async function GET(request: NextRequest) {
   if (!rl.success) return rateLimitResponse(rl.resetAt);
 
   try {
+    const session = await getServerSession();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const userId = session.user.id;
     const { searchParams } = new URL(request.url);
     const dealId = searchParams.get('dealId');
+    const orgId = searchParams.get('orgId') || '';
 
-    const whereClause = dealId ? { dealId } : {};
+    // Get user's org membership(s)
+    const userOrgs = await db.userOrganization.findMany({
+      where: { userId },
+      select: { organizationId: true },
+    });
+
+    if (userOrgs.length === 0) {
+      return NextResponse.json({ error: 'No organizations found' }, { status: 404 });
+    }
+
+    // If orgId specified, validate user belongs to it; otherwise aggregate across all
+    let orgIds: string[];
+    if (orgId) {
+      const belongs = userOrgs.some(uo => uo.organizationId === orgId);
+      if (!belongs) {
+        return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+      }
+      orgIds = [orgId];
+    } else {
+      orgIds = userOrgs.map(uo => uo.organizationId);
+    }
+
+    const whereClause: Record<string, unknown> = {};
+
+    if (dealId) {
+      whereClause.dealId = dealId;
+    }
+
+    // Add org filtering via deal relation
+    whereClause.deal = { organizationId: { in: orgIds } };
 
     const revenues = await db.revenue.findMany({
       where: whereClause,

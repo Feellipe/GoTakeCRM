@@ -6,10 +6,19 @@
  * Tests behavior, not implementation.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
+
+// Mock next-auth for session
+vi.mock('next-auth', () => ({
+  getServerSession: vi.fn(),
+}));
+
+import { getServerSession } from 'next-auth';
 import { GET, POST } from '@/app/api/revenues/route';
 import { GET as GET_BY_ID, PUT, DELETE } from '@/app/api/revenues/[id]/route';
 import { db } from '@/lib/db';
-import { NextRequest } from 'next/server';
+
+const mockGetServerSession = vi.mocked(getServerSession);
 
 // Access the mocked functions
 const mockRevenueFindMany = vi.mocked(db.revenue.findMany);
@@ -17,6 +26,7 @@ const mockRevenueFindUnique = vi.mocked(db.revenue.findUnique);
 const mockRevenueCreate = vi.mocked(db.revenue.create);
 const mockRevenueUpdate = vi.mocked(db.revenue.update);
 const mockRevenueDelete = vi.mocked(db.revenue.delete);
+const mockUserOrgFindMany = vi.mocked(db.userOrganization.findMany);
 
 describe('GET /api/revenues', () => {
   const mockRevenues = [
@@ -56,6 +66,13 @@ describe('GET /api/revenues', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetServerSession.mockResolvedValue({
+      user: { id: 'user_1', name: 'Test User', email: 'test@email.com' },
+      expires: '2099-01-01T00:00:00.000Z',
+    });
+    mockUserOrgFindMany.mockResolvedValue([
+      { id: 'mem_1', userId: 'user_1', organizationId: 'org_1', role: 'owner', createdAt: new Date() },
+    ]);
   });
 
   it('returns an array of revenues with deal and client info', async () => {
