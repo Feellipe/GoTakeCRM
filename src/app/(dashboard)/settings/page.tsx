@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Settings, User, Bell, Palette, Globe, Shield, LogOut, ChevronRight, Moon, Sun, Monitor, MessageSquare, Loader2, CreditCard } from 'lucide-react';
+import { Settings, User, Bell, Palette, Globe, Shield, LogOut, ChevronRight, Moon, Sun, Monitor, MessageSquare, Loader2, CreditCard, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
+import { OrgMembersCard } from '@/components/org-members-card';
 
 interface UserData {
   id: string;
@@ -620,6 +621,11 @@ export default function SettingsPage() {
                   </Button>
                 </CardContent>
               </Card>
+            )}
+
+            {/* Members Section (org-level, admin only) */}
+            {activeOrg && activeOrg.role === 'admin' && (
+              <OrgMembersCard orgId={activeOrg.id} />
             )}
           </div>
         </TabsContent>
