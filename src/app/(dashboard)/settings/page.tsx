@@ -254,7 +254,9 @@ export default function SettingsPage() {
       <Tabs defaultValue="personal">
         <TabsList>
           <TabsTrigger value="personal">Personal</TabsTrigger>
-          <TabsTrigger value="org">Org</TabsTrigger>
+          {activeOrg && activeOrg.role === 'admin' && (
+            <TabsTrigger value="org">Org</TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="personal">
