@@ -172,4 +172,27 @@ describe('DashboardSidebar', () => {
     // The subtitle should show the role
     expect(screen.getByText('autonomo')).toBeInTheDocument();
   });
+
+  it('shows role badge next to each org in the switcher dropdown', async () => {
+    const user = userEvent.setup();
+    const mockOrgs = [
+      { id: 'org_1', name: 'Studio X', slug: 'studio-x', role: 'autonomo' },
+      { id: 'org_2', name: 'Studio Y', slug: 'studio-y', role: 'admin' },
+    ];
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        user: { id: 'u1', name: 'João', email: 'joao@email.com', avatar: null },
+        organizations: mockOrgs,
+      }),
+    });
+
+    render(<DashboardSidebar />);
+    await user.click(screen.getByLabelText('Open sidebar'));
+    await user.click(screen.getByLabelText('Switch context'));
+
+    // Each org shows its role as a badge/label in the dropdown
+    expect(await screen.findByText('autonomo')).toBeInTheDocument();
+    expect(await screen.findByText('admin')).toBeInTheDocument();
+  });
 });
