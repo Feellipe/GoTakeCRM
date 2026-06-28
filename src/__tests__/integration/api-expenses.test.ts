@@ -5,6 +5,13 @@
  * Mocks Prisma at the system boundary.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// Mock next-auth for session
+vi.mock('next-auth', () => ({
+  getServerSession: vi.fn(),
+}));
+
+import { getServerSession } from 'next-auth';
 import { GET, POST } from '@/app/api/expenses/route';
 import {
   GET as GETById,
@@ -14,11 +21,13 @@ import {
 import { db } from '@/lib/db';
 import { NextRequest } from 'next/server';
 
+const mockGetServerSession = vi.mocked(getServerSession);
 const mockExpenseFindMany = vi.mocked(db.expense.findMany);
 const mockExpenseFindUnique = vi.mocked(db.expense.findUnique);
 const mockExpenseCreate = vi.mocked(db.expense.create);
 const mockExpenseUpdate = vi.mocked(db.expense.update);
 const mockExpenseDelete = vi.mocked(db.expense.delete);
+const mockUserOrgFindMany = vi.mocked(db.userOrganization.findMany);
 
 // Helper para construir o objeto params exigido pelos handlers [id]
 const makeParams = (id: string) => ({ params: Promise.resolve({ id }) });
@@ -53,6 +62,13 @@ describe('GET /api/expenses', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetServerSession.mockResolvedValue({
+      user: { id: 'user_1', name: 'Test User', email: 'test@email.com' },
+      expires: '2099-01-01T00:00:00.000Z',
+    });
+    mockUserOrgFindMany.mockResolvedValue([
+      { id: 'mem_1', userId: 'user_1', organizationId: 'org_1', role: 'owner', createdAt: new Date() },
+    ]);
   });
 
   it('returns array of expenses with deal info', async () => {
