@@ -16,6 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "GoTakeCRM - CRM Dashboard - For Filmmakers & Photographers",
+  manifest: "/manifest.json",
   description: "Modern CRM dashboard for filmmakers and photographers. Manage clients, track deals, schedule bookings, and monitor finances with beautiful glassmorphism design.",
   keywords: ["CRM", "filmmakers", "photographers", "WhatsApp", "Next.js", "TypeScript", "Tailwind CSS", "shadcn/ui", "React"],
   authors: [{ name: "Felipe Albuquerque" }],

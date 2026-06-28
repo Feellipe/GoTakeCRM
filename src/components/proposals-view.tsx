@@ -100,6 +100,9 @@ interface Proposal {
   sentAt: string | null;
   viewedAt: string | null;
   respondedAt: string | null;
+  paymentLink: string | null;
+  paymentStatus: string;
+  stripeSessionId: string | null;
   createdAt: string;
   client: {
     id: string;
@@ -215,6 +218,9 @@ export function ProposalsView({ clients, onNotification, initialDeal, onProposal
   const [templateDescription, setTemplateDescription] = useState('');
 
   // Handle initialDeal from Pipeline
+  const [generatingPaymentLink, setGeneratingPaymentLink] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+
   useEffect(() => {
     if (initialDeal) {
       setSelectedClient(initialDeal.clientId);
@@ -418,6 +424,45 @@ export function ProposalsView({ clients, onNotification, initialDeal, onProposal
       onNotification?.('Proposal deleted successfully!');
     } catch (error) {
       console.error('Error deleting proposal:', error);
+    }
+  };
+
+  const handleGeneratePaymentLink = async (proposal: Proposal) => {
+    setGeneratingPaymentLink(true);
+    try {
+      const res = await fetch('/api/stripe/create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ proposalId: proposal.id }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setSelectedProposal(prev => prev ? {
+          ...prev,
+          paymentLink: data.url,
+          stripeSessionId: data.sessionId,
+          paymentStatus: 'pending',
+        } as Proposal : null);
+        onNotification?.('Payment link generated!');
+      } else {
+        const err = await res.json();
+        onNotification?.(err.error || 'Failed to generate payment link');
+      }
+    } catch (error) {
+      console.error('Error generating payment link:', error);
+      onNotification?.('Failed to generate payment link');
+    } finally {
+      setGeneratingPaymentLink(false);
+    }
+  };
+
+  const handleCopyPaymentLink = () => {
+    if (selectedProposal?.paymentLink) {
+      navigator.clipboard.writeText(selectedProposal.paymentLink);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+      onNotification?.('Payment link copied!');
     }
   };
 
@@ -1169,6 +1214,47 @@ export function ProposalsView({ clients, onNotification, initialDeal, onProposal
                     >
                       <Send className="w-4 h-4 mr-2" />
                       Send Proposal
+                    </Button>
+                  )}
+                  {selectedProposal.paymentStatus === 'paid' ? (
+                    <Badge className="bg-green-500 text-white py-2 px-4">
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Paid
+                    </Badge>
+                  ) : selectedProposal.paymentLink ? (
+                    <>
+                      <Button
+                        variant="outline"
+                        onClick={handleCopyPaymentLink}
+                      >
+                        <Copy className="w-4 h-4 mr-2" />
+                        {copiedLink ? 'Copied!' : 'Copy Payment Link'}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => window.open(selectedProposal.paymentLink!, '_blank')}
+                      >
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Open Checkout
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      className="gradient-gold text-warm-950"
+                      onClick={() => handleGeneratePaymentLink(selectedProposal)}
+                      disabled={generatingPaymentLink}
+                    >
+                      {generatingPaymentLink ? (
+                        <>
+                          <Sparkles className="w-4 h-4 mr-2 animate-pulse" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <DollarSign className="w-4 h-4 mr-2" />
+                          Generate Payment Link
+                        </>
+                      )}
                     </Button>
                   )}
                   <Button variant="outline" onClick={() => openEditProposal(selectedProposal)}>

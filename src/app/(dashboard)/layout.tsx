@@ -22,6 +22,7 @@ import { NotificationDropdown } from '@/components/notification-dropdown';
 import { ExportButton } from '@/components/export-button';
 import { GlobalSearch } from '@/components/global-search';
 import { QuickActions } from '@/components/quick-actions';
+import { PwaInstallBanner } from '@/components/pwa-install-banner';
 import { DashboardSidebar } from '@/components/dashboard-sidebar';
 import { ClientFormModal } from '@/components/client-form-modal';
 import { DealFormModal } from '@/components/deal-form-modal';
@@ -408,6 +409,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           currentView={currentView}
         />
 
+        <PwaInstallBanner />
         <Toaster position="bottom-right" richColors closeButton />
       </div>
     </DashboardContext.Provider>

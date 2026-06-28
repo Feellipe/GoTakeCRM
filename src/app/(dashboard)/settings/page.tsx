@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Settings, User, Bell, Palette, Globe, Shield, LogOut, ChevronRight, Moon, Sun, Monitor, MessageSquare, Loader2 } from 'lucide-react';
+import { Settings, User, Bell, Palette, Globe, Shield, LogOut, ChevronRight, Moon, Sun, Monitor, MessageSquare, Loader2, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -35,6 +35,9 @@ interface OrgData {
   plan: string;
   whatsappPhoneId?: string | null;
   whatsappPhone?: string | null;
+  stripePublicKey?: string | null;
+  stripeSecretKey?: string | null;
+  stripeWebhookSecret?: string | null;
 }
 
 export default function SettingsPage() {
@@ -57,6 +60,12 @@ export default function SettingsPage() {
   const [whatsappPhoneId, setWhatsappPhoneId] = React.useState('');
   const [whatsappToken, setWhatsappToken] = React.useState('');
   const [whatsappPhone, setWhatsappPhone] = React.useState('');
+
+  // Stripe form state
+  const [stripePublicKey, setStripePublicKey] = React.useState('');
+  const [stripeSecretKey, setStripeSecretKey] = React.useState('');
+  const [stripeWebhookSecret, setStripeWebhookSecret] = React.useState('');
+  const [savingStripe, setSavingStripe] = React.useState(false);
 
   // Local settings state
   const [settings, setSettings] = React.useState({
@@ -105,6 +114,15 @@ export default function SettingsPage() {
     if (activeOrg) {
       setWhatsappPhoneId(activeOrg.whatsappPhoneId || '');
       setWhatsappPhone(activeOrg.whatsappPhone || '');
+    }
+  }, [activeOrg]);
+
+  // Sync Stripe form fields from org data
+  React.useEffect(() => {
+    if (activeOrg) {
+      setStripePublicKey(activeOrg.stripePublicKey || '');
+      setStripeSecretKey(''); // never prefill secret key
+      setStripeWebhookSecret(''); // never prefill webhook secret
     }
   }, [activeOrg]);
 
@@ -168,6 +186,41 @@ export default function SettingsPage() {
       toast.error('Failed to save WhatsApp configuration');
     } finally {
       setSavingWhatsApp(false);
+    }
+  };
+
+  const handleSaveStripe = async () => {
+    if (!activeOrg) return;
+    setSavingStripe(true);
+    try {
+      const body: Record<string, string> = {};
+      if (stripePublicKey) body.stripePublicKey = stripePublicKey;
+      if (stripeSecretKey) body.stripeSecretKey = stripeSecretKey;
+      if (stripeWebhookSecret) body.stripeWebhookSecret = stripeWebhookSecret;
+
+      const res = await fetch(`/api/admin/organizations/${activeOrg.id}/stripe`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (res.ok) {
+        const updated = await res.json();
+        setActiveOrg(prev => prev ? {
+          ...prev,
+          stripePublicKey: updated.stripePublicKey,
+          stripeSecretKey: updated.stripeSecretKey,
+        } : prev);
+        setStripeSecretKey(''); // clear secret field after save (it's masked)
+        toast.success('Stripe configuration saved successfully');
+      } else {
+        const err = await res.json();
+        toast.error(err.error || 'Failed to save Stripe configuration');
+      }
+    } catch (error) {
+      toast.error('Failed to save Stripe configuration');
+    } finally {
+      setSavingStripe(false);
     }
   };
 
@@ -308,6 +361,66 @@ export default function SettingsPage() {
                   </>
                 ) : (
                   'Save WhatsApp Config'
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Stripe Payments Section */}
+        {activeOrg && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <CreditCard className="w-5 h-5 text-primary" />
+                Stripe Payments
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="space-y-2">
+                <Label htmlFor="stripe-public-key">Publishable Key</Label>
+                <Input
+                  id="stripe-public-key"
+                  value={stripePublicKey}
+                  onChange={(e) => setStripePublicKey(e.target.value)}
+                  placeholder="pk_live_..."
+                  className="bg-muted/50"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="stripe-secret-key">Secret Key</Label>
+                <Input
+                  id="stripe-secret-key"
+                  type="password"
+                  value={stripeSecretKey}
+                  onChange={(e) => setStripeSecretKey(e.target.value)}
+                  placeholder="sk_live_..."
+                  className="bg-muted/50"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="stripe-webhook-secret">Webhook Secret</Label>
+                <Input
+                  id="stripe-webhook-secret"
+                  type="password"
+                  value={stripeWebhookSecret}
+                  onChange={(e) => setStripeWebhookSecret(e.target.value)}
+                  placeholder="whsec_..."
+                  className="bg-muted/50"
+                />
+              </div>
+              <Button
+                onClick={handleSaveStripe}
+                disabled={savingStripe}
+                className="w-full"
+              >
+                {savingStripe ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save Stripe Config'
                 )}
               </Button>
             </CardContent>
