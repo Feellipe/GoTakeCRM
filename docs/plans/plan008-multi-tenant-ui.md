@@ -21,10 +21,8 @@
 ### Task 1: Install dependencies (no tests)
 
 ```bash
-npm install zustand  # lightweight state management for active org
+npm install zustand
 ```
-
-**Rationale:** React Context could work, but zustand avoids prop drilling and persists to localStorage easily.
 
 **Commit:**
 ```bash
@@ -69,7 +67,52 @@ git add src/lib/stores/active-org.ts
 git commit -m "feat: create active org store with zustand"
 ```
 
-### Task 3: Update /api/auth/me to return role per org
+### Task 3: Add middleware with next-auth/jwt
+
+Create `src/middleware.ts` to protect routes using lightweight JWT check (no DB hit):
+
+```typescript
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { getToken } from 'next-auth/jwt';
+
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Public routes
+  const publicRoutes = ['/login', '/register', '/onboarding', '/api/auth'];
+  if (publicRoutes.some(route => pathname.startsWith(route))) {
+    return NextResponse.next();
+  }
+
+  const token = await getToken({ req: request });
+
+  if (!token) {
+    // API routes → 401
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    // Page routes → redirect to login
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.png$).*)'],
+};
+```
+
+**No test needed** — middleware with next-auth/jwt is a thin wrapper around token validation.
+
+**Commit:**
+```bash
+git add src/middleware.ts
+git commit -m "feat: add auth middleware with next-auth/jwt"
+```
+
+### Task 4: Update /api/auth/me to return role per org
 
 The current response returns organizations without role. Need to include it for role gating.
 
@@ -115,7 +158,7 @@ git add src/app/api/auth/me/route.ts
 git commit -m "feat: include user role in /api/auth/me response"
 ```
 
-### Task 4 (🎯 Tracer bullet): Sidebar fetches orgs from API
+### Task 5 (🎯 Tracer bullet): Sidebar fetches orgs from API
 
 **RED — 1 test:** (PC)
 
@@ -619,11 +662,11 @@ it('creates My Work on onboarding', async () => {
 ## Execution Order
 
 ```
-Phase 1 (Tasks 1-4):   Infrastructure + tracer bullet → sidebar fetches orgs
-Phase 2 (Tasks 5-8):   Org switcher + nav restructure
-Phase 3 (Tasks 9-10):  Role-based gating
-Phase 4 (Tasks 11-12): Settings tabs
-Phase 5 (Tasks 13-14): All Work views
-Phase 6 (Tasks 15-19): Members management
-Phase 7 (Tasks 20-21): Onboarding flow
+Phase 1 (Tasks 1-5):   Infrastructure + middleware + tracer bullet → sidebar fetches orgs
+Phase 2 (Tasks 6-9):   Org switcher + nav restructure
+Phase 3 (Tasks 10-11): Role-based gating
+Phase 4 (Tasks 12-13): Settings tabs
+Phase 5 (Tasks 14-15): All Work views
+Phase 6 (Tasks 16-20): Members management
+Phase 7 (Tasks 21-22): Onboarding flow
 ```
