@@ -33,6 +33,7 @@ interface OrgData {
   name: string;
   slug: string;
   plan: string;
+  role?: string;
   whatsappPhoneId?: string | null;
   whatsappPhone?: string | null;
   stripePublicKey?: string | null;
@@ -368,7 +369,7 @@ export default function SettingsPage() {
         )}
 
         {/* Stripe Payments Section */}
-        {activeOrg && (
+        {activeOrg && activeOrg.role === 'admin' && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
