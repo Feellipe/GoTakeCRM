@@ -410,8 +410,8 @@ it('settings page shows Personal tab and org-specific tabs', async () => {
 **GREEN:** Convert Settings to use Tabs component. "Personal" tab always visible. One tab per org (for users with admin role).
 
 **Content per tab:**
-- **Personal:** Profile, Appearance, Notifications, Security (from current page)
-- **Org tab:** WhatsApp Bot, Stripe Payments, Members (role-gated)
+- **Personal:** Profile, Appearance, Notifications, Security, WhatsApp Bot
+- **Org tab:** Stripe Payments, Members (role-gated)
 
 **Commit:**
 ```bash
