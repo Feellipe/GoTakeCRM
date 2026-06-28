@@ -49,7 +49,10 @@ export async function GET(request: NextRequest) {
         lastLoginAt: user.lastLoginAt,
         createdAt: user.createdAt,
       },
-      organizations: user.organizations.map((uo) => uo.organization),
+      organizations: user.organizations.map((uo) => ({
+        ...uo.organization,
+        role: uo.role,
+      })),
     });
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
