@@ -4,6 +4,9 @@
  * Popula o banco de dados de desenvolvimento com dados realistas
  * para um CRM de estúdio de fotografia e filmagem baseado no Brasil.
  *
+ * ⚠️ SEGURANÇA: Este script SÓ roda quando SEED_ALLOWED=true.
+ *    Produção NUNCA deve ter essa variável. Preview/Dev sim.
+ *
  * Estrutura multi-tenant:
  *   Organization → User (via UserOrganization, role "owner")
  *   Organization → DashboardSettings (1 por organização)
@@ -42,6 +45,13 @@ function dateFromStr(dateStr: string): Date {
 
 async function main() {
   console.log("========== Iniciando seed do GoTakeCRM ==========\n");
+
+  // 🛡️ SEGURANÇA: Só roda se explicitamente permitido
+  if (process.env.SEED_ALLOWED !== "true") {
+    console.error("\n❌ SEED BLOQUEADO! Configure SEED_ALLOWED=true para executar.");
+    console.error("   Produção NUNCA deve ter essa variável.\n");
+    process.exit(1);
+  }
 
   // -----------------------------------------------------------------------
   // 1. LIMPEZA DO BANCO (ordem reversa das dependências)
