@@ -1,11 +1,24 @@
 /**
  * Prisma Seed Script — GoTakeCRM (Multi-tenant)
  * ================================================
- * Popula o banco de dados de desenvolvimento com dados realistas
+ * Popula o banco de dados de desenvolvimento/preview com dados realistas
  * para um CRM de estúdio de fotografia e filmagem baseado no Brasil.
  *
- * ⚠️ SEGURANÇA: Este script SÓ roda quando SEED_ALLOWED=true.
- *    Produção NUNCA deve ter essa variável. Preview/Dev sim.
+ * ╔══════════════════════════════════════════════════════════════╗
+ * ║     🛡️  GUARDRALLS DE SEGURANÇA (3 camadas independentes)    ║
+ * ╠══════════════════════════════════════════════════════════════╣
+ * ║ GUARD 1: VERCEL_ENV — NUNCA roda se VERCEL_ENV=production   ║
+ * ║ GUARD 2: SEED_ALLOWED — precisa da flag explícita            ║
+ * ║ GUARD 3: PRODUCTION_DB — bloqueia supabase.co sem confirmação ║
+ * ╚══════════════════════════════════════════════════════════════╝
+ *
+ * Para executar (apenas em dev/preview):
+
+ *   SEED_ALLOWED=true npm run seed
+
+ *   ou
+
+ *   npm run seed:demo
  *
  * Estrutura multi-tenant:
  *   Organization → User (via UserOrganization, role "owner")
@@ -15,13 +28,6 @@
  *
  * Modelos-filhos (Briefing, Expense, Revenue, Message) NÃO recebem
  * organizationId — são acessados via pai (Deal/Conversation).
- *
- * Execução:
- *   npx tsx prisma/seed.ts
- *
- * O script primeiro limpa todos os registros existentes (respeitando a
- * ordem de chaves estrangeiras) e depois insere os dados em lote usando
- * transações do Prisma por grupo de entidade.
  */
 
 import { db } from "../src/lib/db";
@@ -46,10 +52,42 @@ function dateFromStr(dateStr: string): Date {
 async function main() {
   console.log("========== Iniciando seed do GoTakeCRM ==========\n");
 
-  // 🛡️ SEGURANÇA: Só roda se explicitamente permitido
+  // ======================================================================
+  // 🛡️ GUARDRAIL 1: VERCEL_ENV — proteção mais forte (não depende de config)
+  //    Vercel SEMPRE seta VERCEL_ENV como "production", "preview" ou "development"
+  //    Se for "production", o seed NUNCA prossegue, ponto final.
+  // ======================================================================
+  if (process.env.VERCEL_ENV === "production") {
+    console.error("\n❌ SEED BLOQUEADO [GUARD 1/3]: VERCEL_ENV=production detectado.");
+    console.error("   Este script JAMAIS pode executar em ambiente de produção.");
+    console.error("   Execute apenas em preview ou desenvolvimento.\n");
+    process.exit(1);
+  }
+
+  // ======================================================================
+  // 🛡️ GUARDRAIL 2: SEED_ALLOWED — flag explícita de autorização
+  //    Mesmo que VERCEL_ENV não esteja setado (ex: ambiente local),
+  //    só prossegue com autorização explícita.
+  // ======================================================================
   if (process.env.SEED_ALLOWED !== "true") {
-    console.error("\n❌ SEED BLOQUEADO! Configure SEED_ALLOWED=true para executar.");
-    console.error("   Produção NUNCA deve ter essa variável.\n");
+    console.error("\n❌ SEED BLOQUEADO [GUARD 2/3]: SEED_ALLOWED não está habilitado.");
+    console.error("   Configure SEED_ALLOWED=true para executar o seed.");
+    console.error("   Produção NUNCA deve ter esta variável.\n");
+    process.exit(1);
+  }
+
+  // ======================================================================
+  // 🛡️ GUARDRAIL 3: PRODUÇÃO REMOTA — proteção contra execução acidental
+  //    em banco de produção mesmo que as guardas 1 e 2 falhem.
+  //    Detecta se DATABASE_URL aponta para supabase.co (remoto).
+  //    Se sim, exige SEED_DEV_CONFIRMED=true como confirmação extra.
+  // ======================================================================
+  const dbUrl = (process.env.DATABASE_URL || "").toLowerCase();
+  if (dbUrl.includes("supabase.co") && process.env.SEED_DEV_CONFIRMED !== "true") {
+    console.error("\n❌ SEED BLOQUEADO [GUARD 3/3]: Banco remoto detectado (supabase.co).");
+    console.error("   Parece ser um banco de produção ou staging remoto.");
+    console.error("   Se for realmente o banco DEV, confirme com:");
+    console.error("   SEED_ALLOWED=true SEED_DEV_CONFIRMED=true npm run seed\n");
     process.exit(1);
   }
 
@@ -84,7 +122,7 @@ async function main() {
   await db.user.deleteMany();
   await db.organization.deleteMany();
 
-  console.log("  ✓ Banco limpo.\n");
+  console.log("  ✓ Banco limpo.");
 
   // -----------------------------------------------------------------------
   // 2. ORGANIZATION — Tenant raiz "GoTake Studio"
@@ -99,7 +137,7 @@ async function main() {
     },
   });
 
-  console.log(`  ✓ Organização criada: ${org.name} (slug: ${org.slug})\n`);
+  console.log(`  ✓ Organização criada: ${org.name} (slug: ${org.slug})`);
 
   // -----------------------------------------------------------------------
   // 3. USER — Usuário demo para login via Credentials Provider
@@ -116,7 +154,7 @@ async function main() {
     },
   });
 
-  console.log(`  ✓ Usuário demo criado: ${demoUser.email}\n`);
+  console.log(`  ✓ Usuário demo criado: ${demoUser.email}`);
 
   // -----------------------------------------------------------------------
   // 4. USER ORGANIZATION — Vincula o usuário demo como "owner" da org
@@ -131,7 +169,7 @@ async function main() {
     },
   });
 
-  console.log(`  ✓ Usuário vinculado como owner.\n`);
+  console.log(`  ✓ Usuário vinculado como owner.`);
 
   // -----------------------------------------------------------------------
   // 5. DASHBOARD SETTINGS — Configuração padrão do dashboard (1 por org)
@@ -147,7 +185,7 @@ async function main() {
     },
   });
 
-  console.log("  ✓ Configuração do dashboard criada.\n");
+  console.log("  ✓ Configuração do dashboard criada.");
 
   // -----------------------------------------------------------------------
   // 6. CLIENTS — 8 clientes com diversidade de status, tipo de evento,
@@ -259,7 +297,7 @@ async function main() {
     clients;
 
   console.log(
-    `  ✓ ${clients.length} clientes criados: ${clients.map((c) => c.name).join(", ")}\n`
+    `  ✓ ${clients.length} clientes criados: ${clients.map((c) => c.name).join(", ")}`
   );
 
   // -----------------------------------------------------------------------
@@ -445,7 +483,7 @@ async function main() {
   ] = deals;
 
   console.log(
-    `  ✓ ${deals.length} deals criados (${deals.filter((d) => d.status === "new").length} new, ${deals.filter((d) => d.status === "briefing").length} briefing, ${deals.filter((d) => d.status === "quoting").length} quoting, ${deals.filter((d) => d.status === "production").length} production, ${deals.filter((d) => d.status === "completed").length} completed)\n`
+    `  ✓ ${deals.length} deals criados (${deals.filter((d) => d.status === "new").length} new, ${deals.filter((d) => d.status === "briefing").length} briefing, ${deals.filter((d) => d.status === "quoting").length} quoting, ${deals.filter((d) => d.status === "production").length} production, ${deals.filter((d) => d.status === "completed").length} completed)`
   );
 
   // -----------------------------------------------------------------------
@@ -475,7 +513,7 @@ async function main() {
           "",
           "ESTILO: Cinematográfico, tons quentes, câmera lenta em momentos-chave",
           "REFERÊNCIA: Estilo 'The Wedding Filmer'",
-        ].join("\n"),
+        ].join(""),
         author: "Juliana Costa",
       },
     }),
@@ -496,7 +534,7 @@ async function main() {
           "ESTILO: Clean, iluminação uniforme, sem sombras duras",
           "PRAZO: Entrega final até 01/09/2026",
           "ORÇAMENTO INICIAL: R$4.800",
-        ].join("\n"),
+        ].join(""),
         author: "Bruno Almeida",
       },
     }),
@@ -520,7 +558,7 @@ async function main() {
           "",
           "REFERÊNCIAS: Clipes 'Yellow' (Coldplay) e 'Seventy Times 7' (Brand New)",
           "PRAZO: Estreia em 3 meses (single será lançado em novembro)",
-        ].join("\n"),
+        ].join(""),
         author: "Thiago Pereira",
       },
     }),
@@ -542,7 +580,7 @@ async function main() {
           "",
           "USO: Site institucional + YouTube + LinkedIn",
           "PRAZO: Primeiro corte em 30 dias",
-        ].join("\n"),
+        ].join(""),
         author: "Rafael Oliveira",
       },
     }),
@@ -562,7 +600,7 @@ async function main() {
           "",
           "ENTREGAS: 60-80 fotos editadas, galeria online privativa",
           "ESTILO: Leve, natural, cores suaves",
-        ].join("\n"),
+        ].join(""),
         author: "Camila Santos",
       },
     }),
@@ -584,7 +622,7 @@ async function main() {
           "- 2 fotógrafos simultâneos",
           "",
           "ESTILO: Corporativo dinâmico, cores vivas, close-ups de palestrantes",
-        ].join("\n"),
+        ].join(""),
         author: "Fernanda Lima",
       },
     }),
@@ -604,14 +642,14 @@ async function main() {
           "",
           "ENTREGAS: 80 fotos alta resolução + tour virtual em 360°",
           "USO: Site do empreendimento + redes sociais + Google Street View",
-        ].join("\n"),
+        ].join(""),
         author: "Marina Rodrigues",
       },
     }),
   ]);
 
   console.log(
-    `  ✓ ${briefings.length} briefings criados.\n`
+    `  ✓ ${briefings.length} briefings criados.`
   );
 
   // -----------------------------------------------------------------------
@@ -727,7 +765,7 @@ async function main() {
   ]);
 
   console.log(
-    `  ✓ ${expenses.length} despesas criadas (total: R$${expenses.reduce((s, e) => s + e.amount, 0).toFixed(2)}).\n`
+    `  ✓ ${expenses.length} despesas criadas (total: R$${expenses.reduce((s, e) => s + e.amount, 0).toFixed(2)}).`
   );
 
   // -----------------------------------------------------------------------
@@ -822,7 +860,7 @@ async function main() {
   ];
 
   console.log(
-    `  ✓ ${revenues.length} receitas criadas (${receivedRevs.length} recebidas, ${pendingRevs.length} pendentes, total: R$${revenues.reduce((s, r) => s + r.amount, 0).toFixed(2)}).\n`
+    `  ✓ ${revenues.length} receitas criadas (${receivedRevs.length} recebidas, ${pendingRevs.length} pendentes, total: R$${revenues.reduce((s, r) => s + r.amount, 0).toFixed(2)}).`
   );
 
   // -----------------------------------------------------------------------
@@ -915,7 +953,7 @@ async function main() {
   ]);
 
   console.log(
-    `  ✓ ${bookings.length} bookings criados (${bookings.filter((b) => b.status === "pending").length} pending, ${bookings.filter((b) => b.status === "confirmed").length} confirmed, ${bookings.filter((b) => b.status === "completed").length} completed, ${bookings.filter((b) => b.status === "cancelled").length} cancelled).\n`
+    `  ✓ ${bookings.length} bookings criados (${bookings.filter((b) => b.status === "pending").length} pending, ${bookings.filter((b) => b.status === "confirmed").length} confirmed, ${bookings.filter((b) => b.status === "completed").length} completed, ${bookings.filter((b) => b.status === "cancelled").length} cancelled).`
   );
 
   // -----------------------------------------------------------------------
@@ -1035,7 +1073,7 @@ async function main() {
   ]);
 
   console.log(
-    `  ✓ ${packages.length} pacotes criados: ${packages.map((p) => p.name).join(", ")}\n`
+    `  ✓ ${packages.length} pacotes criados: ${packages.map((p) => p.name).join(", ")}`
   );
 
   // -----------------------------------------------------------------------
@@ -1059,7 +1097,7 @@ async function main() {
           "5. O cliente cede direitos de uso de imagem para portfólio e redes sociais do estúdio.",
           "6. Em caso de cancelamento com menos de 60 dias de antecedência, o sinal não será reembolsado.",
           "7. Deslocamento até 50km incluso. Acima disso, R$1,50/km adicional.",
-        ].join("\n"),
+        ].join(""),
         defaultPackages: null,
         coverImage: null,
         isActive: true,
@@ -1078,7 +1116,7 @@ async function main() {
           "4. Cessão de direitos de uso para o cliente (uso comercial e institucional).",
           "5. O estúdio reserva o direito de uso do material para portfólio, salvo acordo em contrário.",
           "6. Horas extras de cobertura: R$350/hora por profissional adicional.",
-        ].join("\n"),
+        ].join(""),
         defaultPackages: null,
         coverImage: null,
         isActive: true,
@@ -1097,7 +1135,7 @@ async function main() {
           "4. Fotos extras além do pacote: R$35 por foto editada.",
           "5. Impressões adicionais: sob consulta (valores por tamanho).",
           "6. O cliente autoriza o uso das imagens para portfólio e divulgação do estúdio.",
-        ].join("\n"),
+        ].join(""),
         defaultPackages: null,
         coverImage: null,
         isActive: false, // template inativo para testar filtros
@@ -1106,13 +1144,13 @@ async function main() {
   ]);
 
   console.log(
-    `  ✓ ${proposalTemplates.length} templates de proposta criados (${proposalTemplates.filter((t) => t.isActive).length} ativos, ${proposalTemplates.filter((t) => !t.isActive).length} inativos).\n`
+    `  ✓ ${proposalTemplates.length} templates de proposta criados (${proposalTemplates.filter((t) => t.isActive).length} ativos, ${proposalTemplates.filter((t) => !t.isActive).length} inativos).`
   );
 
   // -----------------------------------------------------------------------
   // RESUMO FINAL
   // -----------------------------------------------------------------------
-  console.log("========== Seed concluído com sucesso! ==========\n");
+  console.log("========== Seed concluído com sucesso! ==========");
   console.log("Resumo dos registros criados:");
   console.log(`  Organizations:     1`);
   console.log(`  Users:             1`);
@@ -1126,7 +1164,7 @@ async function main() {
   console.log(`  Packages:          ${packages.length}`);
   console.log(`  ProposalTemplates: ${proposalTemplates.length}`);
   console.log(`  DashboardSettings: 1`);
-  console.log(`\nValor total em pipeline: R$${deals.reduce((s, d) => s + d.value, 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`);
+  console.log(`Valor total em pipeline: R$${deals.reduce((s, d) => s + d.value, 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`);
   console.log(`Receitas totais: R$${revenues.filter((r) => r.status === "received").reduce((s, r) => s + r.amount, 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`);
 }
 
