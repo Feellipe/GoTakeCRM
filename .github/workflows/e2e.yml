@@ -8,6 +8,7 @@ on:
 jobs:
   e2e:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -17,35 +18,32 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+        timeout-minutes: 3
 
-      - name: Install Playwright browsers
+      - name: Install Playwright
         run: npx playwright install chromium
+        timeout-minutes: 2
 
-      - name: Wait for Vercel deploy and get URL
+      - name: Wait for Vercel deploy
+        run: sleep 120
+
+      - name: Get Vercel preview URL
         id: vercel
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
-          for i in $(seq 1 60); do
-            DEPLOY_JSON=$(curl -sf "https://api.vercel.com/v6/deployments?teamId=team_xv4KlhF2T3EKAQxIQj4veQ4G&limit=3" \
-              -H "Authorization: Bearer $VERCEL_TOKEN" 2>/dev/null)
-            URL=$(echo "$DEPLOY_JSON" | node -p "try{const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8'));const r=(d.deployments||[]).find(x=>x.state==='READY');r?r.url:''}catch(e){''}")
-            if [ -n "$URL" ]; then
-              echo "url=$URL" >> $GITHUB_OUTPUT
-              echo "Deployment URL: $URL"
-              break
-            fi
-            sleep 5
-          done
+          npm install -g vercel
+          URL=$(vercel ls --token "$VERCEL_TOKEN" --format json 2>/dev/null | node -p "try{const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8'));const r=(d.deployments||[]).sort((a,b)=>b.createdAt-a.createdAt).find(x=>x.state==='READY');r?r.url:''}catch(e){''}")
+          echo "URL=$URL"
+          echo "url=$URL" >> $GITHUB_OUTPUT
 
-      - name: Run E2E tests against preview
-        run: npx playwright test --reporter=list
+      - name: Run E2E tests
+        run: npx playwright test --reporter=list --timeout=60000
         env:
           PLAYWRIGHT_BASE_URL: https://${{ steps.vercel.outputs.url }}
-          E2E_TEST_EMAIL: demo@gotakecrm.com
-          E2E_TEST_PASSWORD: demo2026
+        timeout-minutes: 3
 
-      - name: Upload Playwright report
+      - name: Upload report
         uses: actions/upload-artifact@v4
         if: failure()
         with:
