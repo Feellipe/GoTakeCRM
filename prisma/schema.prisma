@@ -10,10 +10,8 @@ generator client {
 }
 
 datasource db {
-  provider     = "postgresql"
-  url          = env("DATABASE_URL")
-  relationMode = "prisma"
-  connectionLimit = 1
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // ═══════════════════════════════════════════════════════════════════
