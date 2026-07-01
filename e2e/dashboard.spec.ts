@@ -5,8 +5,8 @@ test.describe('Dashboard - Desktop', () => {
     await page.goto('/dashboard');
     await page.waitForLoadState('networkidle');
 
-    // Sidebar visible with glass-sidebar class (deployed code)
-    const sidebar = page.locator('.glass-sidebar');
+    // Sidebar visible with bg-sidebar-glass class (deployed code)
+    const sidebar = page.locator('.bg-sidebar-glass');
     await expect(sidebar).toBeVisible();
 
     // Nav items with labels visible (sidebar defaults to open w-64 on desktop)
@@ -21,11 +21,11 @@ test.describe('Dashboard - Desktop', () => {
     await page.waitForLoadState('networkidle');
 
     // Click toggle (first button with an SVG — X or Menu icon)
-    await page.locator('.glass-sidebar button:has(svg)').first().click();
+    await page.locator('.bg-sidebar-glass button:has(svg)').first().click();
     await page.waitForTimeout(500);
 
     // Sidebar should now have w-20
-    const sidebar = page.locator('.glass-sidebar');
+    const sidebar = page.locator('.bg-sidebar-glass');
     await expect(sidebar).toHaveClass(/w-20/);
   });
 
@@ -34,7 +34,7 @@ test.describe('Dashboard - Desktop', () => {
     await page.waitForLoadState('networkidle');
 
     // Settings is a SettingsPanel trigger button at the bottom, not a nav item
-    const settingsBtn = page.locator('.glass-sidebar button:has(svg.lucide-settings)');
+    const settingsBtn = page.locator('.bg-sidebar-glass button:has(svg.lucide-settings)');
     await expect(settingsBtn).toBeVisible();
   });
 
@@ -56,7 +56,7 @@ test.describe('Dashboard - Mobile (375px)', () => {
     await page.waitForLoadState('networkidle');
 
     // KNOWN BUG: sidebar consumes most of the 375px viewport
-    const sidebar = page.locator('.glass-sidebar');
+    const sidebar = page.locator('.bg-sidebar-glass');
     await expect(sidebar).toBeVisible();
 
     const box = await sidebar.boundingBox();

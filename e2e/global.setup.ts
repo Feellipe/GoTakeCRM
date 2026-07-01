@@ -23,7 +23,7 @@ setup('login as demo user', async ({ page }) => {
   await page.waitForLoadState('domcontentloaded');
 
   // Wait for the dashboard sidebar to be visible — confirms the app has rendered
-  await expect(page.locator('.glass-sidebar')).toBeVisible({ timeout: 15000 });
+  await expect(page.locator('.bg-sidebar-glass')).toBeVisible({ timeout: 15000 });
 
   // Confirm we're logged in (no sign-in button on the page)
   await expect(page.locator('button:has-text("Sign in")')).toHaveCount(0);
