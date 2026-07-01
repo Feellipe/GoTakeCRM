@@ -21,25 +21,20 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install chromium
 
-      - name: Get latest Vercel preview URL
+      - name: Wait for Vercel deploy and get URL
         id: vercel
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
-          npm install -g vercel
-          sleep 60
-          URL=$(vercel ls --token "$VERCEL_TOKEN" --scope feellipes-projects --format json 2>/dev/null | node -p "try{const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8'));const deps=(d.deployments||[]).sort((a,b)=>b.createdAt-a.createdAt);const r=deps.find(d=>d.state==='READY');r?r.url:''}catch(e){''}")
-          echo "Preview URL: $URL"
-          echo "url=$URL" >> $GITHUB_OUTPUT
-
-      - name: Wait for app to be responsive
-        run: |
-          for i in $(seq 1 30); do
-            if curl -sf "https://${{ steps.vercel.outputs.url }}/login" > /dev/null 2>&1; then
-              echo "App is ready!"
+          for i in $(seq 1 60); do
+            DEPLOY_JSON=$(curl -sf "https://api.vercel.com/v6/deployments?teamId=team_xv4KlhF2T3EKAQxIQj4veQ4G&limit=3" \
+              -H "Authorization: Bearer $VERCEL_TOKEN" 2>/dev/null)
+            URL=$(echo "$DEPLOY_JSON" | node -p "try{const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8'));const r=(d.deployments||[]).find(x=>x.state==='READY');r?r.url:''}catch(e){''}")
+            if [ -n "$URL" ]; then
+              echo "url=$URL" >> $GITHUB_OUTPUT
+              echo "Deployment URL: $URL"
               break
             fi
-            echo "Waiting for app... (attempt $i/30)"
             sleep 5
           done
 
