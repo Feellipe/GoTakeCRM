@@ -21,17 +21,30 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install chromium
 
-      - name: Wait for Vercel Preview Deployment
-        uses: patrickedqvist/wait-for-vercel-preview@v1.3.1
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+
+      - name: Wait for Vercel deployment and get URL
         id: vercel
-        with:
-          token: ${{ secrets.VERCEL_TOKEN }}
-          max_timeout: 300
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          for i in $(seq 1 60); do
+            OUTPUT=$(vercel ls --token "$VERCEL_TOKEN" --scope feellipes-projects --format json 2>/dev/null)
+            URL=$(echo "$OUTPUT" | node -p "try{const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8'));const deps=(d.deployments||[]).sort((a,b)=>b.createdAt-a.createdAt);const r=deps.find(d=>d.state==='READY'||d.state==='ERROR');r?r.url+'|'+r.state:''}catch(e){''}" 2>/dev/null)
+            if [ -n "$URL" ]; then
+              echo "url=$URL" >> $GITHUB_OUTPUT
+              echo "Deployment found: $URL"
+              break
+            fi
+            echo "Waiting... (attempt $i/60)"
+            sleep 5
+          done
 
       - name: Run E2E tests against preview
         run: npx playwright test --reporter=list
         env:
-          PLAYWRIGHT_BASE_URL: ${{ steps.vercel.outputs.url }}
+          PLAYWRIGHT_BASE_URL: https://${{ steps.vercel.outputs.url }}
           E2E_TEST_EMAIL: demo@gotakecrm.com
           E2E_TEST_PASSWORD: demo2026
 
