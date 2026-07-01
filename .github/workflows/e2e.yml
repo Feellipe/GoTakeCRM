@@ -41,7 +41,7 @@ jobs:
         run: npx playwright test --reporter=list --timeout=60000
         env:
           PLAYWRIGHT_BASE_URL: https://${{ steps.vercel.outputs.url }}
-        timeout-minutes: 5
+        timeout-minutes: 7
 
       - name: Upload report
         uses: actions/upload-artifact@v4

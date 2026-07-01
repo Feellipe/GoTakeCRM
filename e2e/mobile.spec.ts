@@ -3,60 +3,72 @@ import { test, expect } from '@playwright/test';
 test.describe('Mobile Responsiveness (375px)', () => {
   test.use({ viewport: { width: 375, height: 812 } });
 
-  test('sidebar consumes ~68% of viewport (known bug)', async ({ page }) => {
+  test('sidebar is hidden off-screen on mobile (translate-x-full)', async ({ page }) => {
     await page.goto('/dashboard');
     await page.waitForLoadState('networkidle');
 
-    // Sidebar is visible on mobile (bug — should be hidden by default)
-    const sidebar = page.locator('.glass-sidebar');
-    await expect(sidebar).toBeVisible();
+    // The sidebar aside starts with -translate-x-full on mobile (hidden off-screen)
+    const sidebar = page.locator('aside');
+    await expect(sidebar).toBeAttached();
 
-    // w-64 = 256px on 375px viewport
+    // Sidebar is translated off-screen via -translate-x-full
+    // Since the box should have negative x or be off-screen
     const box = await sidebar.boundingBox();
     expect(box).not.toBeNull();
-    expect(box!.width).toBe(256);
-    expect(box!.width / 375).toBeGreaterThan(0.6); // >60% of screen
+    // Sidebar is off-screen to the left (translated by its own width)
+    expect(box!.x).toBeLessThan(0);
+
+    // Sidebar inner div has bg-sidebar-glass
+    const innerDiv = sidebar.locator('.bg-sidebar-glass');
+    await expect(innerDiv).toBeAttached();
   });
 
-  test('no hamburger menu button exists (known bug)', async ({ page }) => {
+  test('hamburger menu button exists on mobile', async ({ page }) => {
     await page.goto('/dashboard');
     await page.waitForLoadState('networkidle');
 
-    // No menu/hamburger button outside the sidebar (bug)
-    // The only toggle button is INSIDE the sidebar
-    const menuButtons = page.locator('button:has(svg.lucide-menu)');
-    const count = await menuButtons.count();
-
-    if (count > 0) {
-      // If there is one, it's inside the sidebar (not outside/fixed)
-      const toggleButton = menuButtons.first();
-      await expect(toggleButton).toBeVisible();
-
-      // Clicking toggles w-64 ↔ w-20 (not full overlay)
-      await toggleButton.click();
-      await page.waitForTimeout(500);
-      const sidebar = page.locator('.glass-sidebar');
-      await expect(sidebar).toHaveClass(/w-20/);
-    } else {
-      // No toggle button at all (if sidebar is already w-20 somehow)
-      console.log('No menu toggle button found on mobile');
-    }
+    // Hamburger button is fixed top-left, only visible on mobile
+    const hamburger = page.locator('button[aria-label="Open sidebar"]');
+    await expect(hamburger).toBeVisible();
   });
 
-  test('content area is pushed right by sidebar width', async ({ page }) => {
+  test('hamburger opens sidebar overlay on mobile', async ({ page }) => {
     await page.goto('/dashboard');
     await page.waitForLoadState('networkidle');
 
-    // The main content starts after the sidebar (no overlay pattern)
-    // Main element should have ml-64 equivalent offset
+    // Sidebar starts off-screen
+    const sidebar = page.locator('aside');
+    let box = await sidebar.boundingBox();
+    expect(box).not.toBeNull();
+
+    // Click hamburger to open sidebar
+    await page.locator('button[aria-label="Open sidebar"]').click();
+    await page.waitForTimeout(500); // Wait for transition
+
+    // Sidebar should now be on-screen with translate-x-0
+    box = await sidebar.boundingBox();
+    expect(box).not.toBeNull();
+    // Sidebar should now be at x=0 (visible)
+    expect(box!.x).toBe(0);
+
+    // Sidebar width should be w-[66vw] ≈ 247px on 375px viewport
+    expect(box!.width).toBeGreaterThan(200);
+    expect(box!.width).toBeLessThan(300);
+
+    // Nav labels should now be visible
+    await expect(page.locator('text=Dashboard').first()).toBeVisible({ timeout: 3000 });
+  });
+
+  test('main content is full-width on mobile (sidebar hidden)', async ({ page }) => {
+    await page.goto('/dashboard');
+    await page.waitForLoadState('networkidle');
+
+    // Main content should span full width since sidebar is off-screen
     const main = page.locator('main');
     const mainBox = await main.boundingBox();
-    const sidebar = page.locator('.glass-sidebar');
-    const sideBox = await sidebar.boundingBox();
-
     expect(mainBox).not.toBeNull();
-    expect(sideBox).not.toBeNull();
-    // Content starts at or after sidebar ends
-    expect(mainBox!.x).toBeGreaterThanOrEqual(sideBox!.width - 20);
+    // Main starts at x=0 (no sidebar offset on mobile)
+    expect(mainBox!.x).toBe(0);
+    expect(mainBox!.width).toBe(375);
   });
 });

@@ -130,10 +130,16 @@ export function RevenueManager({ deals, onNotification }: RevenueManagerProps) {
   const fetchRevenues = async () => {
     try {
       const response = await fetch('/api/revenues');
-      const data = await response.json();
-      setRevenues(data);
+      if (response.ok) {
+        const data = await response.json();
+        setRevenues(Array.isArray(data) ? data : []);
+      } else {
+        console.error('Error fetching revenues:', await response.text());
+        setRevenues([]);
+      }
     } catch (error) {
       console.error('Error fetching revenues:', error);
+      setRevenues([]);
     } finally {
       setLoading(false);
     }

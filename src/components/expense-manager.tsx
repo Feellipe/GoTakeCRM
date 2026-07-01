@@ -131,10 +131,16 @@ export function ExpenseManager({ deals, onExpenseChange }: ExpenseManagerProps) 
   const fetchExpenses = async () => {
     try {
       const response = await fetch('/api/expenses');
-      const data = await response.json();
-      setExpenses(data);
+      if (response.ok) {
+        const data = await response.json();
+        setExpenses(Array.isArray(data) ? data : []);
+      } else {
+        console.error('Error fetching expenses:', await response.text());
+        setExpenses([]);
+      }
     } catch (error) {
       console.error('Error fetching expenses:', error);
+      setExpenses([]);
     } finally {
       setLoading(false);
     }

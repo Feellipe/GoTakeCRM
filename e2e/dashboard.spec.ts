@@ -43,20 +43,23 @@ test.describe('Dashboard - Desktop', () => {
 test.describe('Dashboard - Mobile (375px)', () => {
   test.use({ viewport: { width: 375, height: 812 } });
 
-  test('sidebar is always visible w-64 (no mobile responsiveness yet)', async ({ page }) => {
+  test('sidebar is hidden off-screen on mobile (no mobile responsiveness yet)', async ({ page }) => {
     await page.goto('/dashboard');
     await page.waitForLoadState('networkidle');
 
-    // KNOWN BUG: sidebar consumes most of the 375px viewport
-    const sidebar = page.locator('.bg-sidebar-glass');
-    await expect(sidebar).toBeVisible();
+    // Sidebar inner div bg-sidebar-glass exists in DOM
+    const sidebarInner = page.locator('.bg-sidebar-glass');
+    await expect(sidebarInner).toBeAttached();
 
-    const box = await sidebar.boundingBox();
+    // The aside container starts with -translate-x-full (off-screen)
+    const aside = page.locator('aside');
+    const box = await aside.boundingBox();
     expect(box).not.toBeNull();
-    // w-64 = 256px on a 375px screen (~68% of width)
-    expect(box!.width).toBe(256);
+    // Sidebar is translated off-screen to the left
+    expect(box!.x).toBeLessThan(0);
 
-    // Menu button (top-left hamburger) does NOT exist yet
-    await expect(page.locator('button:has-text("Menu")')).toHaveCount(0);
+    // Hamburger button exists on mobile (lg:hidden, fixed top-left)
+    const hamburger = page.locator('button[aria-label="Open sidebar"]');
+    await expect(hamburger).toBeVisible();
   });
 });
