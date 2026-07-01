@@ -19,8 +19,11 @@ setup('login as demo user', async ({ page }) => {
   // Wait for navigation — could be /dashboard or /dashboard/...
   await page.waitForURL(/\/dashboard/, { timeout: 20000 });
 
-  // Wait for the page to actually load (not just URL change)
-  await page.waitForLoadState('networkidle');
+  // Wait for DOM to be ready (avoid networkidle which hangs due to SWR polling)
+  await page.waitForLoadState('domcontentloaded');
+
+  // Wait for the dashboard sidebar to be visible — confirms the app has rendered
+  await expect(page.locator('.glass-sidebar')).toBeVisible({ timeout: 15000 });
 
   // Confirm we're logged in (no sign-in button on the page)
   await expect(page.locator('button:has-text("Sign in")')).toHaveCount(0);
