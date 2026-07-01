@@ -33,8 +33,9 @@ jobs:
             OUTPUT=$(vercel ls --token "$VERCEL_TOKEN" --scope feellipes-projects --format json 2>/dev/null)
             URL=$(echo "$OUTPUT" | node -p "try{const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8'));const deps=(d.deployments||[]).sort((a,b)=>b.createdAt-a.createdAt);const r=deps.find(d=>d.state==='READY'||d.state==='ERROR');r?r.url+'|'+r.state:''}catch(e){''}" 2>/dev/null)
             if [ -n "$URL" ]; then
-              echo "url=$URL" >> $GITHUB_OUTPUT
-              echo "Deployment found: $URL"
+              URL_PART=$(echo "$URL" | cut -d'|' -f1)
+              echo "url=$URL_PART" >> $GITHUB_OUTPUT
+              echo "Deployment found: $URL_PART"
               break
             fi
             echo "Waiting... (attempt $i/60)"
