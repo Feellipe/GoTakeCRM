@@ -31,8 +31,7 @@ jobs:
       - name: Run E2E tests against preview
         run: npx playwright test --reporter=list
         env:
-          PLAYWRIGHT_TEST_BASE_URL: ${{ steps.vercel.outputs.url }}
-          # Auth credentials for the test user
+          PLAYWRIGHT_BASE_URL: ${{ steps.vercel.outputs.url }}
           E2E_TEST_EMAIL: demo@gotakecrm.com
           E2E_TEST_PASSWORD: demo2026
 
