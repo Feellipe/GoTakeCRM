@@ -10,6 +10,18 @@ export async function GET(request: NextRequest) {
   if (!rl.success) return rateLimitResponse(rl.resetAt);
 
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const membership = await db.userOrganization.findFirst({
+      where: { userId: session.user.id },
+    });
+    if (!membership) {
+      return NextResponse.json({ error: 'No organization found for user' }, { status: 403 });
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const search = searchParams.get('search') || '';
     const status = searchParams.get('status') || '';
@@ -17,7 +29,9 @@ export async function GET(request: NextRequest) {
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
     const limit = Math.max(1, Math.min(100, parseInt(searchParams.get('limit') || '20', 10)));
 
-    const where: Record<string, unknown> = {};
+    const where: Record<string, unknown> = {
+      organizationId: membership.organizationId,
+    };
 
     if (search) {
       where.OR = [

@@ -2,13 +2,14 @@ import { db } from '@/lib/db';
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth-options';
 
 export async function GET(request: NextRequest) {
   const rl = rateLimit(request, { limit: 100, windowMs: 60_000 });
   if (!rl.success) return rateLimitResponse(rl.resetAt);
 
   try {
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
