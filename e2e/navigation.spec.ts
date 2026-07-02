@@ -1,24 +1,24 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Sidebar Navigation', () => {
-  // All nav items and their expected URLs + header titles
+  // All nav items, their hrefs, and expected header titles
   const navLinks = [
-    { label: 'Dashboard', url: /\/dashboard/, header: 'Dashboard' },
-    { label: 'Clients', url: /\/clients/, header: 'Clients' },
-    { label: 'Pipeline', url: /\/pipeline/, header: 'Pipeline' },
-    { label: 'Proposals', url: /\/proposals/, header: 'Proposals' },
-    { label: 'Financials', url: /\/financials/, header: 'Financials' },
-    { label: 'Calendar', url: /\/calendar/, header: 'Calendar' },
+    { label: 'Dashboard', href: '/dashboard', header: 'Dashboard' },
+    { label: 'Clients', href: '/clients', header: 'Clients' },
+    { label: 'Pipeline', href: '/pipeline', header: 'Pipeline' },
+    { label: 'Proposals', href: '/proposals', header: 'Proposals' },
+    { label: 'Financials', href: '/financials', header: 'Financials' },
+    { label: 'Calendar', href: '/calendar', header: 'Calendar' },
   ];
 
-  for (const { label, url, header } of navLinks) {
+  for (const { label, href, header } of navLinks) {
     test(`navigates to ${label} via sidebar link`, async ({ page }) => {
       await page.goto('/dashboard');
       await page.waitForLoadState('networkidle');
 
-      // Click the nav link in the sidebar
-      await page.locator(`.bg-sidebar-glass a:has-text("${label}")`).click();
-      await page.waitForURL(url, { timeout: 10000 });
+      // On desktop (w-20 icon-only mode), labels are hidden — use href selector
+      await page.locator(`.bg-sidebar-glass a[href="${href}"]`).click();
+      await page.waitForURL(new RegExp(href.replace('/', '\\/')), { timeout: 10000 });
 
       // Verify we're on the right page — header should contain the title
       await expect(page.locator('h1')).toContainText(new RegExp(header, 'i'));
