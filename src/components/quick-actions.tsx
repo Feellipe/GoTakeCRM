@@ -11,6 +11,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import {
   Plus,
   Users,
   FolderKanban,
@@ -24,6 +32,7 @@ import {
   Keyboard,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface QuickAction {
   id: string;
@@ -45,6 +54,104 @@ interface QuickActionsProps {
   currentView?: string;
 }
 
+function ActionsList({ actions }: { actions: QuickAction[] }) {
+  return (
+    <>
+      <DropdownMenuLabel className="text-xs text-muted-foreground font-normal py-1">
+        Create
+      </DropdownMenuLabel>
+      {actions.filter(a => a.category === 'create').map((action) => (
+        <DropdownMenuItem
+          key={action.id}
+          onClick={action.action}
+          className="flex items-center justify-between cursor-pointer"
+        >
+          <span className="flex items-center gap-2">
+            <action.icon className="w-4 h-4" />
+            {action.label}
+          </span>
+          <span className="text-xs text-muted-foreground">{action.shortcut}</span>
+        </DropdownMenuItem>
+      ))}
+
+      <DropdownMenuSeparator />
+      <DropdownMenuLabel className="text-xs text-muted-foreground font-normal py-1">
+        Navigation
+      </DropdownMenuLabel>
+      {actions.filter(a => a.category === 'navigation').map((action) => (
+        <DropdownMenuItem
+          key={action.id}
+          onClick={action.action}
+          className="flex items-center justify-between cursor-pointer"
+        >
+          <span className="flex items-center gap-2">
+            <action.icon className="w-4 h-4" />
+            {action.label}
+          </span>
+          <span className="text-xs text-muted-foreground">{action.shortcut}</span>
+        </DropdownMenuItem>
+      ))}
+
+      <DropdownMenuSeparator />
+      <DropdownMenuLabel className="text-xs text-muted-foreground font-normal py-1">
+        Actions
+      </DropdownMenuLabel>
+      {actions.filter(a => a.category === 'actions').map((action) => (
+        <DropdownMenuItem
+          key={action.id}
+          onClick={action.action}
+          className="flex items-center justify-between cursor-pointer"
+        >
+          <span className="flex items-center gap-2">
+            <action.icon className="w-4 h-4" />
+            {action.label}
+          </span>
+          <span className="text-xs text-muted-foreground">{action.shortcut}</span>
+        </DropdownMenuItem>
+      ))}
+    </>
+  );
+}
+
+function ActionsListMobile({ actions }: { actions: QuickAction[] }) {
+  const categories = [
+    { label: 'Create', key: 'create' as const },
+    { label: 'Navigation', key: 'navigation' as const },
+    { label: 'Actions', key: 'actions' as const },
+  ];
+
+  return (
+    <div className="flex flex-col gap-1 px-4 pb-6 overflow-y-auto">
+      {categories.map((cat, idx) => {
+        const filtered = actions.filter(a => a.category === cat.key);
+        if (filtered.length === 0) return null;
+        return (
+          <React.Fragment key={cat.key}>
+            {idx > 0 && <div className="h-px bg-border my-1" />}
+            <span className="text-xs text-muted-foreground font-medium py-2">
+              {cat.label}
+            </span>
+            {filtered.map((action) => (
+              <SheetClose asChild key={action.id}>
+                <button
+                  onClick={action.action}
+                  className="flex items-center justify-between w-full px-3 py-3 rounded-lg text-sm hover:bg-accent transition-colors cursor-pointer"
+                >
+                  <span className="flex items-center gap-3">
+                    <action.icon className="w-5 h-5 text-muted-foreground" />
+                    {action.label}
+                  </span>
+                  <span className="text-xs text-muted-foreground">{action.shortcut}</span>
+                </button>
+              </SheetClose>
+            ))}
+          </React.Fragment>
+        );
+      })}
+    </div>
+  );
+}
+
 export function QuickActions({
   onNewClient,
   onNewDeal,
@@ -56,6 +163,7 @@ export function QuickActions({
   currentView = 'dashboard',
 }: QuickActionsProps) {
   const { theme, setTheme } = useTheme();
+  const isMobile = useIsMobile();
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -196,6 +304,33 @@ export function QuickActions({
     },
   ];
 
+  // Mobile: use Sheet overlay full-screen
+  if (isMobile) {
+    return (
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button
+            variant="outline"
+            size="icon"
+            className="fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-lg shadow-primary/20 gradient-gold text-warm-950 hover:scale-110 transition-transform z-50"
+          >
+            <Zap className="w-6 h-6" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="bottom" className="h-[80vh] rounded-t-2xl p-0">
+          <SheetHeader className="px-4 pt-4 pb-2 border-b">
+            <SheetTitle className="flex items-center gap-2 text-lg">
+              <Keyboard className="w-5 h-5" />
+              Quick Actions
+            </SheetTitle>
+          </SheetHeader>
+          <ActionsListMobile actions={actions} />
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  // Desktop: use DropdownMenu
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -213,59 +348,7 @@ export function QuickActions({
           Quick Actions
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        
-        <DropdownMenuLabel className="text-xs text-muted-foreground font-normal py-1">
-          Create
-        </DropdownMenuLabel>
-        {actions.filter(a => a.category === 'create').map((action) => (
-          <DropdownMenuItem
-            key={action.id}
-            onClick={action.action}
-            className="flex items-center justify-between cursor-pointer"
-          >
-            <span className="flex items-center gap-2">
-              <action.icon className="w-4 h-4" />
-              {action.label}
-            </span>
-            <span className="text-xs text-muted-foreground">{action.shortcut}</span>
-          </DropdownMenuItem>
-        ))}
-        
-        <DropdownMenuSeparator />
-        <DropdownMenuLabel className="text-xs text-muted-foreground font-normal py-1">
-          Navigation
-        </DropdownMenuLabel>
-        {actions.filter(a => a.category === 'navigation').map((action) => (
-          <DropdownMenuItem
-            key={action.id}
-            onClick={action.action}
-            className="flex items-center justify-between cursor-pointer"
-          >
-            <span className="flex items-center gap-2">
-              <action.icon className="w-4 h-4" />
-              {action.label}
-            </span>
-            <span className="text-xs text-muted-foreground">{action.shortcut}</span>
-          </DropdownMenuItem>
-        ))}
-        
-        <DropdownMenuSeparator />
-        <DropdownMenuLabel className="text-xs text-muted-foreground font-normal py-1">
-          Actions
-        </DropdownMenuLabel>
-        {actions.filter(a => a.category === 'actions').map((action) => (
-          <DropdownMenuItem
-            key={action.id}
-            onClick={action.action}
-            className="flex items-center justify-between cursor-pointer"
-          >
-            <span className="flex items-center gap-2">
-              <action.icon className="w-4 h-4" />
-              {action.label}
-            </span>
-            <span className="text-xs text-muted-foreground">{action.shortcut}</span>
-          </DropdownMenuItem>
-        ))}
+        <ActionsList actions={actions} />
       </DropdownMenuContent>
     </DropdownMenu>
   );

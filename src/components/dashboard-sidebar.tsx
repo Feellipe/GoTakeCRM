@@ -163,10 +163,12 @@ export function DashboardSidebar() {
 
   return (
     <>
-      {/* Hamburger button — always visible on mobile */}
+      {/* Hamburger button — visible on mobile, hidden when sidebar is open */}
       <button
         onClick={() => setSidebarOpen(true)}
-        className="fixed top-4 left-4 z-[60] p-2.5 rounded-xl bg-gold text-warm-950 shadow-lg shadow-gold/30 lg:hidden hover:opacity-90 transition-all duration-200"
+        className={`fixed top-4 left-4 z-[60] p-2.5 rounded-xl bg-gold text-warm-950 shadow-lg shadow-gold/30 lg:hidden hover:opacity-90 transition-all duration-200 ${
+          sidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        }`}
         aria-label="Open sidebar"
       >
         <Menu className="w-5 h-5" />
