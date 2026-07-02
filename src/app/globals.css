@@ -975,8 +975,14 @@
   }
 
   .bg-sidebar-glass {
-    background: rgba(30, 28, 26, 0.97);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
   }
+}
+
+/* Sidebar glass base - defined outside media query so it applies at all breakpoints */
+.bg-sidebar-glass {
+  background: rgba(30, 28, 26, 0.97);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
