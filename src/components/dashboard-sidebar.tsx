@@ -59,7 +59,7 @@ function OrgDropdownContent({ orgs, activeOrg, setActiveOrg, onClose }: OrgDropd
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-white text-sm font-medium">All Work</p>
-          <p className="text-white/50 text-xs">All contexts</p>
+          <p className="text-white/70 text-xs">All contexts</p>
         </div>
         {!activeOrg && <Check className="w-4 h-4 text-gold" />}
       </button>
@@ -76,7 +76,7 @@ function OrgDropdownContent({ orgs, activeOrg, setActiveOrg, onClose }: OrgDropd
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-white text-sm font-medium">My Work</p>
-          <p className="text-white/50 text-xs">Personal workspace</p>
+          <p className="text-white/70 text-xs">Personal workspace</p>
         </div>
         {activeOrg?.id === '__my_work__' && <Check className="w-4 h-4 text-gold" />}
       </button>
@@ -98,7 +98,7 @@ function OrgDropdownContent({ orgs, activeOrg, setActiveOrg, onClose }: OrgDropd
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-white text-sm font-medium truncate">{org.name}</p>
-            <p className="text-white/50 text-xs capitalize">{org.role}</p>
+            <p className="text-white/70 text-xs capitalize">{org.role}</p>
           </div>
           {activeOrg?.id === org.id && <Check className="w-4 h-4 text-gold" />}
         </button>
@@ -175,7 +175,7 @@ export function DashboardSidebar() {
       {/* Backdrop overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -207,7 +207,7 @@ export function DashboardSidebar() {
                       <p className="text-white font-semibold text-[clamp(0.875rem,2.5vw,1.125rem)] truncate">
                         {displayName}
                       </p>
-                      <p className="text-white/50 text-[clamp(0.625rem,1.8vw,0.75rem)] capitalize">
+                      <p className="text-white/70 text-[clamp(0.625rem,1.8vw,0.75rem)] capitalize">
                         {displaySubtitle}
                       </p>
                     </div>
@@ -243,7 +243,7 @@ export function DashboardSidebar() {
               {sidebarOpen && (
                 <button
                   onClick={() => setSidebarOpen(false)}
-                  className="p-2 rounded-lg hover:bg-white/10 transition-colors text-white/70 hover:text-white shrink-0"
+                  className="p-2 rounded-lg hover:bg-white/10 transition-colors text-white/80 hover:text-white shrink-0"
                   aria-label="Close sidebar"
                 >
                   <X className="w-5 h-5" />
@@ -267,7 +267,7 @@ export function DashboardSidebar() {
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group ${
                   activeView === item.id
                     ? 'bg-gold text-warm-950 font-medium shadow-lg shadow-gold/20'
-                    : 'text-white/70 hover:bg-white/10 hover:text-white'
+                    : 'text-white/90 hover:bg-white/10 hover:text-white'
                 }`}
                 style={{ animationDelay: `${index * 50}ms` }}
                 onClick={() => setSidebarOpen(false)}
@@ -302,7 +302,7 @@ export function DashboardSidebar() {
                   <p className="text-white font-medium text-[clamp(0.8rem,2.2vw,0.95rem)] truncate">
                     {user?.name || 'User'}
                   </p>
-                  <p className="text-white/50 text-[clamp(0.625rem,1.8vw,0.75rem)] truncate">
+                  <p className="text-white/70 text-[clamp(0.625rem,1.8vw,0.75rem)] truncate">
                     {user?.email || ''}
                   </p>
                 </div>
@@ -310,7 +310,7 @@ export function DashboardSidebar() {
               {sidebarOpen && (
                 <Link
                   href="/settings"
-                  className="p-2 rounded-lg hover:bg-white/10 transition-colors text-white/70 hover:text-white inline-flex items-center justify-center shrink-0"
+                  className="p-2 rounded-lg hover:bg-white/10 transition-colors text-white/80 hover:text-white inline-flex items-center justify-center shrink-0"
                   aria-label="Settings"
                 >
                   <Settings className="w-5 h-5" />
