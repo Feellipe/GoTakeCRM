@@ -201,6 +201,21 @@
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+
+  /* Mobile minimum touch targets (44px Apple HIG / WCAG 2.2) */
+  button,
+  a,
+  input,
+  select,
+  textarea,
+  [role="button"] {
+    min-height: 44px;
+  }
+
+  /* Icon-only buttons need equal min-width to be square touch targets */
+  button:has(> svg:only-child):not(:has(> :nth-child(2) span)) {
+    min-width: 44px;
+  }
 }
 
 /* Glassmorphism Utilities */

@@ -166,7 +166,7 @@ export function DashboardSidebar() {
       {/* Hamburger button — visible on mobile, hidden when sidebar is open */}
       <button
         onClick={() => setSidebarOpen(true)}
-        className={`fixed top-4 left-4 z-[60] p-2.5 rounded-xl bg-gold text-warm-950 shadow-lg shadow-gold/30 lg:hidden hover:opacity-90 transition-all duration-200 ${
+        className={`fixed top-4 left-4 z-[60] p-3 rounded-xl bg-gold text-warm-950 shadow-lg shadow-gold/30 lg:hidden hover:opacity-90 transition-all duration-200 min-h-[44px] min-w-[44px] ${
           sidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
         }`}
         aria-label="Open sidebar"
@@ -245,7 +245,7 @@ export function DashboardSidebar() {
               {sidebarOpen && (
                 <button
                   onClick={() => setSidebarOpen(false)}
-                  className="p-2 rounded-lg hover:bg-white/10 transition-colors text-white/80 hover:text-white shrink-0"
+                  className="p-2.5 rounded-lg hover:bg-white/10 transition-colors text-white/80 hover:text-white shrink-0 min-h-[44px] min-w-[44px]"
                   aria-label="Close sidebar"
                 >
                   <X className="w-5 h-5" />

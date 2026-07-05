@@ -163,12 +163,12 @@ export default function FinancialsPage() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="revenue" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="revenue" className="flex items-center gap-2">
+            <TabsList className="grid w-full grid-cols-2 mb-6 min-h-[44px]">
+              <TabsTrigger value="revenue" className="flex items-center gap-2 py-3">
                 <TrendingUp className="w-4 h-4" />
                 Revenue
               </TabsTrigger>
-              <TabsTrigger value="expenses" className="flex items-center gap-2">
+              <TabsTrigger value="expenses" className="flex items-center gap-2 py-3">
                 <TrendingDown className="w-4 h-4" />
                 Expenses
               </TabsTrigger>

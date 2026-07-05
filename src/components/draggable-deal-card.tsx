@@ -71,10 +71,10 @@ export const DraggableDealCard = React.memo(function DraggableDealCard({
           <button
             {...attributes}
             {...listeners}
-            className="cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded transition-colors"
+            className="cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <GripVertical className="w-4 h-4 text-muted-foreground" />
+            <GripVertical className="w-5 h-5 text-muted-foreground" />
           </button>
           <Avatar className="w-8 h-8 ring-2 ring-transparent group-hover:ring-primary/30 transition-all">
             <AvatarImage src={deal.client.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${deal.client.name}`} />
@@ -94,7 +94,7 @@ export const DraggableDealCard = React.memo(function DraggableDealCard({
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-7 px-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                className="min-h-[44px] px-3 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
                 onClick={(e) => {
                   e.stopPropagation();
                   onCreateProposal();

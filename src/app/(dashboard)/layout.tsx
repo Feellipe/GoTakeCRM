@@ -14,9 +14,18 @@ import {
   FileText,
   Sparkles,
   Settings,
+  MoreHorizontal,
+  Download,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { NotificationDropdown } from '@/components/notification-dropdown';
 import { ExportButton } from '@/components/export-button';
@@ -304,15 +313,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <main className="flex-1 transition-all duration-500 flex flex-col">
           {/* Header */}
           <header className="sticky top-0 z-40 glass border-b border-glass-border">
-            <div className="px-8 py-4 flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-foreground capitalize flex items-center gap-2">
-                  <ViewIcon className="w-6 h-6 text-primary" />
-                  {meta.title}
+            <div className="px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between gap-1 sm:gap-2">
+              <div className="min-w-0 flex-shrink">
+                <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground capitalize flex items-center gap-2 truncate">
+                  <ViewIcon className="w-5 h-5 sm:w-6 sm:h-6 text-primary flex-shrink-0" />
+                  <span className="truncate">{meta.title}</span>
                 </h1>
-                <p className="text-muted-foreground text-sm">{meta.description}</p>
+                <p className="text-muted-foreground text-xs sm:text-sm truncate hidden sm:block">{meta.description}</p>
               </div>
-              <div className="flex items-center gap-3">
+              {/* Primary actions - always visible */}
+              <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                 <GlobalSearch
                   clients={clients}
                   deals={deals}
@@ -329,22 +339,64 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 />
                 <ThemeToggle />
                 <NotificationDropdown notifications={notifications} />
-                <ExportButton data={{ clients, deals, kpis: data?.kpis }} />
-                <Badge variant="secondary" className="glass-badge px-4 py-2">
-                  <Clock className="w-4 h-4 mr-2" />
-                  {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-                </Badge>
-                <Button
-                  className="gradient-gold text-warm-950 hover:opacity-90 transition-all duration-300 shadow-lg shadow-gold/20 hover:shadow-gold/30 hover:scale-105"
-                  onClick={() => {
-                    if (currentView === 'clients') openNewClientModal();
-                    else if (currentView === 'pipeline') openNewDealModal();
-                    else openNewBookingModal();
-                  }}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  New {currentView === 'clients' ? 'Client' : currentView === 'pipeline' ? 'Deal' : 'Booking'}
-                </Button>
+
+                {/* Secondary actions - visible on md+ */}
+                <div className="hidden md:flex items-center gap-2 lg:gap-3">
+                  <ExportButton data={{ clients, deals, kpis: data?.kpis }} />
+                  <Badge variant="secondary" className="glass-badge px-4 py-2">
+                    <Clock className="w-4 h-4 mr-2" />
+                    {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+                  </Badge>
+                  <Button
+                    className="gradient-gold text-warm-950 hover:opacity-90 transition-all duration-300 shadow-lg shadow-gold/20 hover:shadow-gold/30 hover:scale-105"
+                    onClick={() => {
+                      if (currentView === 'clients') openNewClientModal();
+                      else if (currentView === 'pipeline') openNewDealModal();
+                      else openNewBookingModal();
+                    }}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    New {currentView === 'clients' ? 'Client' : currentView === 'pipeline' ? 'Deal' : 'Booking'}
+                  </Button>
+                </div>
+
+                {/* Mobile overflow menu */}
+                <div className="flex md:hidden">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="min-h-[44px] min-w-[44px]">
+                        <MoreHorizontal className="w-5 h-5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-52">
+                      <div className="px-3 py-2 text-xs text-muted-foreground border-b flex items-center gap-2">
+                        <Clock className="w-3.5 h-3.5" />
+                        {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                      </div>
+                      <DropdownMenuItem onClick={() => {
+                        const csvContent = 'data:text/csv;charset=utf-8,' + encodeURIComponent(
+                          'Clients\n' + clients.map((c: AppClient) => `${c.name},${c.email},${c.phone}`).join('\n')
+                        );
+                        const link = document.createElement('a');
+                        link.href = csvContent;
+                        link.download = 'crm-export.csv';
+                        link.click();
+                      }}>
+                        <Download className="w-4 h-4 mr-2" />
+                        Export CSV
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => {
+                        if (currentView === 'clients') openNewClientModal();
+                        else if (currentView === 'pipeline') openNewDealModal();
+                        else openNewBookingModal();
+                      }}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        New {currentView === 'clients' ? 'Client' : currentView === 'pipeline' ? 'Deal' : 'Booking'}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
             </div>
           </header>
@@ -354,11 +406,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           {/* Footer */}
           <footer className="mt-auto border-t border-border bg-card/30 backdrop-blur-sm">
-            <div className="px-8 py-4 flex items-center justify-between text-sm text-muted-foreground">
-              <p>&copy; 2024 GoTake CRM. Built for filmmakers &amp; photographers.</p>
-              <div className="flex items-center gap-4">
-                <a href="#" className="hover:text-primary transition-colors">Documentation</a>
-                <a href="#" className="hover:text-primary transition-colors">Support</a>
+            <div className="px-4 sm:px-8 py-3 sm:py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-muted-foreground">
+              <p className="text-xs sm:text-sm text-center sm:text-left">&copy; 2024 GoTake CRM. Built for filmmakers &amp; photographers.</p>
+              <div className="flex items-center gap-2">
+                <a href="#" className="inline-flex items-center px-3 py-3 min-h-[44px] hover:text-primary transition-colors rounded-lg">Documentation</a>
+                <a href="#" className="inline-flex items-center px-3 py-3 min-h-[44px] hover:text-primary transition-colors rounded-lg">Support</a>
               </div>
             </div>
           </footer>
