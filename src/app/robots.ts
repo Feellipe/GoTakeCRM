@@ -7,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
     // Portfolio: permite indexacao completa para ser encontravel
     return {
       rules: { userAgent: '*', allow: '/' },
-      sitemap: `${process.env.NEXTAUTH_URL}/sitemap.xml`,
+      sitemap: `${process.env.NEXTAUTH_URL || `https://${process.env.VERCEL_URL}`}/sitemap.xml`,
     };
   }
 
