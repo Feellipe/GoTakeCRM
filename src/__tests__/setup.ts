@@ -25,6 +25,26 @@ if (typeof globalThis.IntersectionObserver === 'undefined') {
   (globalThis as any).IntersectionObserver = IntersectionObserverStub;
 }
 
+// jsdom não implementa window.matchMedia, usado por hooks como useIsMobile().
+// Mock global estável: matches=false significa "desktop", alinhado aos testes
+// que esperam DropdownMenu em vez de Sheet.
+if (typeof window !== 'undefined' && typeof window.matchMedia !== 'function') {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    configurable: true,
+    value: (query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }),
+  });
+}
+
 // Helper to create a mock Prisma model with all common methods
 function createModelMock() {
   return {
