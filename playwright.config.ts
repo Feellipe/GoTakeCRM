@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? 'https://gotakecrm-iudw674vn-feellipes-projects.vercel.app';
+const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? 'https://gotakecrm-git-demo-feellipes-projects.vercel.app';
 
 export default defineConfig({
   testDir: './e2e',
