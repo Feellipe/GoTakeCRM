@@ -246,7 +246,7 @@ export const proposalUpdateSchema = z.object({
 });
 
 export const proposalTemplateCreateSchema = z.object({
-  organizationId: z.string().min(1, "Organization ID is required"),
+  organizationId: z.string().min(1, "Organization ID is required").optional(),
   name: z.string().min(1),
   description: z.string().optional().nullable(),
   defaultTerms: z.string().optional().nullable(),

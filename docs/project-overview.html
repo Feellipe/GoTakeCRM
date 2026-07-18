@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GoTakeCRM — Project Overview</title>
+<style>
+  :root {
+    --bg: #0f0f14;
+    --card: #1a1a24;
+    --border: #2a2a3a;
+    --text: #e4e4ec;
+    --muted: #8888a0;
+    --accent: #b8860b;
+    --accent2: #4a9b6b;
+    --code-bg: #12121a;
+    --tag-bg: #1e1e30;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 2rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 2.2rem; margin-bottom: 0.25rem; color: #fff; }
+  h2 {
+    font-size: 1.4rem;
+    margin: 2.5rem 0 1rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 2px solid var(--accent);
+    color: #fff;
+  }
+  h3 { font-size: 1.1rem; margin: 1.5rem 0 0.75rem; color: #ccc; }
+  p { margin-bottom: 0.75rem; color: var(--muted); }
+  .subtitle { color: var(--muted); font-size: 0.95rem; margin-bottom: 2rem; }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+  }
+  th, td {
+    padding: 0.6rem 0.8rem;
+    text-align: left;
+    border: 1px solid var(--border);
+  }
+  th {
+    background: var(--card);
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  tr:nth-child(even) { background: var(--card); }
+  td:first-child { white-space: nowrap; font-weight: 500; }
+
+  .stack-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 0.6rem;
+    margin: 1rem 0;
+  }
+  .stack-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.7rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .stack-item .cat { color: var(--accent); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stack-item .lib { color: var(--text); font-weight: 500; }
+
+  .tag {
+    display: inline-block;
+    background: var(--tag-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.78rem;
+    margin: 0.15rem 0.2rem 0.15rem 0;
+    color: var(--muted);
+  }
+  .tag.green { border-color: var(--accent2); color: var(--accent2); }
+  .tag.gold { border-color: var(--accent); color: var(--accent); }
+
+  code {
+    background: var(--code-bg);
+    padding: 0.15em 0.4em;
+    border-radius: 3px;
+    font-size: 0.88em;
+    font-family: 'Cascadia Code', 'JetBrains Mono', 'Fira Code', monospace;
+  }
+  pre {
+    background: var(--code-bg);
+    padding: 1rem;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    border: 1px solid var(--border);
+    margin: 0.75rem 0;
+  }
+
+  ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; }
+  li { margin-bottom: 0.35rem; color: var(--muted); }
+  li strong { color: var(--text); }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin: 1rem 0;
+  }
+  .card h3 { margin-top: 0; }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+  @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
+
+  .stats-row {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin: 1.5rem 0;
+  }
+  .stat {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    text-align: center;
+    min-width: 100px;
+  }
+  .stat .num { font-size: 1.8rem; font-weight: 700; color: var(--accent); }
+  .stat .label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+  .flow-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin: 0.75rem 0;
+  }
+  .flow-step {
+    background: var(--tag-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.82rem;
+  }
+  .flow-arrow { color: var(--accent); font-weight: bold; }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+
+  .command-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 0.5rem;
+  }
+  .command-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.7rem 1rem;
+  }
+  .command-card .cmd { color: var(--accent); font-weight: 600; font-family: monospace; }
+  .command-card .desc { color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+
+  .footer {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.8rem;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<h1>GoTakeCRM</h1>
+<p class="subtitle">
+  CRM Dashboard for Filmmakers &amp; Photographers — <strong>Felipe Albuquerque</strong> &middot; Generated 2026-07-17
+</p>
+
+<div class="stats-row">
+  <div class="stat"><div class="num">17</div><div class="label">DB Models</div></div>
+  <div class="stat"><div class="num">23</div><div class="label">API Routes</div></div>
+  <div class="stat"><div class="num">11</div><div class="label">WhatsApp Cmds</div></div>
+  <div class="stat"><div class="num">62</div><div class="label">Test Files</div></div>
+  <div class="stat"><div class="num">~66</div><div class="label">UI Components</div></div>
+  <div class="stat"><div class="num">10</div><div class="label">Pages</div></div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<h2>1. Stack</h2>
+
+<div class="stack-grid">
+  <div class="stack-item"><span class="cat">Framework</span><span class="lib">Next.js 16 (App Router)</span></div>
+  <div class="stack-item"><span class="cat">UI Library</span><span class="lib">React 19</span></div>
+  <div class="stack-item"><span class="cat">Language</span><span class="lib">TypeScript 5</span></div>
+  <div class="stack-item"><span class="cat">Database</span><span class="lib">PostgreSQL (Supabase)</span></div>
+  <div class="stack-item"><span class="cat">ORM</span><span class="lib">Prisma 6.19</span></div>
+  <div class="stack-item"><span class="cat">Auth</span><span class="lib">NextAuth.js 4 (JWT)</span></div>
+  <div class="stack-item"><span class="cat">Payments</span><span class="lib">Stripe (multi-tenant)</span></div>
+  <div class="stack-item"><span class="cat">Deploy</span><span class="lib">Vercel (gru1, webpack)</span></div>
+  <div class="stack-item"><span class="cat">Monitoring</span><span class="lib">Sentry</span></div>
+  <div class="stack-item"><span class="cat">PWA</span><span class="lib">Serwist</span></div>
+  <div class="stack-item"><span class="cat">Styling</span><span class="lib">Tailwind CSS v4 + shadcn/ui</span></div>
+  <div class="stack-item"><span class="cat">Forms</span><span class="lib">react-hook-form + zod</span></div>
+  <div class="stack-item"><span class="cat">Client Data</span><span class="lib">SWR + Zustand</span></div>
+  <div class="stack-item"><span class="cat">Charts</span><span class="lib">Recharts</span></div>
+  <div class="stack-item"><span class="cat">Drag &amp; Drop</span><span class="lib">dnd-kit</span></div>
+  <div class="stack-item"><span class="cat">Testing</span><span class="lib">Vitest + Playwright + MSW</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<h2>2. Domain Model</h2>
+
+<h3>Tenant &amp; User</h3>
+<table>
+  <tr><th>Model</th><th>Key Fields</th><th>Relations</th></tr>
+  <tr><td><code>Organization</code></td><td>name, slug, whatsappPhone/Token/PhoneId, stripeSecretKey/PublicKey/WebhookSecret, plan</td><td>Tenant root — everything belongs here</td></tr>
+  <tr><td><code>User</code></td><td>email (unique), name, passwordHash, googleId, lastLoginAt</td><td>UserOrganization[]</td></tr>
+  <tr><td><code>UserOrganization</code></td><td>userId, organizationId, role (owner|admin|member|viewer)</td><td>M:N bridge with unique constraint</td></tr>
+  <tr><td><code>ClientShare</code></td><td>clientId, sharedToOrgId, grantedBy</td><td>Cross-org client subtree sharing</td></tr>
+</table>
+
+<h3>Business Models (top-level, have organizationId)</h3>
+<table>
+  <tr><th>Model</th><th>Key Fields</th><th>Children</th></tr>
+  <tr><td><code>Client</code></td><td>phone (unique), name, email, eventType, source, status</td><td>Deal[], Conversation[], Booking[], Document[], Proposal[]</td></tr>
+  <tr><td><code>Deal</code></td><td>title, status (new→briefing→quoting→production→completed), value, currency (BRL)</td><td>Briefing[], Expense[], Revenue[], Booking[], Document[], Proposal[]</td></tr>
+  <tr><td><code>Conversation</code></td><td>status (active|closed)</td><td>Message[]</td></tr>
+  <tr><td><code>Booking</code></td><td>eventType, eventDate, duration, location, status</td><td>—</td></tr>
+  <tr><td><code>Document</code></td><td>type (contract|quote|invoice|moodboard|other), title, filename, storageUrl, status (draft→sent→viewed→signed)</td><td>—</td></tr>
+  <tr><td><code>Template</code></td><td>type, title, bodyHtml, variables (JSON)</td><td>—</td></tr>
+  <tr><td><code>Package</code></td><td>name, description, price, currency, deliverables (JSON), duration, category, active</td><td>—</td></tr>
+  <tr><td><code>ProposalTemplate</code></td><td>name, description, defaultTerms, defaultPackages (JSON), coverImage</td><td>Proposal[]</td></tr>
+  <tr><td><code>Proposal</code></td><td>title, status (draft→sent→viewed→accepted|rejected|expired), packages (JSON), terms, validUntil, totalValue, paymentLink, paymentStatus, stripeSessionId</td><td>—</td></tr>
+  <tr><td><code>DashboardSettings</code></td><td>businessName, currency, timezone</td><td>1:1 per org</td></tr>
+</table>
+
+<h3>Child Models (no organizationId — accessed via parent)</h3>
+<table>
+  <tr><th>Model</th><th>Parent</th><th>Key Fields</th></tr>
+  <tr><td><code>Briefing</code></td><td>Deal</td><td>content, author</td></tr>
+  <tr><td><code>Expense</code></td><td>Deal</td><td>category, description, amount, currency, date</td></tr>
+  <tr><td><code>Revenue</code></td><td>Deal</td><td>description, amount, currency, date, status (pending|received)</td></tr>
+  <tr><td><code>Message</code></td><td>Conversation</td><td>direction (inbound|outbound), type (text|image|document|interactive), content, status</td></tr>
+  <tr><td><code>CommandSession</code></td><td>— (standalone)</td><td>phone, command, step, data (JSON), expiresAt</td></tr>
+</table>
+
+<!-- ═══════════════════════════════════════════ -->
+<h2>3. Pages</h2>
+
+<table>
+  <tr><th>Route</th><th>Page</th><th>Features</th></tr>
+  <tr><td><code>/login</code></td><td>Sign In</td><td>NextAuth credentials + Google OAuth</td></tr>
+  <tr><td><code>/register</code></td><td>Register</td><td>User registration form</td></tr>
+  <tr><td><code>/onboarding</code></td><td>Org Setup</td><td>First-time org creation wizard</td></tr>
+  <tr><td><code>/dashboard</code></td><td>Main Dashboard</td><td>KPIs (revenue, expenses, profit, pipeline value, active clients, total deals/clients), bar chart (monthly revenue/expenses/profit), pipeline funnel by status, recent deals, upcoming bookings, top clients</td></tr>
+  <tr><td><code>/pipeline</code></td><td>Kanban Board</td><td>5-column drag-and-drop (dnd-kit): new → briefing → quoting → production → completed. Deal cards with inline edit. Briefing modal.</td></tr>
+  <tr><td><code>/clients</code></td><td>Client List</td><td>Search, filter by status/eventType, pagination. Client detail drill-down.</td></tr>
+  <tr><td><code>/calendar</code></td><td>Booking Calendar</td><td>Event list with date navigation</td></tr>
+  <tr><td><code>/financials</code></td><td>Revenue &amp; Expenses</td><td>ExpenseManager + RevenueManager CRUD tables per deal</td></tr>
+  <tr><td><code>/proposals</code></td><td>Proposals</td><td>Proposal list, proposal templates, Stripe payment link integration</td></tr>
+  <tr><td><code>/settings</code></td><td>Settings</td><td>User profile, theme (light/dark/system), preferences, WhatsApp config (per-org), Stripe config (per-org), org member management (admin only)</td></tr>
+</table>
+
+<!-- ═══════════════════════════════════════════ -->
+<h2>4. API Routes</h2>
+
+<div class="two-col">
+  <div>
+    <h3>Auth</h3>
+    <table>
+      <tr><th>Endpoint</th><th>Methods</th></tr>
+      <tr><td><code>/api/auth/[...nextauth]</code></td><td>NextAuth handler</td></tr>
+      <tr><td><code>/api/auth/register</code></td><td>POST</td></tr>
+      <tr><td><code>/api/auth/me</code></td><td>GET</td></tr>
+      <tr><td><code>/api/auth/onboard</code></td><td>POST</td></tr>
+    </table>
+
+    <h3>CRUD APIs</h3>
+    <table>
+      <tr><th>Endpoint</th><th>Methods</th></tr>
+      <tr><td><code>/api/clients[/[id]]</code></td><td>GET, POST, PATCH, DELETE</td></tr>
+      <tr><td><code>/api/deals[/[id]]</code></td><td>GET, POST, PATCH, DELETE</td></tr>
+      <tr><td><code>/api/revenues[/[id]]</code></td><td>GET, POST, PATCH, DELETE</td></tr>
+      <tr><td><code>/api/expenses[/[id]]</code></td><td>GET, POST, PATCH, DELETE</td></tr>
+      <tr><td><code>/api/bookings</code></td><td>GET, POST</td></tr>
+      <tr><td><code>/api/packages[/[id]]</code></td><td>GET, POST, PATCH, DELETE</td></tr>
+      <tr><td><code>/api/proposals[/[id]]</code></td><td>GET, POST, PATCH, DELETE</td></tr>
+      <tr><td><code>/api/proposal-templates[/[id]]</code></td><td>GET, POST, PATCH, DELETE</td></tr>
+    </table>
+  </div>
+
+  <div>
+    <h3>Aggregate</h3>
+    <table>
+      <tr><th>Endpoint</th><th>Methods</th></tr>
+      <tr><td><code>/api/dashboard</code></td><td>GET (13 parallel Prisma queries)</td></tr>
+    </table>
+
+    <h3>Admin</h3>
+    <table>
+      <tr><th>Endpoint</th><th>Methods</th></tr>
+      <tr><td><code>/api/admin/organizations/[id]/members</code></td><td>GET, POST, PATCH, DELETE</td></tr>
+      <tr><td><code>/api/admin/organizations/[id]/stripe</code></td><td>PATCH</td></tr>
+      <tr><td><code>/api/admin/organizations/[id]/whatsapp</code></td><td>PATCH</td></tr>
+    </table>
+
+    <h3>Stripe &amp; Profile</h3>
+    <table>
+      <tr><th>Endpoint</th><th>Methods</th></tr>
+      <tr><td><code>/api/stripe/webhook</code></td><td>POST</td></tr>
+      <tr><td><code>/api/stripe/create-checkout</code></td><td>POST</td></tr>
+      <tr><td><code>/api/profile</code></td><td>PATCH</td></tr>
+    </table>
+
+    <h3>WhatsApp</h3>
+    <table>
+      <tr><th>Endpoint</th><th>Methods</th></tr>
+      <tr><td><code>/api/whatsapp</code></td><td>GET (verify), POST (incoming)</td></tr>
+    </table>
+  </div>
+</div>
+
+<p style="margin-top:1rem;">
+  <strong>Pattern:</strong> Every route: <code>rateLimit</code> → <code>getServerSession</code> → tenant-validation → Prisma → JSON.
+  <br>No <code>middleware.ts</code> — auth is checked per-route.
+</p>
+
+<!-- ═══════════════════════════════════════════ -->
+<h2>5. WhatsApp Integration</h2>
+
+<div class="flow-row">
+  <div class="flow-step">WhatsApp Cloud API</div>
+  <span class="flow-arrow">→</span>
+  <div class="flow-step"><code>POST /api/whatsapp</code></div>
+  <span class="flow-arrow">→</span>
+  <div class="flow-step">orgLookup<br>(phone_number_id → Org)</div>
+  <span class="flow-arrow">→</span>
+  <div class="flow-step">flowOrchestrator<br>(decision engine)</div>
+  <span class="flow-arrow">→</span>
+  <div class="flow-step">Flow Handler<br>(multi-step state machine)</div>
+  <span class="flow-arrow">→</span>
+  <div class="flow-step">sendMessage<br>(reply via API)</div>
+</div>
+
+<h3>Decision Table (flowOrchestrator)</h3>
+<table>
+  <tr><th>Active Session?</th><th>Input Type</th><th>Action</th></tr>
+  <tr><td>❌ No</td><td>Is a valid command</td><td>Create session, run step 0 of flow</td></tr>
+  <tr><td>✅ Yes</td><td>Not a command</td><td>Run current step with input via flow handler</td></tr>
+  <tr><td>✅ Yes</td><td><code>/cancelar</code></td><td>Cancel session, confirm cancellation</td></tr>
+  <tr><td>✅ Yes</td><td>Other command</td><td>Replace session (delete old, create new), step 0</td></tr>
+</table>
+
+<h3>WhatsApp Commands (11 slash commands)</h3>
+<div class="command-grid">
+  <div class="command-card">
+    <div class="cmd">/novoDeal</div>
+    <div class="desc">7 steps — create client + deal + proposal with package selection</div>
+  </div>
+  <div class="command-card">
+    <div class="cmd">/despesa</div>
+    <div class="desc">4 steps — register expense on a deal</div>
+  </div>
+  <div class="command-card">
+    <div class="cmd">/receita</div>
+    <div class="desc">3 steps — register revenue on a deal</div>
+  </div>
+  <div class="command-card">
+    <div class="cmd">/briefing</div>
+    <div class="desc">3 steps — add briefing notes to a deal</div>
+  </div>
+  <div class="command-card">
+    <div class="cmd">/status</div>
+    <div class="desc">1 step — query deal status by title</div>
+  </div>
+  <div class="command-card">
+    <div class="cmd">/contatos</div>
+    <div class="desc">1 step — search/list contacts</div>
+  </div>
+  <div class="command-card">
+    <div class="cmd">/calendario</div>
+    <div class="desc">1 step — upcoming bookings</div>
+  </div>
+  <div class="command-card">
+    <div class="cmd">/projeto</div>
+    <div class="desc">2 steps — deal detail + financial summary</div>
+  </div>
+  <div class="command-card">
+    <div class="cmd">/pacotes</div>
+    <div class="desc">1 step — list available service packages</div>
+  </div>
+  <div class="command-card">
+    <div class="cmd">/ajuda</div>
+    <div class="desc">1 step — help menu listing all commands</div>
+  </div>
+  <div class="command-card">
+    <div class="cmd">/cancelar</div>
+    <div class="desc">Cancel any active session</div>
+  </div>
+</div>
+
+<h3>WhatsApp Modules</h3>
+<table>
+  <tr><th>Module</th><th>File</th><th>Role</th></tr>
+  <tr><td>Webhook Handler</td><td><code>src/app/api/whatsapp/route.ts</code></td><td>GET verification + POST message receiver</td></tr>
+  <tr><td>Flow Orchestrator</td><td><code>src/lib/whatsapp/flowOrchestrator.ts</code></td><td>Session lifecycle + flow dispatch</td></tr>
+  <tr><td>Command Router</td><td><code>src/lib/whatsapp/commandRouter.ts</code></td><td>/slash command detection + validation</td></tr>
+  <tr><td>Session Manager</td><td><code>src/lib/whatsapp/sessionManager.ts</code></td><td>CommandSession CRUD + expiry cleanup</td></tr>
+  <tr><td>Org Lookup</td><td><code>src/lib/whatsapp/orgLookup.ts</code></td><td>phone_number_id → Organization mapping</td></tr>
+  <tr><td>WhatsApp API</td><td><code>src/lib/whatsapp/whatsappApi.ts</code></td><td>Send messages via Meta Cloud API</td></tr>
+  <tr><td>Flow Handlers</td><td><code>src/lib/whatsapp/flows/*.ts</code></td><td>11 flow handlers (1 per command)</td></tr>
+  <tr><td>Session Cleanup</td><td><code>src/lib/whatsapp/cleanupExpiredSessions.ts</code></td><td>Purge expired CommandSessions</td></tr>
+</table>
+
+<!-- ═══════════════════════════════════════════ -->
+<h2>6. Frontend Architecture</h2>
+
+<div class="card">
+  <h3>Data Flow</h3>
+  <div class="flow-row">
+    <div class="flow-step">SWR Hooks<br>(useDashboardData, useClients, useDeals)</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">DashboardLayout<br>(React Context Provider)</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">useDashboard()<br>(consumed by all child pages)</div>
+  </div>
+  <p style="margin-top:0.5rem;">
+    <span class="tag green">SWR</span> Auto-dedup, 60s revalidation, mutate-on-CRUD.
+    <span class="tag gold">Zustand</span> Persisted <code>activeOrg</code> store (localStorage).
+    All pages are <code>'use client'</code> — no Server Components.
+  </p>
+</div>
+
+<h3>Custom Components (18)</h3>
+<table>
+  <tr><th>Component</th><th>Role</th></tr>
+  <tr><td><code>DashboardSidebar</code></td><td>Collapsible nav sidebar with glassmorphism effect</td></tr>
+  <tr><td><code>DraggableDealCard</code></td><td>Kanban card with drag handle, status, value, profit</td></tr>
+  <tr><td><code>NotificationDropdown</code></td><td>Static notification list dropdown</td></tr>
+  <tr><td><code>QuickActions</code></td><td>FAB: new client, new deal, new booking</td></tr>
+  <tr><td><code>GlobalSearch</code></td><td>cmdk-powered command palette (clients, deals, settings)</td></tr>
+  <tr><td><code>ExportButton</code></td><td>CSV export for dashboard data</td></tr>
+  <tr><td><code>ExpenseManager</code></td><td>Expense CRUD table with category breakdown</td></tr>
+  <tr><td><code>RevenueManager</code></td><td>Revenue CRUD table with status tracking</td></tr>
+  <tr><td><code>OrgMembersCard</code></td><td>Member list with role management (admin only)</td></tr>
+  <tr><td><code>BriefingModal</code></td><td>Creative brief editor modal</td></tr>
+  <tr><td><code>DealFormModal</code></td><td>Deal create/edit modal</td></tr>
+  <tr><td><code>ClientFormModal</code></td><td>Client create/edit modal</td></tr>
+  <tr><td><code>BookingFormModal</code></td><td>Booking create/edit modal</td></tr>
+  <tr><td><code>ProposalsView</code></td><td>Proposal listing with Stripe payment links</td></tr>
+  <tr><td><code>ClientActivityTimeline</code></td><td>Client interaction history timeline</td></tr>
+  <tr><td><code>PwaInstallBanner</code></td><td>PWA install prompt banner</td></tr>
+  <tr><td><code>ThemeToggle</code></td><td>Light/dark/system theme switcher</td></tr>
+  <tr><td><code>ThemeProvider</code></td><td>next-themes wrapper</td></tr>
+</table>
+
+<p><strong>shadcn/ui components:</strong> 48 — accordion, alert, alert-dialog, aspect-ratio, avatar, badge, breadcrumb, button, calendar, card, carousel, chart, checkbox, collapsible, command, context-menu, dialog, drawer, dropdown-menu, form, hover-card, input, input-otp, label, menubar, navigation-menu, pagination, popover, progress, radio-group, resizable, scroll-area, select, separator, sheet, sidebar, skeleton, slider, sonner, switch, table, tabs, textarea, toast, toaster, toggle, toggle-group, tooltip.</p>
+
+<!-- ═══════════════════════════════════════════ -->
+<h2>7. Testing</h2>
+
+<div class="two-col">
+  <div>
+    <h3>Test Breakdown</h3>
+    <table>
+      <tr><th>Category</th><th>Files</th><th>Location</th></tr>
+      <tr><td>Unit — Core</td><td>5</td><td><code>__tests__/unit/</code></td></tr>
+      <tr><td>Unit — WhatsApp Flows</td><td>11</td><td><code>__tests__/state-machine/</code></td></tr>
+      <tr><td>Unit — WhatsApp Webhook</td><td>1</td><td><code>__tests__/api/</code></td></tr>
+      <tr><td>Integration — API</td><td>21</td><td><code>__tests__/integration/</code></td></tr>
+      <tr><td>Component</td><td>13</td><td><code>__tests__/components/</code></td></tr>
+      <tr><td>WhatsApp (lib)</td><td>7</td><td><code>__tests__/unit/</code></td></tr>
+    </table>
+  </div>
+  <div>
+    <h3>E2E Tests (Playwright)</h3>
+    <table>
+      <tr><th>Spec</th><th>Covers</th></tr>
+      <tr><td><code>navigation.spec.ts</code></td><td>Sidebar nav between pages</td></tr>
+      <tr><td><code>dashboard.spec.ts</code></td><td>KPI cards, charts, bookings, deals</td></tr>
+      <tr><td><code>settings.spec.ts</code></td><td>Profile edit, theme, WhatsApp/Stripe config</td></tr>
+      <tr><td><code>mobile.spec.ts</code></td><td>Responsive layout + mobile sidebar</td></tr>
+      <tr><td><code>global.setup.ts</code></td><td>Login as demo@gotakecrm.com / demo2026, save auth state</td></tr>
+    </table>
+
+    <h3>Infrastructure</h3>
+    <table>
+      <tr><th>Tool</th><th>Version</th></tr>
+      <tr><td>Vitest</td><td>v3 (jsdom)</td></tr>
+      <tr><td>Testing Library</td><td>React + jest-dom + user-event</td></tr>
+      <tr><td>MSW</td><td>v2 (API mocking)</td></tr>
+      <tr><td>Playwright</td><td>v1.61 (Chromium)</td></tr>
+    </table>
+
+    <p>
+      <strong>Coverage thresholds:</strong> <code>src/lib/</code>: 80% &middot; <code>src/app/api/</code>: 70% (branches, functions, lines).
+    </p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<h2>8. CI/CD</h2>
+
+<div class="card">
+  <h3>CI Pipeline (<code>ci.yml</code>)</h3>
+  <p>Trigger: push/PR to <code>main</code> or <code>demo</code></p>
+  <div class="flow-row">
+    <div class="flow-step">npm ci</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">prisma generate</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">tsc --noEmit</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">lint</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">build</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">vitest run</div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>E2E Pipeline (<code>e2e.yml</code>)</h3>
+  <p>Trigger: push to <code>demo</code> or manual dispatch</p>
+  <div class="flow-row">
+    <div class="flow-step">install + Playwright</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">wait 120s for Vercel deploy</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">fetch preview URL</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">playwright test</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">upload report (on failure)</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<h2>9. Seed</h2>
+
+<p><code>prisma/seed.ts</code> — ~1,179 lines. Populates Brazilian photography studio data with triple-guard safety:</p>
+<ol>
+  <li><strong>GUARD 1:</strong> <code>VERCEL_ENV=production</code> → instant block (strongest)</li>
+  <li><strong>GUARD 2:</strong> <code>SEED_ALLOWED=true</code> flag required</li>
+  <li><strong>GUARD 3:</strong> Production DB hosts blocked without explicit confirmation</li>
+</ol>
+
+<p>Creates: 2 orgs, 5 users, dashboard settings, 12 clients, 12 deals (with briefings, expenses, revenue), 22 bookings, 4 service packages, 2 proposal templates, 8 documents, conversations + messages, command sessions.</p>
+
+<p>
+  <code>npm run seed:demo</code> (safe) &middot;
+  <code>npm run seed:dev</code> (with environmental checks bypassed)
+</p>
+
+<!-- ═══════════════════════════════════════════ -->
+<h2>10. WhatsApp Cloud API Pricing (2025–2026)</h2>
+
+<div class="card" style="margin-bottom: 1.5rem;">
+  <h3>Pricing Model Change</h3>
+  <p>Effective <strong>July 1, 2025</strong>, Meta switched from conversation-based pricing to <strong>per-message pricing</strong>. You are now charged per delivered <strong>template message</strong> only. Non-template messages (text, images, video, interactive lists) are always free.</p>
+</div>
+
+<h3>What's Free (Unlimited)</h3>
+<table>
+  <tr><th>Category</th><th>Description</th><th>Cost</th></tr>
+  <tr><td>Service Conversations</td><td>All messages within a customer-initiated 24-hour window</td><td><strong>Free</strong> (since Nov 1, 2024)</td></tr>
+  <tr><td>Non-template Messages</td><td>Text, images, video, interactive lists — any non-template reply</td><td><strong>Free</strong></td></tr>
+  <tr><td>Free Entry Point</td><td>72-hour window triggered by Click-to-WhatsApp Ads or FB Page CTAs</td><td><strong>Free</strong> (all categories)</td></tr>
+  <tr><td>Utility Templates in CSW</td><td>Transactional templates sent within an open Customer Service Window</td><td><strong>Free</strong></td></tr>
+</table>
+
+<h3>Paid Messages — Brazil Rates (USD)</h3>
+<table>
+  <tr><th>Category</th><th>Per Message</th><th>Use Case</th></tr>
+  <tr><td><strong>Marketing</strong></td><td><code>$0.0625</code></td><td>Promos, offers, announcements, re-engagement — highest cost tier</td></tr>
+  <tr><td><strong>Utility</strong></td><td><code>$0.0068</code></td><td>Order confirmations, delivery updates, appointment reminders</td></tr>
+  <tr><td><strong>Authentication</strong></td><td><code>$0.0068</code></td><td>OTPs, login verification codes</td></tr>
+</table>
+<p style="font-size:0.82rem; color:var(--muted);">
+  ⚠️ BRL billing becomes mandatory for eligible Brazilian customers from <strong>Jul 1, 2026</strong>, with full migration by Jun 30, 2027.
+</p>
+
+<h3>Brazil vs Other Markets (Per Message, USD)</h3>
+<table>
+  <tr><th>Market</th><th>Marketing</th><th>Utility</th><th>Authentication</th></tr>
+  <tr><td><strong>Brazil</strong></td><td><strong>$0.0625</strong></td><td><strong>$0.0068</strong></td><td><strong>$0.0068</strong></td></tr>
+  <tr><td>United States</td><td>$0.025</td><td>$0.004</td><td>$0.004</td></tr>
+  <tr><td>India</td><td>~$0.010</td><td>~$0.0014</td><td>~$0.0014</td></tr>
+  <tr><td>United Kingdom</td><td>~$0.048</td><td>~$0.020</td><td>~$0.020</td></tr>
+  <tr><td>Germany</td><td>~$0.135</td><td>varies</td><td>varies</td></tr>
+</table>
+
+<h3>Volume Tiers (Utility &amp; Authentication Only)</h3>
+<p>Marketing messages have no volume discounts. Utility and authentication scale:</p>
+<table>
+  <tr><th>Monthly Messages</th><th>Discount</th></tr>
+  <tr><td>0 – 750K</td><td>Baseline (0%)</td></tr>
+  <tr><td>750K – 15M</td><td>–6%</td></tr>
+  <tr><td>15M – 20M</td><td>–12%</td></tr>
+  <tr><td>20M – 50M</td><td>–18%</td></tr>
+  <tr><td>50M – 100M</td><td>–24%</td></tr>
+  <tr><td>100M+</td><td>–30%</td></tr>
+</table>
+<p style="font-size:0.82rem; color:var(--muted);">Tiers reset monthly, are market–category specific, and aggregate at the business portfolio level.</p>
+
+<h3>Messaging Limits &amp; Business Verification</h3>
+<table>
+  <tr><th>Status</th><th>Daily Limit (Unique Users)</th><th>Requirements</th></tr>
+  <tr><td>Unverified</td><td>250</td><td>Default for new accounts</td></tr>
+  <tr><td>Verified → Tier 1</td><td>2,000</td><td>Business verification OR send 2,000 high-quality messages in 30 days</td></tr>
+  <tr><td>Tier 2</td><td>10,000</td><td>Auto-scale: 50%+ usage in 7 days + good quality</td></tr>
+  <tr><td>Tier 3</td><td>100,000</td><td>Auto-scale</td></tr>
+  <tr><td>Tier 4</td><td>Unlimited</td><td>Auto-scale (up to 1,000 msg/sec throughput)</td></tr>
+</table>
+<p><strong>Business verification is free</strong> — requires Meta Business Manager verification with legal entity documents. Tier advancement evaluated every 6 hours.</p>
+
+<h3>Estimated Monthly Cost — Brazilian Photography Studio</h3>
+<p>Assuming 500–2,000 messages/month, with ~70% free (customer-initiated service replies) + ~30% business-initiated templates:</p>
+<table>
+  <tr><th>Scenario</th><th>Total Msgs</th><th>Paid Msgs</th><th>Marketing (50 @ $0.0625)</th><th>Utility (100 @ $0.0068)</th><th>Est. Monthly Cost</th></tr>
+  <tr><td>Low</td><td>500</td><td>150</td><td>$3.13</td><td>$0.68</td><td><strong>~$3.81</strong></td></tr>
+  <tr><td>Medium</td><td>1,500</td><td>450</td><td>$9.38</td><td>$2.04</td><td><strong>~$11.42</strong></td></tr>
+  <tr><td>High</td><td>2,000</td><td>600</td><td>$12.50</td><td>$2.72</td><td><strong>~$15.22</strong></td></tr>
+</table>
+<p><strong>Realistic range: ~$4–$15/month</strong> in Meta fees. Add BSP platform markup (~$0.003–$0.010/msg) if using a third-party provider instead of direct Cloud API.</p>
+
+<h3>Key Takeaway for GoTakeCRM</h3>
+<table>
+  <tr><th>Message Type</th><th>Cost Impact</th></tr>
+  <tr><td>Slash-command replies (<code>/novoDeal</code>, <code>/status</code>, etc.)</td><td><strong>Free</strong> — customer-initiated service messages</td></tr>
+  <tr><td>Proactive reminders (booking, payment)</td><td><strong>~$0.0068/msg</strong> — utility template</td></tr>
+  <tr><td>Marketing blasts (new packages, promotions)</td><td><strong>~$0.0625/msg</strong> — marketing template</td></tr>
+  <tr><td>OTP / verification codes</td><td><strong>~$0.0068/msg</strong> — authentication</td></tr>
+</table>
+<p style="font-size:0.82rem; color:var(--muted);">
+  ⚠️ The old "1,000 free conversations/month" tier <strong>no longer exists</strong> (ended Jul 1, 2025). Replaced by unlimited free service messages.
+</p>
+
+<div class="stats-row" style="margin-top:1.5rem;">
+  <div class="stat"><div class="num" style="font-size:1.2rem;">$4–$15</div><div class="label">Monthly Meta Cost</div></div>
+  <div class="stat"><div class="num" style="font-size:1.2rem;">~70%</div><div class="label">Messages Are Free</div></div>
+  <div class="stat"><div class="num" style="font-size:1.2rem;">250→2K</div><div class="label">Users/Day (Unverified→Verified)</div></div>
+</div>
+
+<h3 style="margin-top:1.5rem;">Sources</h3>
+<ul style="font-size:0.82rem;">
+  <li><a href="https://developers.facebook.com/documentation/business-messaging/whatsapp/pricing" style="color:var(--accent);">Meta Official — Current Per-Message Pricing</a></li>
+  <li><a href="https://developers.facebook.com/documentation/business-messaging/whatsapp/pricing/conversation-based-pricing" style="color:var(--accent);">Meta Official — Deprecated Conversation Pricing (historical)</a></li>
+  <li><a href="https://developers.facebook.com/documentation/business-messaging/whatsapp/messaging-limits" style="color:var(--accent);">Meta Official — Messaging Limits &amp; Tiers</a></li>
+  <li><a href="https://whatsappbusiness.com/products/platform-pricing/" style="color:var(--accent);">WhatsApp Business — Interactive Platform Pricing</a></li>
+  <li><a href="https://blueticks.co/blog/whatsapp-business-api-pricing-2026" style="color:var(--accent);">Blueticks — 2026 Rate Card &amp; Analysis</a></li>
+  <li><a href="https://respond.io/blog/whatsapp-business-api-pricing" style="color:var(--accent);">Respond.io — WhatsApp API Pricing Guide 2026</a></li>
+  <li><a href="https://whats.team/waba-pricing/brazil" style="color:var(--accent);">WhatsApp.Team — Brazil Pricing</a></li>
+</ul>
+
+<!-- ═══════════════════════════════════════════ -->
+
+<!-- ═══════════════════════════════════════════ -->
+<h2>11. Key Architectural Decisions</h2>
+
+<ol>
+  <li><strong>No middleware</strong> — auth checked per-route, not at the edge. Every API handler repeats <code>getServerSession → user org check</code>.</li>
+  <li><strong>No Server Components</strong> — every page is <code>'use client'</code>. Dashboard layout fetches via SWR, provides data through React Context.</li>
+  <li><strong>Multi-tenant aggregation</strong> — dashboard API supports <code>?orgId=</code> for single-org view, otherwise aggregates across all user's orgs.</li>
+  <li><strong>Stripe per-org</strong> — each organization stores its own Stripe keys; checkout and webhook use per-org credentials.</li>
+  <li><strong>WhatsApp session state</strong> — <code>CommandSession</code> model with TTL expiry, checked on every incoming message.</li>
+  <li><strong>TypeScript <code>ignoreBuildErrors: true</code></strong> — build passes even with TS errors (pragmatic for rapid iteration).</li>
+  <li><strong>Child-model isolation</strong> — Expense, Revenue, Briefing have no <code>organizationId</code>; tenant isolation enforced through the Deal → Organization chain.</li>
+  <li><strong>Vercel São Paulo</strong> — deployed to <code>gru1</code> region for low latency in Brazil.</li>
+  <li><strong>Webpack build</strong> — <code>--webpack</code> flag in <code>vercel.json</code> (not Turbopack).</li>
+  <li><strong>PWA via Serwist</strong> — cache-on-navigation, installable, offline-ready.</li>
+</ol>
+
+<hr>
+
+<div class="footer">
+  GoTakeCRM — Project Overview &middot; Generated 2026-07-17 &middot; <code>H:\Dev\GoTakeJP\GoTakeCRM\docs\project-overview.html</code>
+</div>
+
+</body>
+</html>

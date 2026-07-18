@@ -70,6 +70,14 @@ describe('GET /api/clients', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Route requires a valid session + org membership (GET enforces auth)
+    mockGetServerSession.mockResolvedValue(makeSession('user_1'));
+    mockUserOrgFindFirst.mockResolvedValue({
+      userId: 'user_1',
+      organizationId: 'org_1',
+      role: 'owner',
+      createdAt: new Date('2026-01-01'),
+    } as any);
   });
 
   it('returns flat array when no pagination params', async () => {

@@ -1,6 +1,23 @@
 // @vitest-environment jsdom
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
+// Mock window.matchMedia (jsdom may not implement or setup.ts may not run first)
+beforeAll(() => {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: vi.fn().mockImplementation((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  });
+});
+
 // Mock next-themes
 // O setTheme precisa ser uma referencia estavel para que possamos assertar
 // contra a mesma instancia que o componente recebeu ao renderizar.
