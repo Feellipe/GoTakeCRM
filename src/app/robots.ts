@@ -5,9 +5,17 @@ export default function robots(): MetadataRoute.Robots {
 
   if (isPortfolio) {
     // Portfolio: permite indexacao completa para ser encontravel
+    // Fallback chain: NEXTAUTH_URL -> https://VERCEL_URL -> dominio de producao
+    // Necessario porque em build time (CI) ambas as env vars podem ser undefined,
+    // o que tornaria `https://${process.env.VERCEL_URL}` -> "https://undefined".
+    const siteUrl =
+      process.env.NEXTAUTH_URL ||
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
+      'https://gotakecrm.vercel.app';
+
     return {
       rules: { userAgent: '*', allow: '/' },
-      sitemap: `${process.env.NEXTAUTH_URL || `https://${process.env.VERCEL_URL}`}/sitemap.xml`,
+      sitemap: `${siteUrl}/sitemap.xml`,
     };
   }
 
