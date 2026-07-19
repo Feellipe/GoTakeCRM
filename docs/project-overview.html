@@ -665,9 +665,95 @@ tr:hover td { background: rgba(99, 102, 241, 0.04); }
   gap: 0.5rem;
   flex-wrap: wrap;
 }
+.endpoint { cursor: pointer; }
 .endpoint:hover { border-color: var(--color-primary); transform: translateX(2px); }
 .endpoint-path { font-family: var(--font-mono); font-size: 0.82rem; color: var(--color-foreground); word-break: break-all; }
 .endpoint-methods { display: flex; gap: 0.25rem; flex-wrap: wrap; }
+
+/* API Schema Accordion (expand endpoint → show Prisma fields) */
+.schema-accordion {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  margin-bottom: 0.5rem;
+  overflow: hidden;
+  transition: border-color var(--transition);
+}
+.schema-accordion:hover { border-color: var(--color-primary); }
+.schema-accordion[open] { border-color: var(--color-primary); box-shadow: var(--shadow-glow-primary); }
+.schema-accordion > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 0.6rem 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 44px;
+  user-select: none;
+  transition: background var(--transition);
+  flex-wrap: wrap;
+}
+.schema-accordion > summary::-webkit-details-marker { display: none; }
+.schema-accordion > summary:hover { background: var(--color-secondary); }
+.schema-accordion > summary:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -2px; }
+.schema-accordion .endpoint-chevron {
+  color: var(--color-muted-text);
+  transition: transform var(--transition);
+  display: inline-flex;
+  align-items: center;
+}
+.schema-accordion[open] .endpoint-chevron { transform: rotate(90deg); }
+.schema-body {
+  padding: 0 0.85rem 0.85rem;
+  border-top: 1px solid var(--color-border);
+}
+.schema-body h5 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-muted-text);
+  margin: 0.85rem 0 0.5rem;
+}
+.schema-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+.schema-table th {
+  text-align: left;
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-primary);
+  font-weight: 600;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.schema-table td {
+  padding: 0.35rem 0.5rem;
+  color: var(--color-muted-text);
+  border-bottom: 1px solid rgba(51,65,85,0.3);
+}
+.schema-table td:first-child {
+  font-family: var(--font-mono);
+  color: var(--color-foreground);
+  font-weight: 500;
+  font-size: 0.8rem;
+}
+.schema-required { color: var(--color-destructive); font-weight: 600; font-size: 0.7rem; }
+.schema-optional { color: var(--color-muted-text); font-size: 0.7rem; }
+.schema-type {
+  display: inline-block;
+  background: var(--color-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 0.1em 0.4em;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+}
+.schema-type.unique { border-color: var(--color-gold); color: var(--color-gold); }
+.schema-type.rel { border-color: var(--color-info); color: var(--color-info); }
 
 /* ════════════════════════════════════════════════════════════════════
    FLOW DIAGRAM
@@ -1622,14 +1708,200 @@ tr:hover td { background: rgba(99, 102, 241, 0.04); }
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
           CRUD APIs
         </h4>
-        <div class="endpoint"><span class="endpoint-path">/api/clients[/[id]]</span><span class="endpoint-methods"><span class="method get">GET</span><span class="method post">POST</span><span class="method patch">PATCH</span><span class="method delete">DEL</span></span></div>
-        <div class="endpoint"><span class="endpoint-path">/api/deals[/[id]]</span><span class="endpoint-methods"><span class="method get">GET</span><span class="method post">POST</span><span class="method patch">PATCH</span><span class="method delete">DEL</span></span></div>
-        <div class="endpoint"><span class="endpoint-path">/api/revenues[/[id]]</span><span class="endpoint-methods"><span class="method get">GET</span><span class="method post">POST</span><span class="method patch">PATCH</span><span class="method delete">DEL</span></span></div>
-        <div class="endpoint"><span class="endpoint-path">/api/expenses[/[id]]</span><span class="endpoint-methods"><span class="method get">GET</span><span class="method post">POST</span><span class="method patch">PATCH</span><span class="method delete">DEL</span></span></div>
-        <div class="endpoint"><span class="endpoint-path">/api/bookings</span><span class="endpoint-methods"><span class="method get">GET</span><span class="method post">POST</span></span></div>
-        <div class="endpoint"><span class="endpoint-path">/api/packages[/[id]]</span><span class="endpoint-methods"><span class="method get">GET</span><span class="method post">POST</span><span class="method patch">PATCH</span><span class="method delete">DEL</span></span></div>
-        <div class="endpoint"><span class="endpoint-path">/api/proposals[/[id]]</span><span class="endpoint-methods"><span class="method get">GET</span><span class="method post">POST</span><span class="method patch">PATCH</span><span class="method delete">DEL</span></span></div>
-        <div class="endpoint"><span class="endpoint-path">/api/proposal-templates[/[id]]</span><span class="endpoint-methods"><span class="method get">GET</span><span class="method post">POST</span><span class="method patch">PATCH</span><span class="method delete">DEL</span></span></div>
+
+        <!-- Clients -->
+        <details class="schema-accordion">
+          <summary>
+            <span class="endpoint-path">/api/clients[/[id]]</span>
+            <span class="endpoint-methods"><span class="method get">GET</span><span class="method post">POST</span><span class="method patch">PATCH</span><span class="method delete">DEL</span></span>
+            <span class="endpoint-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg></span>
+          </summary>
+          <div class="schema-body">
+            <h5>Model: Client</h5>
+            <table class="schema-table">
+              <tr><th>Field</th><th>Type</th><th>Req</th><th>Constraints</th></tr>
+              <tr><td>id</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>@id @default(cuid)</td></tr>
+              <tr><td>organizationId</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>@map FK → Organization</td></tr>
+              <tr><td>phone</td><td><span class="schema-type unique">String @unique</span></td><td><span class="schema-required">●</span></td><td>WhatsApp number</td></tr>
+              <tr><td>name</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td></td></tr>
+              <tr><td>email</td><td><span class="schema-type">String</span></td><td><span class="schema-optional">○</span></td><td></td></tr>
+              <tr><td>eventType</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>@map wedding/corporate/portrait...</td></tr>
+              <tr><td>notes</td><td><span class="schema-type">String</span></td><td><span class="schema-optional">○</span></td><td></td></tr>
+              <tr><td>source</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>@default("whatsapp")</td></tr>
+              <tr><td>status</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>@default("active")</td></tr>
+              <tr><td>avatar</td><td><span class="schema-type">String</span></td><td><span class="schema-optional">○</span></td><td></td></tr>
+              <tr><td colspan="4" style="color:var(--color-info); font-size:0.72rem; padding-top:0.35rem;">→ Relations: deals[], conversations[], bookings[], documents[], proposals[], shares[]</td></tr>
+            </table>
+          </div>
+        </details>
+
+        <!-- Deals -->
+        <details class="schema-accordion">
+          <summary>
+            <span class="endpoint-path">/api/deals[/[id]]</span>
+            <span class="endpoint-methods"><span class="method get">GET</span><span class="method post">POST</span><span class="method patch">PATCH</span><span class="method delete">DEL</span></span>
+            <span class="endpoint-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg></span>
+          </summary>
+          <div class="schema-body">
+            <h5>Model: Deal</h5>
+            <table class="schema-table">
+              <tr><th>Field</th><th>Type</th><th>Req</th><th>Constraints</th></tr>
+              <tr><td>id</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>@id @default(cuid)</td></tr>
+              <tr><td>organizationId</td><td><span class="schema-type rel">String (FK)</span></td><td><span class="schema-required">●</span></td><td>→ Organization</td></tr>
+              <tr><td>clientId</td><td><span class="schema-type rel">String (FK)</span></td><td><span class="schema-required">●</span></td><td>→ Client</td></tr>
+              <tr><td>title</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td></td></tr>
+              <tr><td>description</td><td><span class="schema-type">String</span></td><td><span class="schema-optional">○</span></td><td></td></tr>
+              <tr><td>status</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>@default("new") → new/briefing/quoting/production/completed</td></tr>
+              <tr><td>value</td><td><span class="schema-type">Float</span></td><td><span class="schema-required">●</span></td><td>@default(0)</td></tr>
+              <tr><td>currency</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>@default("BRL")</td></tr>
+              <tr><td colspan="4" style="color:var(--color-info); font-size:0.72rem; padding-top:0.35rem;">→ Relations: briefings[], expenses[], revenue[], bookings[], documents[], proposals[]</td></tr>
+            </table>
+          </div>
+        </details>
+
+        <!-- Revenues -->
+        <details class="schema-accordion">
+          <summary>
+            <span class="endpoint-path">/api/revenues[/[id]]</span>
+            <span class="endpoint-methods"><span class="method get">GET</span><span class="method post">POST</span><span class="method patch">PATCH</span><span class="method delete">DEL</span></span>
+            <span class="endpoint-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg></span>
+          </summary>
+          <div class="schema-body">
+            <h5>Model: Revenue <span style="font-weight:400;color:var(--color-muted-text)">(child of Deal)</span></h5>
+            <table class="schema-table">
+              <tr><th>Field</th><th>Type</th><th>Req</th><th>Constraints</th></tr>
+              <tr><td>id</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>@id @default(cuid)</td></tr>
+              <tr><td>dealId</td><td><span class="schema-type rel">String (FK)</span></td><td><span class="schema-required">●</span></td><td>→ Deal</td></tr>
+              <tr><td>description</td><td><span class="schema-type">String</span></td><td><span class="schema-optional">○</span></td><td></td></tr>
+              <tr><td>amount</td><td><span class="schema-type">Float</span></td><td><span class="schema-required">●</span></td><td></td></tr>
+              <tr><td>currency</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>@default("BRL")</td></tr>
+              <tr><td>date</td><td><span class="schema-type">DateTime</span></td><td><span class="schema-required">●</span></td><td>@default(now)</td></tr>
+              <tr><td>status</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>@default("received") → pending/received</td></tr>
+            </table>
+          </div>
+        </details>
+
+        <!-- Expenses -->
+        <details class="schema-accordion">
+          <summary>
+            <span class="endpoint-path">/api/expenses[/[id]]</span>
+            <span class="endpoint-methods"><span class="method get">GET</span><span class="method post">POST</span><span class="method patch">PATCH</span><span class="method delete">DEL</span></span>
+            <span class="endpoint-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg></span>
+          </summary>
+          <div class="schema-body">
+            <h5>Model: Expense <span style="font-weight:400;color:var(--color-muted-text)">(child of Deal)</span></h5>
+            <table class="schema-table">
+              <tr><th>Field</th><th>Type</th><th>Req</th><th>Constraints</th></tr>
+              <tr><td>id</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>@id @default(cuid)</td></tr>
+              <tr><td>dealId</td><td><span class="schema-type rel">String (FK)</span></td><td><span class="schema-required">●</span></td><td>→ Deal</td></tr>
+              <tr><td>category</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>equipment/location/crew/props/travel/other</td></tr>
+              <tr><td>description</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td></td></tr>
+              <tr><td>amount</td><td><span class="schema-type">Float</span></td><td><span class="schema-required">●</span></td><td></td></tr>
+              <tr><td>currency</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>@default("BRL")</td></tr>
+              <tr><td>date</td><td><span class="schema-type">DateTime</span></td><td><span class="schema-required">●</span></td><td>@default(now)</td></tr>
+            </table>
+          </div>
+        </details>
+
+        <!-- Bookings -->
+        <details class="schema-accordion">
+          <summary>
+            <span class="endpoint-path">/api/bookings</span>
+            <span class="endpoint-methods"><span class="method get">GET</span><span class="method post">POST</span></span>
+            <span class="endpoint-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg></span>
+          </summary>
+          <div class="schema-body">
+            <h5>Model: Booking</h5>
+            <table class="schema-table">
+              <tr><th>Field</th><th>Type</th><th>Req</th><th>Constraints</th></tr>
+              <tr><td>id</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>@id @default(cuid)</td></tr>
+              <tr><td>organizationId</td><td><span class="schema-type rel">String (FK)</span></td><td><span class="schema-required">●</span></td><td>→ Organization</td></tr>
+              <tr><td>clientId</td><td><span class="schema-type rel">String (FK)</span></td><td><span class="schema-required">●</span></td><td>→ Client</td></tr>
+              <tr><td>dealId</td><td><span class="schema-type rel">String (FK)</span></td><td><span class="schema-optional">○</span></td><td>→ Deal (nullable)</td></tr>
+              <tr><td>eventType</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td></td></tr>
+              <tr><td>eventDate</td><td><span class="schema-type">DateTime</span></td><td><span class="schema-required">●</span></td><td></td></tr>
+              <tr><td>duration</td><td><span class="schema-type">Int</span></td><td><span class="schema-required">●</span></td><td>@default(60) — minutes</td></tr>
+              <tr><td>location</td><td><span class="schema-type">String</span></td><td><span class="schema-optional">○</span></td><td></td></tr>
+              <tr><td>status</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>@default("pending") → pending/confirmed/completed/cancelled</td></tr>
+              <tr><td>notes</td><td><span class="schema-type">String</span></td><td><span class="schema-optional">○</span></td><td></td></tr>
+            </table>
+          </div>
+        </details>
+
+        <!-- Packages -->
+        <details class="schema-accordion">
+          <summary>
+            <span class="endpoint-path">/api/packages[/[id]]</span>
+            <span class="endpoint-methods"><span class="method get">GET</span><span class="method post">POST</span><span class="method patch">PATCH</span><span class="method delete">DEL</span></span>
+            <span class="endpoint-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg></span>
+          </summary>
+          <div class="schema-body">
+            <h5>Model: Package</h5>
+            <table class="schema-table">
+              <tr><th>Field</th><th>Type</th><th>Req</th><th>Constraints</th></tr>
+              <tr><td>id</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>@id @default(cuid)</td></tr>
+              <tr><td>organizationId</td><td><span class="schema-type rel">String (FK)</span></td><td><span class="schema-required">●</span></td><td>→ Organization</td></tr>
+              <tr><td>name</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td></td></tr>
+              <tr><td>description</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td></td></tr>
+              <tr><td>price</td><td><span class="schema-type">Float</span></td><td><span class="schema-required">●</span></td><td></td></tr>
+              <tr><td>currency</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>@default("BRL")</td></tr>
+              <tr><td>deliverables</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>JSON array of items</td></tr>
+              <tr><td>duration</td><td><span class="schema-type">Int</span></td><td><span class="schema-required">●</span></td><td>hours</td></tr>
+              <tr><td>category</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>@default("photography") → photography/videography/both</td></tr>
+              <tr><td>active</td><td><span class="schema-type">Boolean</span></td><td><span class="schema-required">●</span></td><td>@default(true)</td></tr>
+            </table>
+          </div>
+        </details>
+
+        <!-- Proposals -->
+        <details class="schema-accordion">
+          <summary>
+            <span class="endpoint-path">/api/proposals[/[id]]</span>
+            <span class="endpoint-methods"><span class="method get">GET</span><span class="method post">POST</span><span class="method patch">PATCH</span><span class="method delete">DEL</span></span>
+            <span class="endpoint-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg></span>
+          </summary>
+          <div class="schema-body">
+            <h5>Model: Proposal</h5>
+            <table class="schema-table">
+              <tr><th>Field</th><th>Type</th><th>Req</th><th>Constraints</th></tr>
+              <tr><td>id</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>@id @default(cuid)</td></tr>
+              <tr><td>organizationId</td><td><span class="schema-type rel">String (FK)</span></td><td><span class="schema-required">●</span></td><td>→ Organization</td></tr>
+              <tr><td>clientId</td><td><span class="schema-type rel">String (FK)</span></td><td><span class="schema-required">●</span></td><td>→ Client</td></tr>
+              <tr><td>dealId</td><td><span class="schema-type rel">String (FK)</span></td><td><span class="schema-optional">○</span></td><td>→ Deal (nullable)</td></tr>
+              <tr><td>templateId</td><td><span class="schema-type rel">String (FK)</span></td><td><span class="schema-optional">○</span></td><td>→ ProposalTemplate</td></tr>
+              <tr><td>title</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td></td></tr>
+              <tr><td>status</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>@default("draft") → draft/sent/viewed/accepted/rejected/expired</td></tr>
+              <tr><td>totalValue</td><td><span class="schema-type">Float</span></td><td><span class="schema-required">●</span></td><td>@default(0)</td></tr>
+              <tr><td>paymentStatus</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>@default("none") → none/pending/paid/failed</td></tr>
+              <tr><td>stripeSessionId</td><td><span class="schema-type">String</span></td><td><span class="schema-optional">○</span></td><td></td></tr>
+              <tr><td colspan="4" style="font-size:0.7rem; color:var(--color-muted-text);">+ 8 more optional fields: description, packages, customItems, portfolioLinks, terms, validUntil, notes, paymentLink, sentAt, viewedAt, respondedAt (all nullable)</td></tr>
+            </table>
+          </div>
+        </details>
+
+        <!-- Proposal Templates -->
+        <details class="schema-accordion">
+          <summary>
+            <span class="endpoint-path">/api/proposal-templates[/[id]]</span>
+            <span class="endpoint-methods"><span class="method get">GET</span><span class="method post">POST</span><span class="method patch">PATCH</span><span class="method delete">DEL</span></span>
+            <span class="endpoint-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg></span>
+          </summary>
+          <div class="schema-body">
+            <h5>Model: ProposalTemplate</h5>
+            <table class="schema-table">
+              <tr><th>Field</th><th>Type</th><th>Req</th><th>Constraints</th></tr>
+              <tr><td>id</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>@id @default(cuid)</td></tr>
+              <tr><td>organizationId</td><td><span class="schema-type rel">String (FK)</span></td><td><span class="schema-required">●</span></td><td>→ Organization</td></tr>
+              <tr><td>name</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td></td></tr>
+              <tr><td>description</td><td><span class="schema-type">String</span></td><td><span class="schema-optional">○</span></td><td></td></tr>
+              <tr><td>defaultTerms</td><td><span class="schema-type">String</span></td><td><span class="schema-optional">○</span></td><td></td></tr>
+              <tr><td>defaultPackages</td><td><span class="schema-type">String</span></td><td><span class="schema-optional">○</span></td><td>JSON array of package IDs</td></tr>
+              <tr><td>coverImage</td><td><span class="schema-type">String</span></td><td><span class="schema-optional">○</span></td><td></td></tr>
+              <tr><td>isActive</td><td><span class="schema-type">Boolean</span></td><td><span class="schema-required">●</span></td><td>@default(true)</td></tr>
+              <tr><td colspan="4" style="color:var(--color-info); font-size:0.72rem; padding-top:0.35rem;">→ Relations: proposals[]</td></tr>
+            </table>
+          </div>
+        </details>
       </div>
 
       <div class="endpoint-group">
