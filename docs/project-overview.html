@@ -1692,6 +1692,49 @@ tr:hover td { background: rgba(99, 102, 241, 0.04); }
         <div class="endpoint"><span class="endpoint-path">/api/auth/register</span><span class="endpoint-methods"><span class="method post">POST</span></span></div>
         <div class="endpoint"><span class="endpoint-path">/api/auth/me</span><span class="endpoint-methods"><span class="method get">GET</span></span></div>
         <div class="endpoint"><span class="endpoint-path">/api/auth/onboard</span><span class="endpoint-methods"><span class="method post">POST</span></span></div>
+
+        <!-- User schema -->
+        <details class="schema-accordion">
+          <summary>
+            <span class="endpoint-path" style="font-size:0.78rem;">Model: User</span>
+            <span class="badge muted">register / me / onboard</span>
+            <span class="endpoint-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg></span>
+          </summary>
+          <div class="schema-body">
+            <h5>Model: User</h5>
+            <table class="schema-table">
+              <tr><th>Field</th><th>Type</th><th>Req</th><th>Constraints</th></tr>
+              <tr><td>id</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>@id @default(cuid)</td></tr>
+              <tr><td>email</td><td><span class="schema-type unique">String @unique</span></td><td><span class="schema-required">●</span></td><td></td></tr>
+              <tr><td>name</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td></td></tr>
+              <tr><td>passwordHash</td><td><span class="schema-type">String</span></td><td><span class="schema-optional">○</span></td><td>Credentials auth (nullable for Google-only users)</td></tr>
+              <tr><td>avatar</td><td><span class="schema-type">String</span></td><td><span class="schema-optional">○</span></td><td></td></tr>
+              <tr><td>googleId</td><td><span class="schema-type unique">String @unique</span></td><td><span class="schema-optional">○</span></td><td>OAuth — Google SSO</td></tr>
+              <tr><td>lastLoginAt</td><td><span class="schema-type">DateTime</span></td><td><span class="schema-optional">○</span></td><td></td></tr>
+              <tr><td colspan="4" style="color:var(--color-info); font-size:0.72rem; padding-top:0.35rem;">→ Relations: organizations[] (via UserOrganization)</td></tr>
+            </table>
+          </div>
+        </details>
+
+        <!-- UserOrganization schema (used by onboard) -->
+        <details class="schema-accordion">
+          <summary>
+            <span class="endpoint-path" style="font-size:0.78rem;">Model: UserOrganization</span>
+            <span class="badge indigo">M:N join</span>
+            <span class="endpoint-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg></span>
+          </summary>
+          <div class="schema-body">
+            <h5>Model: UserOrganization <span style="font-weight:400;color:var(--color-muted-text)">(many-to-many join table)</span></h5>
+            <table class="schema-table">
+              <tr><th>Field</th><th>Type</th><th>Req</th><th>Constraints</th></tr>
+              <tr><td>id</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>@id @default(cuid)</td></tr>
+              <tr><td>userId</td><td><span class="schema-type rel">String (FK)</span></td><td><span class="schema-required">●</span></td><td>→ User (Cascade)</td></tr>
+              <tr><td>organizationId</td><td><span class="schema-type rel">String (FK)</span></td><td><span class="schema-required">●</span></td><td>→ Organization (Cascade)</td></tr>
+              <tr><td>role</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>@default("owner") → owner/admin/member/viewer</td></tr>
+              <tr><td colspan="4" style="font-size:0.72rem; color:var(--color-muted-text);">@@unique([userId, organizationId]) — one row per user per org</td></tr>
+            </table>
+          </div>
+        </details>
       </div>
 
       <div class="endpoint-group">
@@ -1701,6 +1744,25 @@ tr:hover td { background: rgba(99, 102, 241, 0.04); }
         </h4>
         <div class="endpoint"><span class="endpoint-path">/api/dashboard</span><span class="endpoint-methods"><span class="method get">GET</span></span></div>
         <p style="font-size:0.78rem; color:var(--color-muted-text); margin-top:0.4rem;">13 queries Prisma em paralelo — KPIs, funnel, top clients, recent deals, bookings.</p>
+
+        <details class="schema-accordion" style="margin-top:0.5rem;">
+          <summary>
+            <span class="endpoint-path" style="font-size:0.78rem;">Model: DashboardSettings</span>
+            <span class="badge indigo">1:1 per org</span>
+            <span class="endpoint-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg></span>
+          </summary>
+          <div class="schema-body">
+            <h5>Model: DashboardSettings <span style="font-weight:400;color:var(--color-muted-text)">(1-per-organization config)</span></h5>
+            <table class="schema-table">
+              <tr><th>Field</th><th>Type</th><th>Req</th><th>Constraints</th></tr>
+              <tr><td>id</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>@id @default(cuid)</td></tr>
+              <tr><td>organizationId</td><td><span class="schema-type unique">String @unique</span></td><td><span class="schema-required">●</span></td><td>FK → Organization (1:1)</td></tr>
+              <tr><td>businessName</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>@default("My Studio")</td></tr>
+              <tr><td>currency</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>@default("BRL")</td></tr>
+              <tr><td>timezone</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>@default("America/Sao_Paulo")</td></tr>
+            </table>
+          </div>
+        </details>
       </div>
 
       <div class="endpoint-group">
@@ -1913,11 +1975,38 @@ tr:hover td { background: rgba(99, 102, 241, 0.04); }
         <div class="endpoint"><span class="endpoint-path">/api/admin/organizations/[id]/stripe</span><span class="endpoint-methods"><span class="method patch">PATCH</span></span></div>
         <div class="endpoint"><span class="endpoint-path">/api/admin/organizations/[id]/whatsapp</span><span class="endpoint-methods"><span class="method patch">PATCH</span></span></div>
 
+        <!-- Organization schema (stripe + whatsapp admin) -->
+        <details class="schema-accordion" style="margin-top:0.5rem;">
+          <summary>
+            <span class="endpoint-path" style="font-size:0.78rem;">Model: Organization</span>
+            <span class="badge indigo">tenant core</span>
+            <span class="endpoint-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg></span>
+          </summary>
+          <div class="schema-body">
+            <h5>Model: Organization <span style="font-weight:400;color:var(--color-muted-text)">(tenant isolation unit)</span></h5>
+            <table class="schema-table">
+              <tr><th>Field</th><th>Type</th><th>Req</th><th>Constraints</th></tr>
+              <tr><td>id</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>@id @default(cuid)</td></tr>
+              <tr><td>name</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td></td></tr>
+              <tr><td>slug</td><td><span class="schema-type unique">String @unique</span></td><td><span class="schema-required">●</span></td><td>URL-friendly tenant identifier</td></tr>
+              <tr><td>whatsappPhone</td><td><span class="schema-type">String</span></td><td><span class="schema-optional">○</span></td><td>→ set via admin/whatsapp PATCH</td></tr>
+              <tr><td>whatsappToken</td><td><span class="schema-type">String</span></td><td><span class="schema-optional">○</span></td><td>→ set via admin/whatsapp PATCH</td></tr>
+              <tr><td>whatsappPhoneId</td><td><span class="schema-type">String</span></td><td><span class="schema-optional">○</span></td><td>→ phone_number_id for orgLookup</td></tr>
+              <tr><td>stripeSecretKey</td><td><span class="schema-type">String</span></td><td><span class="schema-optional">○</span></td><td>→ set via admin/stripe PATCH</td></tr>
+              <tr><td>stripePublicKey</td><td><span class="schema-type">String</span></td><td><span class="schema-optional">○</span></td><td></td></tr>
+              <tr><td>stripeWebhookSecret</td><td><span class="schema-type">String</span></td><td><span class="schema-optional">○</span></td><td></td></tr>
+              <tr><td>plan</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>@default("solo") → solo/pro/agency</td></tr>
+              <tr><td colspan="4" style="color:var(--color-info); font-size:0.72rem; padding-top:0.35rem;">→ Relations: members[], clients[], deals[], bookings[], packages[], proposals[], templates[], dashboardSettings[]</td></tr>
+            </table>
+          </div>
+        </details>
+
         <h4 style="margin-top:1.25rem;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="16" height="16"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
           Profile &amp; Misc
         </h4>
         <div class="endpoint"><span class="endpoint-path">/api/profile</span><span class="endpoint-methods"><span class="method patch">PATCH</span></span></div>
+        <p style="font-size:0.75rem; color:var(--color-muted-text); margin:0.2rem 0;">Schema → Model: User (see Auth group above)</p>
       </div>
 
       <div class="endpoint-group">
@@ -1936,6 +2025,27 @@ tr:hover td { background: rgba(99, 102, 241, 0.04); }
         </h4>
         <div class="endpoint"><span class="endpoint-path">/api/whatsapp</span><span class="endpoint-methods"><span class="method get">GET</span><span class="method post">POST</span></span></div>
         <p style="font-size:0.78rem; color:var(--color-muted-text); margin-top:0.4rem;"><span class="method get">GET</span> verifica hub.challenge · <span class="method post">POST</span> recebe mensagens do Meta webhook.</p>
+
+        <details class="schema-accordion" style="margin-top:0.5rem;">
+          <summary>
+            <span class="endpoint-path" style="font-size:0.78rem;">Model: CommandSession</span>
+            <span class="badge gold">state machine</span>
+            <span class="endpoint-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg></span>
+          </summary>
+          <div class="schema-body">
+            <h5>Model: CommandSession <span style="font-weight:400;color:var(--color-muted-text)">(WhatsApp multi-step state machine — standalone)</span></h5>
+            <table class="schema-table">
+              <tr><th>Field</th><th>Type</th><th>Req</th><th>Constraints</th></tr>
+              <tr><td>id</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>@id @default(cuid)</td></tr>
+              <tr><td>phone</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td></td></tr>
+              <tr><td>command</td><td><span class="schema-type">String</span></td><td><span class="schema-required">●</span></td><td>/novoDeal, /despesa, /receita...</td></tr>
+              <tr><td>step</td><td><span class="schema-type">Int</span></td><td><span class="schema-required">●</span></td><td>@default(0)</td></tr>
+              <tr><td>data</td><td><span class="schema-type">Json</span></td><td><span class="schema-required">●</span></td><td>@default("{}") — accumulates flow state</td></tr>
+              <tr><td>expiresAt</td><td><span class="schema-type">DateTime</span></td><td><span class="schema-required">●</span></td><td>TTL — cleanupExpiredSessions.ts purges stale rows</td></tr>
+              <tr><td colspan="4" style="font-size:0.72rem; color:var(--color-muted-text);">@@index([phone, expiresAt]) — fast lookup by phone number. No relation to User/Org (standalone).</td></tr>
+            </table>
+          </div>
+        </details>
       </div>
     </div>
   </section>
