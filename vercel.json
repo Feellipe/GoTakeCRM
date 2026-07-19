@@ -3,6 +3,12 @@
   "installCommand": "npm install",
   "framework": "nextjs",
   "regions": ["gru1"],
+  "crons": [
+    {
+      "path": "/api/cron/keep-alive",
+      "schedule": "0 0 */5 * *"
+    }
+  ],
   "functions": {
     "src/app/api/**/*.ts": {
       "maxDuration": 10
