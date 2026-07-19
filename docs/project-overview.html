@@ -13,8 +13,12 @@
     --muted: #8888a0;
     --accent: #b8860b;
     --accent2: #4a9b6b;
+    --accent3: #6b8eff;
+    --accent4: #c45a5a;
     --code-bg: #12121a;
     --tag-bg: #1e1e30;
+    --user-bubble: #1e3a5f;
+    --bot-bubble: #1f2a1f;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -23,7 +27,7 @@
     color: var(--text);
     line-height: 1.6;
     padding: 2rem;
-    max-width: 1100px;
+    max-width: 1200px;
     margin: 0 auto;
   }
   h1 { font-size: 2.2rem; margin-bottom: 0.25rem; color: #fff; }
@@ -35,9 +39,10 @@
     color: #fff;
   }
   h3 { font-size: 1.1rem; margin: 1.5rem 0 0.75rem; color: #ccc; }
+  h4 { font-size: 0.95rem; margin: 1.2rem 0 0.5rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; }
   p { margin-bottom: 0.75rem; color: var(--muted); }
   .subtitle { color: var(--muted); font-size: 0.95rem; margin-bottom: 2rem; }
-  
+
   table {
     width: 100%;
     border-collapse: collapse;
@@ -48,6 +53,7 @@
     padding: 0.6rem 0.8rem;
     text-align: left;
     border: 1px solid var(--border);
+    vertical-align: top;
   }
   th {
     background: var(--card);
@@ -90,6 +96,8 @@
   }
   .tag.green { border-color: var(--accent2); color: var(--accent2); }
   .tag.gold { border-color: var(--accent); color: var(--accent); }
+  .tag.blue { border-color: var(--accent3); color: var(--accent3); }
+  .tag.red  { border-color: var(--accent4); color: var(--accent4); }
 
   code {
     background: var(--code-bg);
@@ -107,6 +115,7 @@
     line-height: 1.5;
     border: 1px solid var(--border);
     margin: 0.75rem 0;
+    color: var(--text);
   }
 
   ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; }
@@ -160,7 +169,40 @@
     padding: 0.4rem 0.8rem;
     font-size: 0.82rem;
   }
+  .flow-step.active { border-color: var(--accent); color: var(--accent); }
   .flow-arrow { color: var(--accent); font-weight: bold; }
+
+  /* Steps list — numbered */
+  .steps {
+    list-style: none;
+    margin-left: 0;
+    counter-reset: step-counter;
+  }
+  .steps > li {
+    counter-increment: step-counter;
+    position: relative;
+    padding-left: 2.5rem;
+    margin-bottom: 0.6rem;
+    color: var(--text);
+  }
+  .steps > li::before {
+    content: counter(step-counter);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1.6rem;
+    height: 1.6rem;
+    background: var(--accent);
+    color: #000;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.78rem;
+  }
+  .steps > li .step-label { color: var(--accent); font-weight: 600; }
+  .steps > li .step-detail { color: var(--muted); font-size: 0.88rem; }
 
   hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
 
@@ -178,6 +220,197 @@
   .command-card .cmd { color: var(--accent); font-weight: 600; font-family: monospace; }
   .command-card .desc { color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
 
+  /* Conversation dialog bubbles */
+  .dialog {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 0.75rem 0;
+    font-size: 0.85rem;
+  }
+  .dialog .bubble {
+    display: block;
+    padding: 0.55rem 0.85rem;
+    border-radius: 10px;
+    margin-bottom: 0.4rem;
+    max-width: 85%;
+    white-space: pre-wrap;
+    line-height: 1.45;
+  }
+  .dialog .user {
+    background: var(--user-bubble);
+    border: 1px solid #2a4a7a;
+    color: #cfe1ff;
+    margin-left: auto;
+    text-align: right;
+  }
+  .dialog .bot {
+    background: var(--bot-bubble);
+    border: 1px solid #2f4a2f;
+    color: #c8f0c8;
+    margin-right: auto;
+    text-align: left;
+  }
+  .dialog .speaker {
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0.4rem 0 0.15rem 0.15rem;
+  }
+  .dialog .speaker.user { text-align: right; }
+
+  /* ADR cards */
+  .adr-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: 6px;
+    padding: 1.1rem 1.25rem;
+    margin: 1rem 0;
+  }
+  .adr-card .adr-id {
+    color: var(--accent);
+    font-family: monospace;
+    font-size: 0.82rem;
+    letter-spacing: 0.5px;
+  }
+  .adr-card .adr-title {
+    color: #fff;
+    font-weight: 600;
+    font-size: 1.05rem;
+    margin: 0.2rem 0 0.5rem;
+  }
+  .adr-card .adr-status {
+    display: inline-block;
+    background: rgba(74, 155, 107, 0.15);
+    color: var(--accent2);
+    border: 1px solid var(--accent2);
+    border-radius: 3px;
+    padding: 0.1rem 0.5rem;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Architecture diagram — styled divs */
+  .arch-diagram {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    font-family: 'Cascadia Code', 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    overflow-x: auto;
+    color: var(--text);
+    white-space: pre;
+  }
+  .arch-diagram .h { color: var(--accent); font-weight: bold; }
+  .arch-diagram .g { color: var(--accent2); }
+  .arch-diagram .b { color: var(--accent3); }
+  .arch-diagram .r { color: var(--accent4); }
+  .arch-diagram .m { color: var(--muted); }
+
+  /* Sidebar wireframe */
+  .wireframe {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 0.75rem;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin: 1rem 0;
+  }
+  .wireframe .sidebar {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.6rem;
+    font-size: 0.78rem;
+  }
+  .wireframe .sidebar .brand {
+    color: var(--accent);
+    font-weight: 600;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0.5rem;
+  }
+  .wireframe .sidebar .nav-item {
+    padding: 0.25rem 0.4rem;
+    color: var(--muted);
+    border-radius: 4px;
+    margin-bottom: 0.15rem;
+  }
+  .wireframe .sidebar .nav-item.active {
+    background: rgba(184, 134, 11, 0.15);
+    color: var(--accent);
+    border-left: 2px solid var(--accent);
+    padding-left: 0.3rem;
+  }
+  .wireframe .content {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.6rem;
+    min-height: 200px;
+  }
+  .wireframe .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0.6rem;
+    font-size: 0.78rem;
+  }
+  .wireframe .topbar .search {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.2rem 0.5rem;
+    color: var(--muted);
+    flex: 1;
+    margin-right: 0.5rem;
+  }
+  .wireframe .kpis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.4rem;
+    margin-bottom: 0.5rem;
+  }
+  .wireframe .kpi {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.4rem;
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-align: center;
+  }
+  .wireframe .kpi .v { color: var(--accent); font-weight: 700; display: block; }
+  @media (max-width: 600px) {
+    .wireframe { grid-template-columns: 1fr; }
+    .wireframe .kpis { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .fab {
+    position: relative;
+    display: inline-block;
+    background: var(--accent);
+    color: #000;
+    border-radius: 50%;
+    width: 3rem;
+    height: 3rem;
+    line-height: 3rem;
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
   .footer {
     margin-top: 3rem;
     padding-top: 1.5rem;
@@ -186,26 +419,63 @@
     font-size: 0.8rem;
     text-align: center;
   }
+
+  /* TOC */
+  .toc {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    margin: 1.5rem 0;
+  }
+  .toc h3 { margin-top: 0; color: var(--accent); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+  .toc ol { columns: 2; column-gap: 2rem; }
+  @media (max-width: 600px) { .toc ol { columns: 1; } }
+  .toc a { color: var(--text); text-decoration: none; }
+  .toc a:hover { color: var(--accent); }
 </style>
 </head>
 <body>
 
 <h1>GoTakeCRM</h1>
 <p class="subtitle">
-  CRM Dashboard for Filmmakers &amp; Photographers — <strong>Felipe Albuquerque</strong> &middot; Generated 2026-07-17
+  CRM Dashboard for Filmmakers &amp; Photographers &middot; <strong>Felipe Cavalcanti</strong> &middot; Updated 2026-07-19
 </p>
 
 <div class="stats-row">
   <div class="stat"><div class="num">17</div><div class="label">DB Models</div></div>
-  <div class="stat"><div class="num">23</div><div class="label">API Routes</div></div>
+  <div class="stat"><div class="num">26</div><div class="label">API Routes</div></div>
   <div class="stat"><div class="num">11</div><div class="label">WhatsApp Cmds</div></div>
   <div class="stat"><div class="num">62</div><div class="label">Test Files</div></div>
   <div class="stat"><div class="num">~66</div><div class="label">UI Components</div></div>
   <div class="stat"><div class="num">10</div><div class="label">Pages</div></div>
+  <div class="stat"><div class="num">5</div><div class="label">ADRs</div></div>
+</div>
+
+<div class="toc">
+  <h3>Table of Contents</h3>
+  <ol>
+    <li><a href="#stack">Stack</a></li>
+    <li><a href="#domain">Domain Model</a></li>
+    <li><a href="#pages">Pages</a></li>
+    <li><a href="#api">API Routes</a></li>
+    <li><a href="#ux">Web UX Flows</a></li>
+    <li><a href="#whatsapp">WhatsApp Integration</a></li>
+    <li><a href="#commands">11 Command Flows + Dialogs</a></li>
+    <li><a href="#frontend">Frontend Architecture</a></li>
+    <li><a href="#adrs">Architectural Decisions (ADRs)</a></li>
+    <li><a href="#diagrams">Architecture Diagrams</a></li>
+    <li><a href="#testing">Testing</a></li>
+    <li><a href="#cicd">CI/CD</a></li>
+    <li><a href="#seed">Seed</a></li>
+    <li><a href="#pricing">WhatsApp Pricing</a></li>
+    <li><a href="#gaps">Known Gaps &amp; Next Steps</a></li>
+    <li><a href="#risks">Technical Risks</a></li>
+  </ol>
 </div>
 
 <!-- ═══════════════════════════════════════════ -->
-<h2>1. Stack</h2>
+<h2 id="stack">1. Stack</h2>
 
 <div class="stack-grid">
   <div class="stack-item"><span class="cat">Framework</span><span class="lib">Next.js 16 (App Router)</span></div>
@@ -227,7 +497,7 @@
 </div>
 
 <!-- ═══════════════════════════════════════════ -->
-<h2>2. Domain Model</h2>
+<h2 id="domain">2. Domain Model</h2>
 
 <h3>Tenant &amp; User</h3>
 <table>
@@ -264,24 +534,25 @@
 </table>
 
 <!-- ═══════════════════════════════════════════ -->
-<h2>3. Pages</h2>
+<h2 id="pages">3. Pages</h2>
 
 <table>
   <tr><th>Route</th><th>Page</th><th>Features</th></tr>
-  <tr><td><code>/login</code></td><td>Sign In</td><td>NextAuth credentials + Google OAuth</td></tr>
+  <tr><td><code>/</code></td><td>Home</td><td>Server-side <code>redirect('/dashboard')</code></td></tr>
+  <tr><td><code>/login</code></td><td>Sign In</td><td>NextAuth Credentials + Google OAuth. On success: <code>router.push('/dashboard')</code></td></tr>
   <tr><td><code>/register</code></td><td>Register</td><td>User registration form</td></tr>
-  <tr><td><code>/onboarding</code></td><td>Org Setup</td><td>First-time org creation wizard</td></tr>
-  <tr><td><code>/dashboard</code></td><td>Main Dashboard</td><td>KPIs (revenue, expenses, profit, pipeline value, active clients, total deals/clients), bar chart (monthly revenue/expenses/profit), pipeline funnel by status, recent deals, upcoming bookings, top clients</td></tr>
-  <tr><td><code>/pipeline</code></td><td>Kanban Board</td><td>5-column drag-and-drop (dnd-kit): new → briefing → quoting → production → completed. Deal cards with inline edit. Briefing modal.</td></tr>
-  <tr><td><code>/clients</code></td><td>Client List</td><td>Search, filter by status/eventType, pagination. Client detail drill-down.</td></tr>
+  <tr><td><code>/onboarding</code></td><td>Org Setup</td><td>First-time org creation wizard → <code>POST /api/auth/onboard</code> → redirect <code>/dashboard</code></td></tr>
+  <tr><td><code>/dashboard</code></td><td>Main Dashboard</td><td>KPIs (revenue, expenses, profit, pipeline value, active clients, total deals/clients), bar chart, pipeline funnel, recent deals, upcoming bookings, top clients</td></tr>
+  <tr><td><code>/pipeline</code></td><td>Kanban Board</td><td>5-column drag-and-drop (dnd-kit): new → briefing → quoting → production → completed</td></tr>
+  <tr><td><code>/clients</code></td><td>Client List</td><td>Search, filter, pagination, drill-down</td></tr>
   <tr><td><code>/calendar</code></td><td>Booking Calendar</td><td>Event list with date navigation</td></tr>
   <tr><td><code>/financials</code></td><td>Revenue &amp; Expenses</td><td>ExpenseManager + RevenueManager CRUD tables per deal</td></tr>
-  <tr><td><code>/proposals</code></td><td>Proposals</td><td>Proposal list, proposal templates, Stripe payment link integration</td></tr>
-  <tr><td><code>/settings</code></td><td>Settings</td><td>User profile, theme (light/dark/system), preferences, WhatsApp config (per-org), Stripe config (per-org), org member management (admin only)</td></tr>
+  <tr><td><code>/proposals</code></td><td>Proposals</td><td>Proposal list, templates, Stripe payment link integration</td></tr>
+  <tr><td><code>/settings</code></td><td>Settings</td><td>Profile, theme, WhatsApp/Stripe config, org member management (admin)</td></tr>
 </table>
 
 <!-- ═══════════════════════════════════════════ -->
-<h2>4. API Routes</h2>
+<h2 id="api">4. API Routes</h2>
 
 <div class="two-col">
   <div>
@@ -323,17 +594,12 @@
       <tr><td><code>/api/admin/organizations/[id]/whatsapp</code></td><td>PATCH</td></tr>
     </table>
 
-    <h3>Stripe &amp; Profile</h3>
+    <h3>Stripe &amp; Profile &amp; WhatsApp</h3>
     <table>
       <tr><th>Endpoint</th><th>Methods</th></tr>
       <tr><td><code>/api/stripe/webhook</code></td><td>POST</td></tr>
       <tr><td><code>/api/stripe/create-checkout</code></td><td>POST</td></tr>
       <tr><td><code>/api/profile</code></td><td>PATCH</td></tr>
-    </table>
-
-    <h3>WhatsApp</h3>
-    <table>
-      <tr><th>Endpoint</th><th>Methods</th></tr>
       <tr><td><code>/api/whatsapp</code></td><td>GET (verify), POST (incoming)</td></tr>
     </table>
   </div>
@@ -345,7 +611,118 @@
 </p>
 
 <!-- ═══════════════════════════════════════════ -->
-<h2>5. WhatsApp Integration</h2>
+<h2 id="ux">5. Web UX Flows</h2>
+
+<h3>5.1 Authentication &amp; First-Run Flow</h3>
+<div class="flow-row">
+  <div class="flow-step">Visit <code>/</code></div>
+  <span class="flow-arrow">→</span>
+  <div class="flow-step">Server redirect <code>/dashboard</code></div>
+  <span class="flow-arrow">→</span>
+  <div class="flow-step">No session? <code>/login</code></div>
+  <span class="flow-arrow">→</span>
+  <div class="flow-step">Credentials or Google</div>
+  <span class="flow-arrow">→</span>
+  <div class="flow-step">Has org? → Dashboard</div>
+  <span class="flow-arrow">→</span>
+  <div class="flow-step active">No org? → <code>/onboarding</code></div>
+</div>
+
+<div class="card">
+  <h3>Sign-in Detail</h3>
+  <ol class="steps">
+    <li><span class="step-label">Landing on <code>/login</code></span> <span class="step-detail">— two providers shown side-by-side: Google button + Credentials form (email/password).</span></li>
+    <li><span class="step-label">Credentials path</span> <span class="step-detail">— <code>signIn('credentials', {...})</code> validates via <code>bcrypt.compare</code>; on success <code>router.push('/dashboard')</code>.</span></li>
+    <li><span class="step-label">Google path</span> <span class="step-detail">— on first Google sign-in, the <code>signIn()</code> callback <strong>upserts the User</strong> and <strong>auto-creates Organization + DashboardSettings + UserOrganization (owner)</strong> if none exists.</span></li>
+    <li><span class="step-label">Onboarding (first-time only)</span> <span class="step-detail">— if user has no <code>UserOrganization</code>, redirect to <code>/onboarding</code> wizard. On submit → <code>POST /api/auth/onboard</code> → <code>/dashboard</code>.</span></li>
+    <li><span class="step-label">Session strategy</span> <span class="step-detail">— JWT (stateless). <code>token.sub</code> = User.id. <code>session.user.id</code> populated from token.</span></li>
+  </ol>
+</div>
+
+<h3>5.2 Sidebar Navigation (7 items)</h3>
+<p>Defined in <code>src/components/dashboard-sidebar.tsx</code> — <code>navItems[]</code>. Collapsible, glassmorphism, role-aware (CRM role cannot see Financials).</p>
+<table>
+  <tr><th>#</th><th>id</th><th>label</th><th>icon</th><th>href</th><th>role gated?</th></tr>
+  <tr><td>1</td><td>dashboard</td><td>Dashboard</td><td>LayoutDashboard</td><td><code>/dashboard</code></td><td>—</td></tr>
+  <tr><td>2</td><td>clients</td><td>Clients</td><td>Users</td><td><code>/clients</code></td><td>—</td></tr>
+  <tr><td>3</td><td>pipeline</td><td>Pipeline</td><td>FolderKanban</td><td><code>/pipeline</code></td><td>—</td></tr>
+  <tr><td>4</td><td>proposals</td><td>Proposals</td><td>FileText</td><td><code>/proposals</code></td><td>—</td></tr>
+  <tr><td>5</td><td>financials</td><td>Financials</td><td>DollarSign</td><td><code>/financials</code></td><td><span class="tag red">CRM role blocked</span></td></tr>
+  <tr><td>6</td><td>calendar</td><td>Calendar</td><td>Calendar</td><td><code>/calendar</code></td><td>—</td></tr>
+  <tr><td>7</td><td>settings</td><td>Settings</td><td>Settings</td><td><code>/settings</code></td><td>—</td></tr>
+</table>
+
+<h3>5.3 App Wireframe</h3>
+<div class="wireframe">
+  <div class="sidebar">
+    <div class="brand">≡ GoTakeCRM</div>
+    <div class="nav-item active">▣ Dashboard</div>
+    <div class="nav-item">👥 Clients</div>
+    <div class="nav-item">📁 Pipeline</div>
+    <div class="nav-item">📄 Proposals</div>
+    <div class="nav-item">$ Financials</div>
+    <div class="nav-item">📅 Calendar</div>
+    <div class="nav-item">⚙ Settings</div>
+  </div>
+  <div class="content">
+    <div class="topbar">
+      <div class="search">⌕ Search clients, deals, bookings...</div>
+      <span style="color:var(--muted)">🔔</span>
+      <span style="color:var(--muted)">👤</span>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><span class="v">R$ 24k</span>Revenue</div>
+      <div class="kpi"><span class="v">R$ 6k</span>Expenses</div>
+      <div class="kpi"><span class="v">R$ 18k</span>Profit</div>
+      <div class="kpi"><span class="v">12</span>Active</div>
+    </div>
+    <div style="font-size:0.75rem; color:var(--muted); padding:0.4rem;">📊 Monthly chart + pipeline funnel + recent deals + upcoming bookings + top clients</div>
+  </div>
+</div>
+<p style="text-align:right; font-size:0.78rem; color:var(--muted);">Bottom-right: <span class="fab" style="display:inline-block; width:1.6rem; height:1.6rem; line-height:1.6rem; font-size:0.9rem;">+</span> Quick Actions FAB</p>
+
+<h3>5.4 Global Search (cmdk)</h3>
+<div class="card">
+  <p><strong>Trigger:</strong> <code>⌘K</code> / <code>Ctrl+K</code> or click the topbar search field. Opens a <strong>command palette</strong> overlay.</p>
+  <p><strong>Implementation:</strong> <code>src/components/global-search.tsx</code> — client-side filter over SWR-cached data.</p>
+  <h4>Searches across 3 entity types</h4>
+  <ul>
+    <li><strong>Clients</strong> — matches on <code>name</code>, <code>phone</code>, <code>email</code>. Shows top 5 if no query.</li>
+    <li><strong>Deals</strong> — matches on <code>title</code> or <code>client.name</code>.</li>
+    <li><strong>Bookings</strong> — matches on <code>eventType</code> or <code>client.name</code>.</li>
+  </ul>
+  <p><strong>Placeholder:</strong> <code>"Search clients, deals, bookings..."</code> · Empty state: <code>No results found for "{query}"</code></p>
+</div>
+
+<h3>5.5 Quick Actions (FAB)</h3>
+<div class="card">
+  <p>Floating action button bottom-right (<code>src/components/quick-actions.tsx</code>). Opens a Sheet (mobile) or popover (desktop) listing categorized actions:</p>
+  <table>
+    <tr><th>Category</th><th>Action</th><th>Shortcut</th></tr>
+    <tr><td rowspan="3"><span class="tag green">create</span></td><td>New Client</td><td>opens ClientFormModal</td></tr>
+    <tr><td>New Deal</td><td>opens DealFormModal</td></tr>
+    <tr><td>New Booking</td><td>opens BookingFormModal</td></tr>
+    <tr><td><span class="tag blue">navigation</span></td><td>Search · Go to Dashboard · Go to Clients</td><td>router.push()</td></tr>
+    <tr><td><span class="tag gold">actions</span></td><td>Export, etc.</td><td>contextual</td></tr>
+  </table>
+</div>
+
+<h3>5.6 Notifications Dropdown</h3>
+<div class="card">
+  <p><code>src/components/notification-dropdown.tsx</code> — bell icon in topbar. Renders as DropdownMenu (desktop) or Sheet (mobile). <strong>Static list</strong> (no push backend yet).</p>
+  <h4>Notification types</h4>
+  <table>
+    <tr><th>type</th><th>icon</th><th>example</th></tr>
+    <tr><td><code>booking</code></td><td>Calendar</td><td>"Booking confirmed — Wedding Silva"</td></tr>
+    <tr><td><code>payment</code></td><td>DollarSign</td><td>"Payment received — R$ 3.500"</td></tr>
+    <tr><td><code>briefing</code></td><td>FileText</td><td>"Briefing updated — Corporate Event"</td></tr>
+    <tr><td><code>client</code></td><td>Users</td><td>"New client registered — João S."</td></tr>
+  </table>
+  <p>Each notification has: <code>title</code>, <code>message</code>, <code>time</code>, <code>read</code> flag. Click marks as read (border + opacity changes). Unread get <code>border-primary</code> + <code>bg-primary/5</code>.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="whatsapp">6. WhatsApp Integration</h2>
 
 <div class="flow-row">
   <div class="flow-step">WhatsApp Cloud API</div>
@@ -370,53 +747,13 @@
   <tr><td>✅ Yes</td><td>Other command</td><td>Replace session (delete old, create new), step 0</td></tr>
 </table>
 
-<h3>WhatsApp Commands (11 slash commands)</h3>
-<div class="command-grid">
-  <div class="command-card">
-    <div class="cmd">/novoDeal</div>
-    <div class="desc">7 steps — create client + deal + proposal with package selection</div>
-  </div>
-  <div class="command-card">
-    <div class="cmd">/despesa</div>
-    <div class="desc">4 steps — register expense on a deal</div>
-  </div>
-  <div class="command-card">
-    <div class="cmd">/receita</div>
-    <div class="desc">3 steps — register revenue on a deal</div>
-  </div>
-  <div class="command-card">
-    <div class="cmd">/briefing</div>
-    <div class="desc">3 steps — add briefing notes to a deal</div>
-  </div>
-  <div class="command-card">
-    <div class="cmd">/status</div>
-    <div class="desc">1 step — query deal status by title</div>
-  </div>
-  <div class="command-card">
-    <div class="cmd">/contatos</div>
-    <div class="desc">1 step — search/list contacts</div>
-  </div>
-  <div class="command-card">
-    <div class="cmd">/calendario</div>
-    <div class="desc">1 step — upcoming bookings</div>
-  </div>
-  <div class="command-card">
-    <div class="cmd">/projeto</div>
-    <div class="desc">2 steps — deal detail + financial summary</div>
-  </div>
-  <div class="command-card">
-    <div class="cmd">/pacotes</div>
-    <div class="desc">1 step — list available service packages</div>
-  </div>
-  <div class="command-card">
-    <div class="cmd">/ajuda</div>
-    <div class="desc">1 step — help menu listing all commands</div>
-  </div>
-  <div class="command-card">
-    <div class="cmd">/cancelar</div>
-    <div class="desc">Cancel any active session</div>
-  </div>
-</div>
+<h3>StepResult Contract (shared by all flows)</h3>
+<pre>interface StepResult {
+  message: string;                 // reply text (WhatsApp-formatted, *bold*, \n)
+  nextStep: number | null;         // null = flow complete, session deleted
+  updatedData: Record&lt;string, any&gt;; // persisted into CommandSession.data
+  result?: { action: string; entities: Record&lt;string, any&gt; }; // optional side-effect record
+}</pre>
 
 <h3>WhatsApp Modules</h3>
 <table>
@@ -427,12 +764,307 @@
   <tr><td>Session Manager</td><td><code>src/lib/whatsapp/sessionManager.ts</code></td><td>CommandSession CRUD + expiry cleanup</td></tr>
   <tr><td>Org Lookup</td><td><code>src/lib/whatsapp/orgLookup.ts</code></td><td>phone_number_id → Organization mapping</td></tr>
   <tr><td>WhatsApp API</td><td><code>src/lib/whatsapp/whatsappApi.ts</code></td><td>Send messages via Meta Cloud API</td></tr>
-  <tr><td>Flow Handlers</td><td><code>src/lib/whatsapp/flows/*.ts</code></td><td>11 flow handlers (1 per command)</td></tr>
+  <tr><td>Flow Handlers</td><td><code>src/lib/whatsapp/flows/*.ts</code></td><td>10 flow handlers + /cancelar (orchestrator-level)</td></tr>
   <tr><td>Session Cleanup</td><td><code>src/lib/whatsapp/cleanupExpiredSessions.ts</code></td><td>Purge expired CommandSessions</td></tr>
 </table>
 
 <!-- ═══════════════════════════════════════════ -->
-<h2>6. Frontend Architecture</h2>
+<h2 id="commands">7. WhatsApp Commands — Detailed Flows &amp; Dialogs</h2>
+
+<p>All messages shown below are <strong>real strings</strong> extracted from <code>src/lib/whatsapp/flows/*.ts</code>. Brazilian Portuguese, WhatsApp formatting (<code>*bold*</code>, emoji, newlines).</p>
+
+<div class="command-grid">
+  <div class="command-card"><div class="cmd">/novoDeal</div><div class="desc">7 steps — client + deal + optional proposal</div></div>
+  <div class="command-card"><div class="cmd">/despesa</div><div class="desc">5 steps — register expense on a deal</div></div>
+  <div class="command-card"><div class="cmd">/receita</div><div class="desc">5 steps — register revenue on a deal</div></div>
+  <div class="command-card"><div class="cmd">/briefing</div><div class="desc">3 steps — add briefing notes</div></div>
+  <div class="command-card"><div class="cmd">/status</div><div class="desc">2 steps — deal status summary</div></div>
+  <div class="command-card"><div class="cmd">/contatos</div><div class="desc">3 steps — search contacts</div></div>
+  <div class="command-card"><div class="cmd">/calendario</div><div class="desc">2 steps — bookings by period</div></div>
+  <div class="command-card"><div class="cmd">/projeto</div><div class="desc">2 steps — full project detail</div></div>
+  <div class="command-card"><div class="cmd">/pacotes</div><div class="desc">2 steps — list packages</div></div>
+  <div class="command-card"><div class="cmd">/ajuda</div><div class="desc">0 steps — help menu</div></div>
+  <div class="command-card"><div class="cmd">/cancelar</div><div class="desc">Cancel active session</div></div>
+</div>
+
+<!-- ─── /novoDeal ─── -->
+<h3>7.1 /novoDeal — Create Deal (7 steps)</h3>
+<p><strong>Source:</strong> <code>src/lib/whatsapp/flows/novoDeal.ts</code> · <code>totalSteps: 7</code> · Creates <code>Client</code> + <code>Deal</code> + optional <code>Proposal</code>.</p>
+<ol class="steps">
+  <li><span class="step-label">Ask name</span> <span class="step-detail">— validates non-empty, max 200 chars.</span></li>
+  <li><span class="step-label">Receive name → ask phone</span> <span class="step-detail">— strips non-digits, requires 10–13 digits.</span></li>
+  <li><span class="step-label">Receive phone → list packages</span> <span class="step-detail">— fetches <code>db.package.findMany({ active:true, organizationId })</code>. Aborts if none.</span></li>
+  <li><span class="step-label">Select package (case-insensitive partial match)</span> <span class="step-detail">— asks "Quer editar o pacote? (sim/não)".</span></li>
+  <li><span class="step-label">Edit sub-flow (decision table)</span> <span class="step-detail">— if <code>sim</code>: choose <code>valor</code> or <code>descrição</code>, capture new value, BRL-parse. If <code>não</code>: skip to step 5 prompt.</span></li>
+  <li><span class="step-label">Ask create proposal</span> <span class="step-detail">— <code>sim/não</code> → sets <code>createProposal</code> flag.</span></li>
+  <li><span class="step-label">Persist entities</span> <span class="step-detail">— creates Client + Deal (+ Proposal if flagged), deletes session, returns confirmation.</span></li>
+</ol>
+
+<div class="dialog">
+  <div class="speaker user">User</div><div class="bubble user">/novoDeal</div>
+  <div class="speaker">Bot</div><div class="bubble bot">Qual o nome do cliente?</div>
+  <div class="speaker user">User</div><div class="bubble user">João Silva</div>
+  <div class="speaker">Bot</div><div class="bubble bot">Qual o telefone do(a) João Silva?</div>
+  <div class="speaker user">User</div><div class="bubble user">11987654321</div>
+  <div class="speaker">Bot</div><div class="bubble bot">Pacotes disponíveis:
+*Casamento Premium* — R$ 8.500
+*Ensaio Externo* — R$ 1.500
+
+Qual pacote?</div>
+  <div class="speaker user">User</div><div class="bubble user">casamento</div>
+  <div class="speaker">Bot</div><div class="bubble bot">Quer editar o pacote? (sim/não)</div>
+  <div class="speaker user">User</div><div class="bubble user">sim</div>
+  <div class="speaker">Bot</div><div class="bubble bot">O que quer editar? (valor/descrição)</div>
+  <div class="speaker user">User</div><div class="bubble user">valor</div>
+  <div class="speaker">Bot</div><div class="bubble bot">Qual o novo valor?</div>
+  <div class="speaker user">User</div><div class="bubble user">9000</div>
+  <div class="speaker">Bot</div><div class="bubble bot">Deseja criar uma proposta? (sim/não)</div>
+  <div class="speaker user">User</div><div class="bubble user">sim</div>
+  <div class="speaker">Bot</div><div class="bubble bot">Criando deal e registrando tudo...
+
+✅ *Deal criado com sucesso!*
+
+Cliente: João Silva
+Pacote: Casamento Premium
+Valor editado: R$ 9.000
+
+📄 Proposta criada com sucesso!</div>
+</div>
+
+<!-- ─── /despesa ─── -->
+<h3>7.2 /despesa — Register Expense (5 steps)</h3>
+<p><strong>Source:</strong> <code>flows/despesa.ts</code> · <code>totalSteps: 5</code> · Creates <code>Expense</code> on a Deal.</p>
+<ol class="steps">
+  <li><span class="step-label">Ask project ID</span> <span class="step-detail">— strips <code>#</code> prefix, validates Deal exists in org.</span></li>
+  <li><span class="step-label">Receive ID → ask value</span> <span class="step-detail">— BRL parser handles <code>"5000"</code>, <code>"1.500,50"</code>, <code>"R$ 1.500,50"</code>.</span></li>
+  <li><span class="step-label">Receive value → ask description</span> <span class="step-detail">— 1–500 chars.</span></li>
+  <li><span class="step-label">Receive description → ask category</span> <span class="step-detail">— enum: <code>equipamento | locação | equipe | transporte | outro</code>.</span></li>
+  <li><span class="step-label">Receive category → create Expense</span> <span class="step-detail">— persists with <code>currency: 'BRL'</code>, returns summary.</span></li>
+</ol>
+<div class="dialog">
+  <div class="speaker user">User</div><div class="bubble user">/despesa</div>
+  <div class="speaker">Bot</div><div class="bubble bot">Qual o ID do projeto?</div>
+  <div class="speaker user">User</div><div class="bubble user">#abc123</div>
+  <div class="speaker">Bot</div><div class="bubble bot">Projeto: *Casamento Silva*
+
+Qual o valor da despesa?</div>
+  <div class="speaker user">User</div><div class="bubble user">R$ 350,00</div>
+  <div class="speaker">Bot</div><div class="bubble bot">Qual a descrição da despesa?</div>
+  <div class="speaker user">User</div><div class="bubble user">Aluguel de lente 50mm</div>
+  <div class="speaker">Bot</div><div class="bubble bot">Qual a categoria da despesa?
+
+Categorias disponíveis: equipamento, locação, equipe, transporte, outro</div>
+  <div class="speaker user">User</div><div class="bubble user">equipamento</div>
+  <div class="speaker">Bot</div><div class="bubble bot">✅ *Despesa registrada com sucesso!*
+
+Valor: R$ 350
+Categoria: equipamento
+Descrição: Aluguel de lente 50mm</div>
+</div>
+
+<!-- ─── /receita ─── -->
+<h3>7.3 /receita — Register Revenue (5 steps)</h3>
+<p><strong>Source:</strong> <code>flows/receita.ts</code> · <code>totalSteps: 5</code> · Creates <code>Revenue</code> on a Deal. Same skeleton as /despesa but ends with status.</p>
+<ol class="steps">
+  <li><span class="step-label">Ask project ID</span> <span class="step-detail">— validates Deal exists.</span></li>
+  <li><span class="step-label">Receive ID → ask value</span> <span class="step-detail">— BRL parse, must be &gt; 0.</span></li>
+  <li><span class="step-label">Receive value → ask description</span> <span class="step-detail">— 1–500 chars.</span></li>
+  <li><span class="step-label">Receive description → ask status</span> <span class="step-detail">— <code>recebido</code> → <code>received</code>, <code>pendente</code> → <code>pending</code>.</span></li>
+  <li><span class="step-label">Receive status → create Revenue</span> <span class="step-detail">— persists with mapped status, <code>currency: 'BRL'</code>.</span></li>
+</ol>
+<div class="dialog">
+  <div class="speaker user">User</div><div class="bubble user">/receita</div>
+  <div class="speaker">Bot</div><div class="bubble bot">Qual o ID do projeto?</div>
+  <div class="speaker user">User</div><div class="bubble user">abc123</div>
+  <div class="speaker">Bot</div><div class="bubble bot">Projeto: *Casamento Silva*
+
+Qual o valor da receita?</div>
+  <div class="speaker user">User</div><div class="bubble user">4500</div>
+  <div class="speaker">Bot</div><div class="bubble bot">Qual a descrição da receita?</div>
+  <div class="speaker user">User</div><div class="bubble user">Entrada do pacote casamento</div>
+  <div class="speaker">Bot</div><div class="bubble bot">A receita foi recebida ou está pendente? (recebido/pendente)</div>
+  <div class="speaker user">User</div><div class="bubble user">recebido</div>
+  <div class="speaker">Bot</div><div class="bubble bot">✅ *Receita registrada com sucesso!*
+
+Valor: R$ 4.500
+Status: recebido
+Descrição: Entrada do pacote casamento</div>
+</div>
+
+<!-- ─── /briefing ─── -->
+<h3>7.4 /briefing — Add Briefing (3 steps)</h3>
+<p><strong>Source:</strong> <code>flows/briefing.ts</code> · <code>totalSteps: 3</code> · Creates <code>Briefing</code> (author: "WhatsApp").</p>
+<ol class="steps">
+  <li><span class="step-label">Ask project ID</span> <span class="step-detail">— opens session.</span></li>
+  <li><span class="step-label">Receive briefing text → confirm</span> <span class="step-detail">— validates 1–10,000 chars. Asks <code>confirmar</code> or <code>cancelar</code>.</span></li>
+  <li><span class="step-label">Confirm/cancel</span> <span class="step-detail">— <code>confirmar</code> persists; <code>cancelar</code> restarts at step 0.</span></li>
+</ol>
+<div class="dialog">
+  <div class="speaker user">User</div><div class="bubble user">/briefing</div>
+  <div class="speaker">Bot</div><div class="bubble bot">Qual o ID do projeto?</div>
+  <div class="speaker user">User</div><div class="bubble user">abc123</div>
+  <div class="speaker">Bot</div><div class="bubble bot">[waits for briefing text input]</div>
+  <div class="speaker user">User</div><div class="bubble user">Cliente quer fotos golden hour, estilo documental, 200 fotos editadas, álbum 30 páginas.</div>
+  <div class="speaker">Bot</div><div class="bubble bot">Confirma o briefing?
+
+Cliente quer fotos golden hour...
+
+Digite *confirmar* para salvar ou *cancelar* para recomeçar.</div>
+  <div class="speaker user">User</div><div class="bubble user">confirmar</div>
+  <div class="speaker">Bot</div><div class="bubble bot">✅ *Briefing salvo com sucesso!*</div>
+</div>
+
+<!-- ─── /status ─── -->
+<h3>7.5 /status — Project Status (2 steps)</h3>
+<p><strong>Source:</strong> <code>flows/status.ts</code> · <code>totalSteps: 2</code> · Read-only summary.</p>
+<ol class="steps">
+  <li><span class="step-label">Ask project ID</span></li>
+  <li><span class="step-label">Fetch + render summary</span> <span class="step-detail">— <code>deal.findUnique</code> with <code>client, briefings, proposals, expenses, revenue</code>. Computes totals.</span></li>
+</ol>
+<div class="dialog">
+  <div class="speaker user">User</div><div class="bubble user">/status</div>
+  <div class="speaker">Bot</div><div class="bubble bot">Qual o ID do projeto?</div>
+  <div class="speaker user">User</div><div class="bubble user">abc123</div>
+  <div class="speaker">Bot</div><div class="bubble bot">📊 *Status do Projeto*
+
+Projeto: *Casamento Silva*
+Cliente: João Silva
+Status: production
+
+Briefing: ✅
+Proposta: ✅
+
+Despesas: R$ 1.200
+Recebido: R$ 4.500
+Pendente: R$ 4.000</div>
+</div>
+
+<!-- ─── /contatos ─── -->
+<h3>7.6 /contatos — Search Contacts (3 steps)</h3>
+<p><strong>Source:</strong> <code>flows/contatos.ts</code> · <code>totalSteps: 3</code> · <code>OR</code> search on <code>name</code> + <code>phone</code>, org-scoped.</p>
+<ol class="steps">
+  <li><span class="step-label">Ask search term</span> <span class="step-detail">— min 3, max 50 chars.</span></li>
+  <li><span class="step-label">Validate + echo "Buscando..."</span></li>
+  <li><span class="step-label">Query DB → top 5 results</span> <span class="step-detail">— format: <code>#C1 — Name — phone ✅ Ativo</code>. Notes overflow count.</span></li>
+</ol>
+<div class="dialog">
+  <div class="speaker user">User</div><div class="bubble user">/contatos</div>
+  <div class="speaker">Bot</div><div class="bubble bot">Qual o termo de busca? (mínimo 3 caracteres)</div>
+  <div class="speaker user">User</div><div class="bubble user">silva</div>
+  <div class="speaker">Bot</div><div class="bubble bot">Buscando contatos...</div>
+  <div class="speaker">Bot</div><div class="bubble bot">#C1 — João Silva — 11987654321 ✅ Ativo
+#C2 — Maria Silva — 11912345678 ✅ Ativo
+#C3 — Carlos Silva — 11999998888 ❌ Inativo
+
+e mais 2 resultados</div>
+</div>
+
+<!-- ─── /calendario ─── -->
+<h3>7.7 /calendario — Bookings (2 steps)</h3>
+<p><strong>Source:</strong> <code>flows/calendario.ts</code> · <code>totalSteps: 2</code> · Filters by <code>hoje</code> / <code>semana</code> / <code>mês</code>.</p>
+<ol class="steps">
+  <li><span class="step-label">Ask period</span></li>
+  <li><span class="step-label">Compute date range → query bookings</span> <span class="step-detail">— icons: 🟡 pending · 🟢 confirmed · ✅ completed. Format: <code>icon *title* / date time / notes</code>.</span></li>
+</ol>
+<div class="dialog">
+  <div class="speaker user">User</div><div class="bubble user">/calendario</div>
+  <div class="speaker">Bot</div><div class="bubble bot">Qual o período? (hoje / semana / mês)</div>
+  <div class="speaker user">User</div><div class="bubble user">semana</div>
+  <div class="speaker">Bot</div><div class="bubble bot">📅 *Agendamentos — Esta semana*
+
+🟢 *Casamento Silva*
+   22/07/2026 16:00
+   Igreja São Paulo
+
+🟡 *Ensaio Família Lima*
+   24/07/2026 09:00</div>
+</div>
+
+<!-- ─── /projeto ─── -->
+<h3>7.8 /projeto — Full Project Detail (2 steps)</h3>
+<p><strong>Source:</strong> <code>flows/projeto.ts</code> · <code>totalSteps: 2</code> · Aggregated view (briefings, proposals, bookings).</p>
+<ol class="steps">
+  <li><span class="step-label">Ask project ID</span></li>
+  <li><span class="step-label">Fetch + render</span> <span class="step-detail">— <code>deal.include: client, briefings, proposals, bookings</code>. Briefings/proposals show count + preview; bookings show title + date + status.</span></li>
+</ol>
+<div class="dialog">
+  <div class="speaker user">User</div><div class="bubble user">/projeto</div>
+  <div class="speaker">Bot</div><div class="bubble bot">Qual o ID do projeto?</div>
+  <div class="speaker user">User</div><div class="bubble user">abc123</div>
+  <div class="speaker">Bot</div><div class="bubble bot">📋 *Projeto: Casamento Silva*
+
+*ID:* abc123
+*Status:* production
+*Valor:* R$ 8.500
+
+*Cliente:* João Silva
+*Telefone:* 11987654321
+
+*Briefings (1):*
+  1. Cliente quer fotos golden hour, estilo documental...
+
+*Propostas (1):*
+  1. Status: accepted — R$ 8.500
+
+*Agendamentos (1):*
+  1. Casamento Silva — 22/07/2026 (confirmed)</div>
+</div>
+
+<!-- ─── /pacotes ─── -->
+<h3>7.9 /pacotes — List Packages (2 steps)</h3>
+<p><strong>Source:</strong> <code>flows/pacotes.ts</code> · <code>totalSteps: 2</code> · <code>ativos</code> or <code>todos</code>.</p>
+<ol class="steps">
+  <li><span class="step-label">Ask filter</span> <span class="step-detail">— <code>ativos</code> / <code>ativo</code> / <code>todos</code> / <code>all</code>.</span></li>
+  <li><span class="step-label">Query + render</span> <span class="step-detail">— name, value, status icon, description preview (100 chars).</span></li>
+</ol>
+<div class="dialog">
+  <div class="speaker user">User</div><div class="bubble user">/pacotes</div>
+  <div class="speaker">Bot</div><div class="bubble bot">Quer ver pacotes ativos ou todos? (ativos/todos)</div>
+  <div class="speaker user">User</div><div class="bubble user">ativos</div>
+  <div class="speaker">Bot</div><div class="bubble bot">📦 *Pacotes Ativos*
+
+*1. Casamento Premium*
+   Valor: R$ 8.500
+   Status: ✅ Ativo
+   Cobertura completa, pré-wedding, álbum premium...
+
+*2. Ensaio Externo*
+   Valor: R$ 1.500
+   Status: ✅ Ativo</div>
+</div>
+
+<!-- ─── /ajuda ─── -->
+<h3>7.10 /ajuda — Help Menu (0 steps)</h3>
+<p><strong>Source:</strong> <code>flows/ajuda.ts</code> · <code>totalSteps: 0</code> · One-shot, no session created.</p>
+<div class="dialog">
+  <div class="speaker user">User</div><div class="bubble user">/ajuda</div>
+  <div class="speaker">Bot</div><div class="bubble bot">🤖 *Comandos disponíveis:*
+
+*/novoDeal* — Criar um novo deal (cliente + pacote + proposta)
+*/despesa* — Registrar uma despesa no projeto
+*/receita* — Registrar uma receita no projeto
+*/briefing* — Adicionar um briefing ao projeto
+*/status* — Ver o status resumido do projeto
+*/contatos* — Buscar contatos cadastrados
+*/calendario* — Ver agendamentos (hoje/semana/mês)
+*/projeto* — Ver detalhes completos de um projeto
+*/ajuda* — Exibir esta lista de comandos
+*/pacotes* — Listar pacotes (ativos ou todos)
+*/cancelar* — Cancelar o fluxo atual
+
+Envie um comando para começar! 🚀</div>
+</div>
+
+<!-- ─── /cancelar ─── -->
+<h3>7.11 /cancelar — Cancel Session</h3>
+<p>Handled at the <strong>orchestrator level</strong> (not in <code>FLOWS</code> map). When an active session exists and input is <code>/cancelar</code>, the session is deleted and a cancellation confirmation is sent. If sent with no active session, treated as a no-op or guidance message.</p>
+<div class="dialog">
+  <div class="speaker user">User</div><div class="bubble user">/cancelar</div>
+  <div class="speaker">Bot</div><div class="bubble bot">✅ Sessão cancelada.</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="frontend">8. Frontend Architecture</h2>
 
 <div class="card">
   <h3>Data Flow</h3>
@@ -453,11 +1085,11 @@
 <h3>Custom Components (18)</h3>
 <table>
   <tr><th>Component</th><th>Role</th></tr>
-  <tr><td><code>DashboardSidebar</code></td><td>Collapsible nav sidebar with glassmorphism effect</td></tr>
+  <tr><td><code>DashboardSidebar</code></td><td>Collapsible nav sidebar with glassmorphism, role-aware items</td></tr>
   <tr><td><code>DraggableDealCard</code></td><td>Kanban card with drag handle, status, value, profit</td></tr>
-  <tr><td><code>NotificationDropdown</code></td><td>Static notification list dropdown</td></tr>
-  <tr><td><code>QuickActions</code></td><td>FAB: new client, new deal, new booking</td></tr>
-  <tr><td><code>GlobalSearch</code></td><td>cmdk-powered command palette (clients, deals, settings)</td></tr>
+  <tr><td><code>NotificationDropdown</code></td><td>Static notification list (booking/payment/briefing/client types)</td></tr>
+  <tr><td><code>QuickActions</code></td><td>FAB: New Client / New Deal / New Booking + navigation</td></tr>
+  <tr><td><code>GlobalSearch</code></td><td>cmdk-powered command palette (clients, deals, bookings)</td></tr>
   <tr><td><code>ExportButton</code></td><td>CSV export for dashboard data</td></tr>
   <tr><td><code>ExpenseManager</code></td><td>Expense CRUD table with category breakdown</td></tr>
   <tr><td><code>RevenueManager</code></td><td>Revenue CRUD table with status tracking</td></tr>
@@ -476,7 +1108,283 @@
 <p><strong>shadcn/ui components:</strong> 48 — accordion, alert, alert-dialog, aspect-ratio, avatar, badge, breadcrumb, button, calendar, card, carousel, chart, checkbox, collapsible, command, context-menu, dialog, drawer, dropdown-menu, form, hover-card, input, input-otp, label, menubar, navigation-menu, pagination, popover, progress, radio-group, resizable, scroll-area, select, separator, sheet, sidebar, skeleton, slider, sonner, switch, table, tabs, textarea, toast, toaster, toggle, toggle-group, tooltip.</p>
 
 <!-- ═══════════════════════════════════════════ -->
-<h2>7. Testing</h2>
+<h2 id="adrs">9. Architectural Decisions (ADRs)</h2>
+
+<p>All 5 ADRs are <strong>Accepted</strong>. Source files under <code>docs/adr/</code>.</p>
+
+<div class="adr-card">
+  <div class="adr-id">ADR-0001</div>
+  <div class="adr-title">Multi-tenant data model with single-user UI from day one</div>
+  <span class="adr-status">Accepted</span>
+  <h4>Context</h4>
+  <p>Must support two collaboration patterns: (1) freelance collab — two photographers share a specific Client subtree while keeping others private; (2) Phase 2 agency/multi-user with role-based access. Migrating a flat schema to multi-tenant later is a high-risk data migration once real data exists.</p>
+  <h4>Decision</h4>
+  <ul>
+    <li>Every model gets <code>organizationId</code> from day one.</li>
+    <li>New tables: <code>User</code>, <code>Organization</code>, <code>UserOrganization</code>, <code>ClientShare</code> (full-subtree sharing, no per-table granular flags).</li>
+    <li>UI launches single-user — Organization is hidden, auto-created on signup.</li>
+    <li>Phase 2 adds role enforcement in middleware + UI org management; <code>ClientShare</code> works from Phase 1.</li>
+  </ul>
+  <h4>Consequences</h4>
+  <p><strong>+ Positive:</strong> Zero data migration to multi-user. Every query already filters by <code>organizationId</code>. <code>ClientShare</code> enables the core freelance use case immediately. Dev and prod share the same DB engine (PostgreSQL/Supabase).</p>
+  <p><strong>− Negative:</strong> Extra field + index per model. All API routes must include <code>organizationId</code> even in Phase 1. SQLite can no longer be used locally — Supabase PostgreSQL required even in dev.</p>
+  <p><strong>Risks:</strong> If Phase 2 never ships, the tenant fields are unused overhead (low — roadmap targets agencies). <code>ClientShare</code> may prove too coarse (can't share a Deal but hide Revenue); granular per-table sharing deferred to Phase 2.</p>
+  <p><strong>Alternatives rejected:</strong> (a) Single-user schema, migrate later — too risky. (b) Per-table sharing flags on ClientShare — adds query complexity; use case is niche.</p>
+</div>
+
+<div class="adr-card">
+  <div class="adr-id">ADR-0002</div>
+  <div class="adr-title">Single-branch deployment with Vercel Preview Environments</div>
+  <span class="adr-status">Accepted</span>
+  <h4>Context</h4>
+  <p>Originally planned two Git branches (<code>main</code> for client, <code>deploy/portfolio</code> for demo) deployed to separate Vercel projects. Vercel natively supports Preview Deployments per branch with separate env vars, making branches redundant for deploy routing.</p>
+  <h4>Decision</h4>
+  <ul>
+    <li>Single branch (<code>main</code>) — delete <code>deploy/portfolio</code>.</li>
+    <li>Production Deployment (from <code>main</code>) → <code>gotakecrm-prod</code> Supabase (real client data).</li>
+    <li>Preview Deployments (any branch push) → <code>gotakecrm-demo</code> Supabase (seeded demo data).</li>
+    <li>Env vars configured separately under Vercel "Production" and "Preview" environments.</li>
+    <li>Portfolio demo is simply a Preview URL shared with demo credentials.</li>
+  </ul>
+  <h4>Consequences</h4>
+  <p><strong>+ Positive:</strong> No branch maintenance / merge conflicts / schema drift. CI simplified to one branch. Same code in both envs — bug fixes ship to both simultaneously. Demo data is decoupled from code (just reseed).</p>
+  <p><strong>− Negative:</strong> Preview Deployments are ephemeral on Hobby plan (pin a branch for persistent demo URL). Same code in both — no feature gating without flags/env checks.</p>
+  <p><strong>Migration:</strong> Merge <code>deploy/portfolio</code> → <code>main</code>, delete branch, update CI to watch only <code>main</code>, configure Vercel env vars separately.</p>
+  <p><strong>Alternatives rejected:</strong> (a) Two branches — fork maintenance trap, inevitable drift. (b) Two Vercel projects — overkill, double the dashboards/caches/pipelines.</p>
+</div>
+
+<div class="adr-card">
+  <div class="adr-id">ADR-0003</div>
+  <div class="adr-title">Dual auth (Credentials + Google) and unified PostgreSQL schema</div>
+  <span class="adr-status">Accepted</span>
+  <h4>Context</h4>
+  <p>CRM started Google-only via NextAuth — locked out non-Google users and put identity data in Google's systems. Project also maintained two Prisma schemas: <code>schema.prisma</code> (SQLite local) and <code>schema.prod.prisma</code> (PostgreSQL prod) — schema drift risk, dev ≠ prod DB engine.</p>
+  <h4>Decision</h4>
+  <p><strong>Auth:</strong> Add <code>CredentialsProvider</code> (email/password, bcrypt) alongside <code>GoogleProvider</code>. Both coexist; users pick at sign in. <code>User</code> table owns data (email, name, password hash, avatar). Credentials path also enables the portfolio demo shared credential.</p>
+  <p><strong>DB:</strong> Drop SQLite entirely — single <code>schema.prisma</code> on PostgreSQL. Local dev connects to <code>gotakecrm-demo</code> Supabase. No more <code>schema.prod.prisma</code> or <code>NODE_ENV</code>-based datasource switching. Two Supabase projects: <code>gotakecrm-prod</code> (Vercel Production) + <code>gotakecrm-demo</code> (dev + Preview).</p>
+  <h4>Consequences</h4>
+  <p><strong>+ Positive:</strong> Non-Google users can sign up. Full ownership of user data. Single Prisma schema — no drift. Free to seed/mutate/test on demo Supabase. Demo reseed is one command.</p>
+  <p><strong>− Negative:</strong> Requires internet for local dev (remote Supabase). Password hashing adds implementation surface. <code>User</code> table must be seeded with a demo user for portfolio preview. No offline/local-first option without local PostgreSQL.</p>
+  <p><strong>Migration:</strong> Merge <code>schema.prod.prisma</code> → <code>schema.prisma</code>, delete <code>schema.prod.prisma</code> + <code>prisma/dev.db</code>, update <code>db.ts</code>, remove <code>validate-prod-schema</code> CI job, update <code>vercel.json</code> build command.</p>
+  <p><strong>Alternatives rejected:</strong> (a) Keep SQLite for local dev — engine mismatch creates prod-only bugs. (b) More providers (Magic Link, GitHub) — deferred; Google + email/password covers the majority.</p>
+</div>
+
+<div class="adr-card">
+  <div class="adr-id">ADR-0004</div>
+  <div class="adr-title">WhatsApp integration via official Cloud API (one number per Organization)</div>
+  <span class="adr-status">Accepted</span>
+  <h4>Context</h4>
+  <p>WhatsApp is a core selling feature. WhatsApp has no Telegram-style "create a bot, get a token" API. Options: official Cloud API (stable, compliant, paid after free tier) vs unofficial reverse-engineered libraries (Baileys, whatsapp-web.js — free but ToS violations).</p>
+  <h4>Decision</h4>
+  <ul>
+    <li>Use the <strong>official Meta WhatsApp Cloud API</strong> exclusively.</li>
+    <li>Each <strong>Organization</strong> connects their own WhatsApp Business number via Meta Business API credentials.</li>
+    <li>CRM stores the org's WhatsApp access token + phone number ID.</li>
+    <li>Incoming webhooks are routed by the phone number they arrive <strong>on</strong> → maps to Organization → processed within that org's data boundary.</li>
+    <li>WhatsApp groups can include the bot — all group messages route to the owning Organization.</li>
+  </ul>
+  <h4>Consequences</h4>
+  <p><strong>+ Positive:</strong> Stable, compliant, won't break overnight. Free tier covers small photographers. Natural per-org isolation via phone number. No infra cost — photographers bring their own Meta account. Scales to agency use case (one number, whole team sees messages).</p>
+  <p><strong>− Negative:</strong> Each photographer needs a Meta Business account + WhatsApp Business number — onboarding friction. After free tier, per-message billing (cost passed through). Official API has rate limits + format restrictions. WhatsApp Business numbers can't be regular personal numbers.</p>
+  <p><strong>Risks:</strong> Meta could change the free tier threshold. Group bot API support is limited vs DMs. Photographers in markets without WhatsApp Business API availability are blocked.</p>
+  <p><strong>Alternatives rejected:</strong> (a) Unofficial libraries — ToS violation time bomb. (b) Single shared bot number for all orgs — destroys brand identity + routing complexity. (c) Provider-agnostic messaging layer (Telegram, IG DM) — deferred; WhatsApp is the primary market.</p>
+</div>
+
+<div class="adr-card">
+  <div class="adr-id">ADR-0005</div>
+  <div class="adr-title">Multi-Tenant UI Architecture</div>
+  <span class="adr-status">Accepted</span>
+  <p style="font-size:0.78rem; color:var(--muted);">Date: 2026-06-28 · Related: ADR-0001</p>
+  <h4>Context</h4>
+  <p>Multi-tenant data layer is implemented (User, Organization, UserOrganization, organizationId on all models). The UI layer needs to support: freelancers working solo AND collaborating with agencies; users with multiple org memberships; role-based access within orgs; a consolidated "All Work" view.</p>
+  <h4>Decision</h4>
+  <p><strong>Navigation model — three-tier:</strong></p>
+  <ol>
+    <li><strong>All Work</strong> — aggregated view across ALL contexts (solo + all orgs).</li>
+    <li><strong>My Work</strong> — the user's personal workspace (always exists, no explicit org creation).</li>
+    <li><strong>Organization X/Y</strong> — specific org contexts the user is a member of.</li>
+  </ol>
+  <p><strong>Org state management:</strong> Active context managed via React Context + global state, <strong>NOT in the URL</strong>. Enables easy cross-org views, no URL restructuring, deep linking via session-based context.</p>
+  <p><strong>Org switcher:</strong> Lives at the <strong>top of the sidebar</strong>, replacing the static brand section. Dropdown pattern with org name + icon + chevron.</p>
+  <p><strong>Settings:</strong> Single page with tabs — "Personal" (persists across context switches) + a dynamic tab per org context.</p>
+  <p><strong>Roles (per org):</strong></p>
+  <table>
+    <tr><th>Role</th><th>Scope</th></tr>
+    <tr><td>Admin</td><td>Full access to org data + configuration</td></tr>
+    <tr><td>Autônomo</td><td>Sees only clients/deals they're assigned to</td></tr>
+    <tr><td>CRM</td><td>Sees clients, conversations, proposals (read/edit) — no financials/config</td></tr>
+  </table>
+  <p><strong>WhatsApp:</strong> Configured at the <strong>user level</strong> (the photographer's number). Same bot serves all contexts. Conversation routing is role-based per org.</p>
+  <h4>Consequences</h4>
+  <p>Sidebar needs significant restructuring. React Context provider needed for active org state. Role gating logic needed in sidebar nav + API queries. Settings page needs tab redesign. Member management page needed. All API queries already filter by <code>organizationId</code> (data layer ready).</p>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="diagrams">10. Architecture Diagrams</h2>
+
+<h3>10.1 Authentication Flow (end-to-end)</h3>
+<div class="arch-diagram"><span class="m">┌─────────────────────────────────────────────────────────────────────────┐</span>
+<span class="m">│</span>                          <span class="h">AUTHENTICATION FLOW</span>                            <span class="m">│</span>
+<span class="m">└─────────────────────────────────────────────────────────────────────────┘</span>
+
+  <span class="b">User</span> ──► <span class="g">GET /</span> ──► <span class="h">redirect('/dashboard')</span>
+                          │
+                          ▼
+                 <span class="g">NextAuth session?</span>
+                ┌─────────┴─────────┐
+              YES                   NO
+                │                     │
+                ▼                     ▼
+         <span class="g">/dashboard</span>          <span class="g">/login</span>
+                                   ┌─────┴──────┐
+                              <span class="b">Google</span>      <span class="b">Credentials</span>
+                                   │              │
+                                   ▼              ▼
+                          <span class="h">signIn() cb</span>    <span class="h">authorize()</span>
+                          upsert User        bcrypt.compare
+                                   │              │
+                                   ▼              │
+                        <span class="r">first time?</span>      │
+                         ┌─────┴────┐           │
+                       YES         NO           │
+                         │          │           │
+                         ▼          │           │
+                create Org +       │           │
+                DashboardSettings  │           │
+                UserOrganization   │           │
+                (owner)            │           │
+                         │          │           │
+                         └────┬─────┴───────────┘
+                              ▼
+                    <span class="g">JWT issued (token.sub = user.id)</span>
+                              │
+                              ▼
+                    <span class="g">router.push('/dashboard')</span>
+                              │
+                              ▼
+              <span class="h">DashboardLayout</span> (Context Provider)
+              loads SWR data scoped to user's org(s)</div>
+
+<h3>10.2 WhatsApp Message Flow (end-to-end)</h3>
+<div class="arch-diagram"><span class="m">┌─────────────────────────────────────────────────────────────────────────┐</span>
+<span class="m">│</span>                       <span class="h">WHATSAPP MESSAGE — END TO END</span>                       <span class="m">│</span>
+<span class="m">└─────────────────────────────────────────────────────────────────────────┘</span>
+
+  <span class="b">Customer phone</span>
+       │
+       │  WhatsApp message ("/novoDeal")
+       ▼
+  <span class="h">Meta Cloud API</span> ── webhook ──► <span class="g">POST /api/whatsapp</span>
+                                          │
+                                          ▼
+                              <span class="h">GET verify (hub.challenge)</span>  (only on first setup)
+                                          │
+                                          ▼
+                              <span class="h">parse incoming payload</span>
+                              { from, text, phone_number_id }
+                                          │
+                                          ▼
+                              <span class="h">orgLookup(phone_number_id)</span>
+                              → Organization row
+                                          │
+                                          ▼
+                              <span class="h">commandRouter(text)</span>
+                              detect /slash command
+                                          │
+                                          ▼
+                              <span class="h">flowOrchestrator</span>
+                              ┌──────────┴──────────┐
+                       <span class="r">active session?</span>      <span class="r">no session?</span>
+                              │                     │
+                              ▼                     ▼
+                  is /cancelar?              is valid command?
+                  ┌────┴────┐                ┌────┴────┐
+                YES       NO               YES       NO
+                  │         │                │         │
+                  ▼         ▼                ▼         ▼
+            delete     run flow        create      ignore /
+            session    step with        session     reply help
+            + reply    input            step 0
+                                          │
+                                          ▼
+                              <span class="h">FlowHandler.handle()</span>
+                              (10 handlers in FLOWS map)
+                                          │
+                                          ▼
+                              <span class="h">StepResult</span>
+                              { message, nextStep, data }
+                                          │
+                              ┌──────────┴──────────┐
+                       nextStep = null          nextStep = N
+                              │                     │
+                              ▼                     ▼
+                        delete session        persist session.data
+                        + send reply          + send reply
+                                          │
+                                          ▼
+                              <span class="h">whatsappApi.sendMessage()</span>
+                              POST to Meta Graph API
+                              (org's access token)
+                                          │
+                                          ▼
+                                  <span class="b">Customer phone</span> receives reply</div>
+
+<h3>10.3 Data Flow: SWR → Context → Components</h3>
+<div class="arch-diagram"><span class="m">┌─────────────────────────────────────────────────────────────────────────┐</span>
+<span class="m">│</span>                    <span class="h">CLIENT-SIDE DATA FLOW (no Server Components)</span>                    <span class="m">│</span>
+<span class="m">└─────────────────────────────────────────────────────────────────────────┘</span>
+
+  <span class="h">DashboardLayout ('use client')</span>
+       │
+       │  SWR hooks (60s revalidate, auto-dedup)
+       ├──► useDashboardData()  ──► GET /api/dashboard (13 parallel Prisma)
+       ├──► useClients()        ──► GET /api/clients
+       ├──► useDeals()          ──► GET /api/deals
+       ├──► useBookings()       ──► GET /api/bookings
+       └──► useProposals()      ──► GET /api/proposals
+       │
+       ▼
+  <span class="h">React Context Provider</span> (DashboardContext)
+       │  exposes useDashboard() to all children
+       │
+       ├──► <span class="g">Zustand</span> activeOrg store (persisted in localStorage)
+       │
+       ▼
+  <span class="h">Child pages ('use client')</span>
+       │  useDashboard() consumes cached data
+       │
+       ├──► /dashboard   → KPIs, charts, funnel, top clients
+       ├──► /pipeline    → Kanban (dnd-kit)
+       ├──► /clients     → table + filters
+       ├──► /calendar    → booking list
+       ├──► /financials  → ExpenseManager + RevenueManager
+       ├──► /proposals   → ProposalsView + Stripe links
+       └──► /settings    → profile + per-org config
+       │
+       ▼
+  <span class="h">Mutations</span> (optimistic via SWR mutate)
+       POST /api/clients  ──► mutate('/api/clients')  ──► revalidate
+       PATCH /api/deals   ──► mutate('/api/deals')    ──► revalidate
+       ...etc</div>
+
+<h3>10.4 Pipeline State Machine</h3>
+<div class="arch-diagram"><span class="m">┌─────────────────────────────────────────────────────────────────────────┐</span>
+<span class="m">│</span>                          <span class="h">DEAL STATUS LIFECYCLE</span>                            <span class="m">│</span>
+<span class="m">└─────────────────────────────────────────────────────────────────────────┘</span>
+
+   <span class="b">new</span>  ──►  <span class="h">briefing</span>  ──►  <span class="h">quoting</span>  ──►  <span class="g">production</span>  ──►  <span class="g">completed</span>
+     ▲           │              │              │                │
+     │           │  /briefing   │  /receita    │  /despesa      │
+     │           │  adds notes  │  /proposal   │  ongoing       │
+     └───────────┴──────────────┴──────────────┴────────────────┘
+                         drag-and-drop (dnd-kit) on /pipeline
+
+   Kanban columns map 1:1 to Deal.status enum values.
+   WhatsApp commands (/briefing, /receita, /despesa, /status, /projeto)
+   operate on a Deal regardless of its current status.</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="testing">11. Testing</h2>
 
 <div class="two-col">
   <div>
@@ -518,7 +1426,7 @@
 </div>
 
 <!-- ═══════════════════════════════════════════ -->
-<h2>8. CI/CD</h2>
+<h2 id="cicd">12. CI/CD</h2>
 
 <div class="card">
   <h3>CI Pipeline (<code>ci.yml</code>)</h3>
@@ -555,7 +1463,7 @@
 </div>
 
 <!-- ═══════════════════════════════════════════ -->
-<h2>9. Seed</h2>
+<h2 id="seed">13. Seed</h2>
 
 <p><code>prisma/seed.ts</code> — ~1,179 lines. Populates Brazilian photography studio data with triple-guard safety:</p>
 <ol>
@@ -572,7 +1480,7 @@
 </p>
 
 <!-- ═══════════════════════════════════════════ -->
-<h2>10. WhatsApp Cloud API Pricing (2025–2026)</h2>
+<h2 id="pricing">14. WhatsApp Cloud API Pricing (2025–2026)</h2>
 
 <div class="card" style="margin-bottom: 1.5rem;">
   <h3>Pricing Model Change</h3>
@@ -673,27 +1581,82 @@
 </ul>
 
 <!-- ═══════════════════════════════════════════ -->
+<h2 id="gaps">15. Known Gaps &amp; Next Steps</h2>
+
+<h3>15.1 Not Yet Implemented</h3>
+<table>
+  <tr><th>Gap</th><th>Status</th><th>Impact / Plan</th></tr>
+  <tr><td>Real-time notifications backend</td><td><span class="tag red">missing</span></td><td><code>NotificationDropdown</code> is static UI only — no push/SSE/WebSocket. Plan: SSE on /api/notifications or polling.</td></tr>
+  <tr><td>Org switcher UI (ADR-0005)</td><td><span class="tag red">missing</span></td><td>Three-tier nav (All Work / My Work / Org X) not yet in sidebar. Active org via Zustand store, switcher dropdown pending.</td></tr>
+  <tr><td>Role enforcement middleware</td><td><span class="tag red">missing</span></td><td>No <code>middleware.ts</code> — ADR-0005 Phase 2 roles (Admin/Autônomo/CRM) not enforced server-side.</td></tr>
+  <tr><td><code>ClientShare</code> UI</td><td><span class="tag gold">partial</span></td><td>Schema + model exist (ADR-0001). No UI to grant/revoke cross-org sharing.</td></tr>
+  <tr><td>Proactive WhatsApp messaging</td><td><span class="tag gold">partial</span></td><td>Inbound + slash-command replies work. Outbound template messages (reminders, marketing) not implemented.</td></tr>
+  <tr><td>Document signing flow</td><td><span class="tag gold">partial</span></td><td><code>Document.status</code> enum has draft→sent→viewed→signed, but no e-sign integration (DocuSign/DottedSign).</td></tr>
+  <tr><td>Member management page (admin)</td><td><span class="tag green">done</span></td><td><code>OrgMembersCard</code> + <code>/api/admin/organizations/[id]/members</code> implemented.</td></tr>
+  <tr><td>Mobile push (PWA notifications)</td><td><span class="tag red">missing</span></td><td>Serwist PWA install works, but no push notification permission flow.</td></tr>
+  <tr><td>Two-factor auth</td><td><span class="tag red">missing</span></td><td>Credentials + Google only. No TOTP/SMS 2FA.</td></tr>
+</table>
+
+<h3>15.2 Planned Features (Roadmap)</h3>
+<ul>
+  <li><strong>Phase 2 multi-user:</strong> role-based access (Admin / Autônomo / CRM), org switcher, "All Work" aggregated view.</li>
+  <li><strong>Proactive WhatsApp templates:</strong> booking reminders 24h before, payment confirmations, follow-ups after event.</li>
+  <li><strong>E-sign integration:</strong> native contract signing via DocuSign or DottedSign.</li>
+  <li><strong>Real-time notifications:</strong> SSE or WebSocket for live updates.</li>
+  <li><strong>Granular sharing:</strong> per-table ClientShare flags (share a Deal but hide Revenue).</li>
+  <li><strong>Mobile push notifications</strong> via PWA + Web Push API.</li>
+  <li><strong>Provider-agnostic messaging</strong> — abstract WhatsApp behind a <code>MessageProvider</code> interface to add Telegram / Instagram DM.</li>
+</ul>
 
 <!-- ═══════════════════════════════════════════ -->
-<h2>11. Key Architectural Decisions</h2>
+<h2 id="risks">16. Technical Risks</h2>
 
-<ol>
-  <li><strong>No middleware</strong> — auth checked per-route, not at the edge. Every API handler repeats <code>getServerSession → user org check</code>.</li>
-  <li><strong>No Server Components</strong> — every page is <code>'use client'</code>. Dashboard layout fetches via SWR, provides data through React Context.</li>
-  <li><strong>Multi-tenant aggregation</strong> — dashboard API supports <code>?orgId=</code> for single-org view, otherwise aggregates across all user's orgs.</li>
-  <li><strong>Stripe per-org</strong> — each organization stores its own Stripe keys; checkout and webhook use per-org credentials.</li>
-  <li><strong>WhatsApp session state</strong> — <code>CommandSession</code> model with TTL expiry, checked on every incoming message.</li>
-  <li><strong>TypeScript <code>ignoreBuildErrors: true</code></strong> — build passes even with TS errors (pragmatic for rapid iteration).</li>
-  <li><strong>Child-model isolation</strong> — Expense, Revenue, Briefing have no <code>organizationId</code>; tenant isolation enforced through the Deal → Organization chain.</li>
-  <li><strong>Vercel São Paulo</strong> — deployed to <code>gru1</code> region for low latency in Brazil.</li>
-  <li><strong>Webpack build</strong> — <code>--webpack</code> flag in <code>vercel.json</code> (not Turbopack).</li>
-  <li><strong>PWA via Serwist</strong> — cache-on-navigation, installable, offline-ready.</li>
-</ol>
+<div class="card">
+  <h3>16.1 TypeScript <code>ignoreBuildErrors: true</code></h3>
+  <p><code>next.config.ts</code> has <code>typescript.ignoreBuildErrors = true</code> (and <code>eslint.ignoreDuringBuilds = true</code>). The production build passes even with type errors — pragmatic for rapid iteration but means type regressions can ship undetected. CI runs <code>tsc --noEmit</code> separately to catch them, but the deploy itself does not block on TS errors.</p>
+  <p><strong>Mitigation:</strong> Keep <code>tsc --noEmit</code> in CI as a gate; track type-error count; flip to <code>false</code> once error count reaches zero.</p>
+</div>
+
+<div class="card">
+  <h3>16.2 No <code>middleware.ts</code></h3>
+  <p>Auth is checked per-route (<code>getServerSession</code> in every handler) rather than at the edge. Every API handler repeats <code>session → user → org check</code>. Risk: a forgotten check on a new route = unauthenticated access.</p>
+  <p><strong>Mitigation:</strong> Centralize the auth helper (<code>requireSession()</code> / <code>requireOrg()</code>) and lint against direct <code>getServerSession</code> calls. Add middleware when role enforcement lands (ADR-0005 Phase 2).</p>
+</div>
+
+<div class="card">
+  <h3>16.3 No Server Components</h3>
+  <p>Every page is <code>'use client'</code>. Dashboard data flows through SWR → Context → components. Means no SSR data fetching, larger client bundles, and the initial load depends entirely on client-side SWR.</p>
+  <p><strong>Mitigation:</strong> Acceptable for an internal CRM. Watch bundle size; consider selective Server Components for read-heavy pages (e.g. /clients list) in future.</p>
+</div>
+
+<div class="card">
+  <h3>16.4 Child-Model Tenant Isolation</h3>
+  <p><code>Expense</code>, <code>Revenue</code>, <code>Briefing</code>, <code>Message</code> have no <code>organizationId</code>. Tenant isolation is enforced through the <code>Deal → Organization</code> chain. Any query that fetches a child without first verifying the parent Deal's org leaks data across tenants.</p>
+  <p><strong>Mitigation:</strong> Always include the parent Deal with <code>where: { id, organizationId }</code> before reading/writing children. Code review checklist item for any new child-model route.</p>
+</div>
+
+<div class="card">
+  <h3>16.5 WhatsApp Session Expiry</h3>
+  <p><code>CommandSession</code> has <code>expiresAt</code> with TTL cleanup (<code>cleanupExpiredSessions.ts</code>). If the cleanup job is not scheduled or fails, stale sessions linger and could attach a new user's input to an old session.</p>
+  <p><strong>Mitigation:</strong> Confirm cleanup cron/Vercel Cron is wired. Defensive check on every incoming message: if <code>expiresAt &lt; now</code>, delete and treat as no session.</p>
+</div>
+
+<div class="card">
+  <h3>16.6 Stripe Per-Org Credentials in DB</h3>
+  <p>Each <code>Organization</code> stores its own Stripe <code>secretKey</code>, <code>publishableKey</code>, and <code>webhookSecret</code> in plaintext columns. A DB leak = full Stripe key compromise for every org.</p>
+  <p><strong>Mitigation:</strong> Encrypt at rest (application-level AES), restrict DB access, rotate keys on incident. Long-term: use Stripe Connect (platform account) instead of per-org raw keys.</p>
+</div>
+
+<div class="card">
+  <h3>16.7 Single-Branch Demo = Same Code</h3>
+  <p>ADR-0002 single-branch strategy means the demo Preview runs the exact same code as production. No way to disable a half-baked feature in demo without env-var checks or feature flags.</p>
+  <p><strong>Mitigation:</strong> Introduce a lightweight feature-flag layer keyed off <code>NEXT_PUBLIC_VERCEL_ENV</code> or a flags table.</p>
+</div>
 
 <hr>
 
 <div class="footer">
-  GoTakeCRM — Project Overview &middot; Generated 2026-07-17 &middot; <code>H:\Dev\GoTakeJP\GoTakeCRM\docs\project-overview.html</code>
+  GoTakeCRM — Project Overview &middot; Updated 2026-07-19 &middot; <code>H:\Dev\GoTakeJP\GoTakeCRM\docs\project-overview.html</code>
 </div>
 
 </body>
