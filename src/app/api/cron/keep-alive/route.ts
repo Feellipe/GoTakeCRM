@@ -1,5 +1,9 @@
 import { db } from '@/lib/db';
 
+// Força rota dinâmica — Vercel cron NÃO faz build-time evaluation
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 /**
  * Vercel Cron — Keep-Alive para Supabase free tier
  * ================================================
